@@ -1,0 +1,1761 @@
+Q) What is the DisAdvantages of Both
+Volatile:-
+----------
+1) Does NOT provide Atomicity
+private volatile int count = 0;
+count++; // Not atomic
+
+Internally
+----------
+Read count
+Increment
+Write count
+
+2) Cannot Protect Multiple Variables
+private volatile int x;
+private volatile int y;
+
+3) Even with volatile, race conditions can occur. Multiple threads can execute simultaneously.
+
+Suitable Only for Simple Visibility Cases like below
+ex:- private volatile boolean stop = false;  //Simple Visibility Cases
+
+
+Synchronization:-
+-----------------
+Performance Overhead:- Before entering a synchronized block, JVM must acquire the lock.
+Reduced Concurrency:- Only 1 thread can execute at a time. Other threads wait even if CPU cores are available.
+Thread Blocking:- If Thread-1 acquires the lock for 10 secs then Thread-2 is blocked for 10 seconds.
+
+------------------------------------------------------------------------------------------------------------------
+
+Q) Difference Between ThreadPool Executor and ForkJoinPool
+ThreadPool Executor:- ThreadPoolExecutor is used when you have many independent tasks (consumeData, ProcessData, SaveDataInDB).
+-> Tasks Dont Depend on Each Other.
+Ex:-
+ExecutorService executor = Executors.newFixedThreadPool(3);
+executor.submit(() -> consumeData());
+executor.submit(() -> processData());
+executor.submit(() -> saveDataInDB());
+executor.shutdown();
+
+ForkJoinPool:- When 1 worker thread finishes its queue, it steals tasks from another thread worker.
+-> ForkJoinPool uses a work-stealing algorithm to keep threads busy.
+-> It is used when you have one huge task that can be recursively broken into smaller tasks for better CPU utilization.
+-> suitable for divide-and-conquer algorithms.
+
+------------------------------------------------------------------------------------------------------------------
+
+Q) What are the cons of Using ThreadPool Executor
+1) Not Ideal for Recursive Tasks. No automatic splitting of tasks.
+2) No Work Stealing.
+Ex:-
+----
+Thread-1 -> 100 tasks
+Thread-2 -> 2 tasks
+Thread-3 -> 0 tasks //Thread-3 sits idle. It cannot automatically take work from Thread-1.
+3) Risk of Deadlock.
+Ex:-
+----
+Future<String> future = executor.submit(task);
+future.get(); //Task A waiting for Task B and Task B waiting for Task A
+
+------------------------------------------------------------------------------------------------------------------
+
+Q) Difference between G1 vs ZGC
+G1 GC:-
+-------
+-> G1 stands for Garbage First.
+-> It divides the heap into multiple regions instead of managing the heap as a single large space.
+-> It prioritizes collecting regions that contains the most garbage first.
+-> Stops Application Threads while performing G1 GC but for a Very Minimal ms time.
+-> Suitable for most enterprise applications.
+Ex:-
+----
+Application Running -> Pause (GC) -> Application Running -> Pause (GC)
+
+ZGC:-
+-----
+-> ZGC is an ultra-low latency garbage collector.
+-> Most garbage collection work is performed concurrently while the application continues running.
+-> Pause times typically remain in the sub-millisecond to a few milliseconds range, even with very large heap sizes.
+-> Designed for applications where response time is critical. Application Running + GC Running
+
+------------------------------------------------------------------------------------------------------------------
+
+Q) What Happens When Application gets Executed and GC Comes to remove Objects. What Will Happen to our Application
+A) When GC runs, your application does not necessarily stop completely. What happens depends on the garbage collector being used.
+
+Step 1: Application Starts
+Step 2: GC Detects Low Memory. Suppose heap is filling up. JVM decides "Need to free memory" and starts a Garbage Collection cycle.
+
+What Happens to the Application ?
+With G1 GC, Some phases are:
+Application Running
+↓
+Pause 20 ms  //During those 20 ms: No application thread runs. All business threads are paused.
+↓
+Remove Garbage Objects
+↓
+Resume  //After GC completes: Threads continue from where they stopped.
+
+------------------------------------------------------------------------------------------------------------------
+
+Q) How does Springboot autoconfiguration works internally
+A) Spring Boot automatically creates and configures beans based on the dependencies present in the classpath.
+-> 1st, we add dependencies in pom.xml, which puts the required libraries on the classpath. 
+-> During application startup, @EnableAutoConfiguration checks the classes available in the classpath using conditions such as @ConditionalOnClass. 
+-> Based on the matching dependencies, Spring Boot activates the relevant AutoConfiguration classes, which then create and register beans in the IOC container automatically.
+
+------------------------------------------------------------------------------------------------------------------
+
+Q) Difference Between @Component and @Configuration
+@Component:- 
+-> Used to mark a class as a Spring-managed bean.
+-> Spring creates an object of this class during component scanning and stores it in the IOC Container.
+
+@Configuration:- 
+-> Used for Java-based configuration.
+-> Typically contains one or more @Bean methods.
+-> Used when we want to explicitly control bean creation.
+-> Commonly used for third-party classes where we cannot add Spring annotations such as: RestTemplate and KafkaTemplate.
+
+------------------------------------------------------------------------------------------------------------------
+
+Q) If we Already have @Component then Whats the Use of @Bean
+-> Application Classes like @Component, @Service, @Repository, @Controller
+-> For Third-Party Classes, Custom Object Creation Logic and Object Customization before Registration.
+
+------------------------------------------------------------------------------------------------------------------
+
+Q) How do you Manage Transactions in Monolithic Application
+-> In a Monolithic Application, transactions are typically managed using Spring's @Transactional annotation. 
+-> Since all modules generally operate on the same database, Spring creates a transaction boundary around the method. 
+-> If all operations succeed, the transaction is committed; if an exception occurs, the transaction is rolled back, ensuring ACID properties and data consistency.
+
+------------------------------------------------------------------------------------------------------------------
+
+Q) Difference Between Orchestration vs Choreography
+Orchestration:-
+-> Orchestration uses a central service (Orchestrator) to control and coordinate the workflow between microservices.
+-> The orchestrator decides which service should execute next and manages the overall business flow.
+-> Typically used with synchronous communication such as REST APIs or gRPC.
+-> The orchestrator acts as a central point for handling requests and responses between services.
+-> Easier to monitor, debug, and manage because the flow is centralized.
+
+Choreography:-
+-> Choreography follows a decentralized, event-driven approach with no central controller.
+-> Each microservice reacts to events and decides independently what action to perform next.
+-> Commonly used with asynchronous communication using Kafka, RabbitMQ, or other message brokers.
+-> Communication happens through the Publisher-Subscriber (Pub/Sub) model.
+-> Promotes loose coupling and better scalability.
+
+------------------------------------------------------------------------------------------------------------------
+
+Q) What is OutOfMemoryException and How do you Approach that Problem to Solve it.
+A) OutOfMemoryError occurs when the JVM cannot allocate memory in a specific memory area such as Heap, Metaspace, or Native Thread memory because the required memory area is exhausted.
+-> In production, I would first identify the exact OOM type from logs. 
+-> For Heap-related OOMs, I would capture a Heap Dump using jmap or -XX:+HeapDumpOnOutOfMemoryError, analyze it using Eclipse MAT or JMC, identify the objects consuming the most memory, and trace why they are not being garbage collected.
+-> I would also review GC behavior, memory utilization trends, and thread counts to determine the root cause and fix the memory leak.
+-> Investigate Recent Deployments , new features and traffic spikes.
+
+Common Types of OutOfMemoryError
+--------------------------------
+1. Java Heap Space:- Cause: Memory leak, Huge collections and Objects not getting garbage collected.
+2. GC Overhead Limit Exceeded:- Cause: GC is spending most of its time cleaning memory, but recovering very little memory.
+3. Metaspace:- Cause: Excessive class loading
+4. Unable to Create New Native Thread:- Cause: Too many threads created
+
+Production Approach
+-------------------
+Step 1: Identify Exact OOM Type. First look at logs
+java.lang.OutOfMemoryError: Java heap space
+java.lang.OutOfMemoryError: Metaspace
+java.lang.OutOfMemoryError: GC Overhead Limit Exceeded
+java.lang.OutOfMemoryError: unable to create native thread
+
+Step 2: Capture and Analyze Heap Dump using Tools like JVisualVM and Java Mission Control.
+-> Capture Heap Dump: Enable -XX:+HeapDumpOnOutOfMemoryError
+-> This Heap Dump will help us to identity below questions like,
+a) Which object occupies most memory?
+b) Why is it still reachable?
+c) Which collection is continuously growing?
+
+Step 3: Check GC Behaviour
+Symptoms:
+a) Full GC every few seconds
+b) CPU High
+c) Memory never comes down
+-> This usually indicates "Memory Leak" because objects remain reachable.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q) How do we Investigate when any Deadlock Occurs. Which Specific Memory Space needs to be monitored to understand the root cause if any Dead Lock Occurs
+A) If a deadlock is suspected in production, I would first take a Thread Dump using jstack rather than focusing on heap memory. 
+-> Deadlocks are generally thread-related issues, not memory issues.
+-> I would examine threads in BLOCKED, WAITING, or TIMED_WAITING state and look for messages such as "Found one Java-level deadlock".
+-> From the thread dump, I can identify,
+a) Which thread is holding the lock
+b) Which thread is waiting for the lock
+c) The exact code location causing the deadlock
+
+Step 1: Take Thread Dump
+-> Get the JVM PID: jps -l
+-> Generate Thread Dump: jstack 12345 > threaddump.txt
+
+Step 2: Analyze Thread Dump
+-> Open dump and search: "Found one Java-level deadlock", "waiting to lock", "locked" and "BLOCKED"
+-> With the above search, JVM often directly points to the threads involved in the deadlock and the service/class holding the lock.
+Example:
+--------
+Found one Java-level deadlock:
+==============================
+Thread-101: State:BLOCKED
+waiting to lock <0x123>
+at com.example.OrderService.placeOrder(OrderService.java:45)
+
+Thread-102: State:RUNNABLE
+locked <0x123>
+at com.example.OrderService.cancelOrder(OrderService.java:85)
+
+-> From this we can conclude:
+Thread-101 is waiting for lock 0x123
+Thread-102 already owns lock 0x123
+-> From this we can identify the exact service/class and line number responsible for lock contention or deadlock.
+
+Step 3: Monitor Thread Count
+-> Using Jconsole, VisualVM and Java Mission Control (JMC) Check for Live Threads, Peak Threads and Blocked Threads.
+-> If blocked threads continuously increase: 20, 40, 60....and so, then we can ensure Threads are Blocked and Causing Deadlock Issue.
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+1. Derived Query — Spring creates the query
+List<Employee> findByDepartment(String department);
+-> You don't write the query. Spring Data JPA interprets "findByDepartment" and generates the appropriate query.
+
+2. JPQL (Java Persistence Query Language)
+@Query("SELECT e FROM Employee e WHERE e.department = :department")
+-> You write the query using Entity names and Java field names.
+
+3. Native Query - We write Actual SQL Queries
+@Query(value = "SELECT * FROM employee WHERE department = :department", nativeQuery = true)
+-> We write actual SQL Queries.
+
+Named Parameters
+A Named Parameter is simply a parameter in your JPQL/SQL query that is identified by a name, rather than by its position.
+-> Its a way of passing values into a JPQL or SQL query using meaningful names.
+-> We give Parameters a meaningful name.
+
+Example Without Named Parameters — Positional Parameters
+---------------------------------------------------------
+@Query("SELECT e FROM Employee e WHERE e.department = ?1 AND e.salary > ?2")
+List<Employee> findEmployees(String department, double salary);
+
+Example With Named Parameters
+-----------------------------
+@Query("SELECT e FROM Employee e WHERE e.department = :department")
+List<Employee> findEmployees(@Param("department") String department);
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q) When a stale-version conflict occurred through optimistic locking, How retry should fetch latest version before Re-Attempting
+A) When a stale-version conflict occurred, we caught the optimistic locking exception, rolled back that transaction, re-fetched the latest record, applied the required business update again, and retried the transaction.
+-> We just dont catch the exception and retry, because if we retry, then we will retry with same old stale object which is of now use.
+-> So, After caught the Exception, Before Re-Attempting, better rollback the Transaction, refetch the Latest record and retry the operation in a new Transaction.
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+Q) what specific technical solution was implemented at the DB level to resolve optimistic locking exception
+A) At the DB level, we introduced a version column for the entity. JPA's @Version was used for optimistic locking. 
+-> The update happens only when the ID and expected version match.
+-> If another transaction has already changed the version, the update affects zero rows and Hibernate throws an optimistic locking exception.
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+Q) Will @Transactional always rollback for every exception ?
+A) By default, Spring rolls back for unchecked RuntimeException and Error. For checked exceptions, we can explicitly configure rollbackFor when rollback is required.
+Example:- @Transactional(rollbackFor = SomeCheckedException.class)
+
+Spring Transaction Rollback — 3 Scenarios
+-----------------------------------------
+1) Checked Exception + @Transactional
+-> repo.save() executes and data is saved within the transaction.
+-> Checked Exception occurs.
+-> No rollback by default, so the transaction commits and data remains in DB.
+Example:-
+---------
+@Transactional
+public void saveOrderInternal(Order o) {
+    repo.save(o);
+    chargePayment(o);
+}
+
+chargePayment(Order o) {
+    throw new Exception("Checked Exception:- Payment failed"); //Throws Checked Exception
+}
+
+2) Checked Exception + rollbackFor
+-> repo.save() executes.
+-> Checked Exception occurs.
+-> @Transactional(rollbackFor = Exception.class) tells Spring to rollback.
+-> Transaction rolls back, so saved data is not persisted.
+Example:-
+---------
+@Transactional(rollbackFor = Exception.class)
+public void saveOrderInternal(Order o) {
+    repo.save(o);
+    chargePayment(o);
+}
+
+chargePayment(Order o) {
+    throw new Exception("Checked Exception:- Payment failed"); //Throws Checked Exception
+}
+
+3) Checked Exception + rollbackFor + try/catch
+-> repo.save() executes.
+-> Checked Exception occurs inside try block.
+-> Exception is caught by catch, so it does not reach the transactional method boundary.
+-> Spring does not automatically rollback, and the transaction can commit.
+Example:-
+---------
+@Transactional(rollbackFor = Exception.class)
+public void saveOrderInternal(Order o) {
+    repo.save(o);
+    chargePayment(o);
+}
+
+chargePayment(Order o) {
+try{
+throw new Exception("Checked Exception:- Payment failed"); //Throws Checked Exception
+} catch (){
+}
+}
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+Q) What is ack in Kafka
+Producer ack:- When a Kafka producer sends a message, acks controls how much confirmation the producer requires from Kafka.
+Example:- spring.kafka.producer.acks=all
+acks=0:-   Producer does not wait for broker acknowledgement
+acks=1:-   Leader broker acknowledges the message
+acks=all:- All in-sync replicas acknowledge the message.
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+Q) Where did you actually use Singleton in your project ?
+Scenario 1 — Application Configuration
+-> Loading url from .props file
+-> Retry Count
+-> connectionTimeout
+
+Scenario 2 — RestTemplate / WebClient Configuration
+-> Created "RestTemplate" bean by using @Bean. By default, this RestTemplate bean is Singleton scoped.
+
+Scenario 3 - Kafka Configuration / Shared ProducerFactory
+-> Created "KafkaTemplate<String, Employee> kafkaTemplate()"
+
+-> Multiple HTTP requests using the same Singleton bean
+-> Spring creates one PaymentService object by default.
+-> Now 100 HTTP requests arrives but refers to same PaymentService object
+-> Because each request has its own method execution and local variables and Each thread gets its own id.
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+Q) Can lambda expression can be created without a functional interface ?
+A) No. A lambda expression needs a target type, and in normal Java usage that target is a Functional Interface.
+-> lambda expression cannot exist independently without a target functional interface
+-> That's why lambda expressions are primarily used with Functional Interfaces such as Predicate, Function, Consumer, Supplier, Runnable, or our own @FunctionalInterface
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+Q) Where have you used multithreading concepts ?
+A) I used CompletableFuture when I had multiple independent operations that could be executed concurrently. 
+-> The advantage was reducing overall response time by avoiding sequential execution. 
+-> After starting the asynchronous operations, I used CompletableFuture.allOf() to wait until all operations completed, and then retrieved the individual results and aggregated them into the final response.
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+Q) What principles do you follow when writing a new method with business logic ?
+-> When writing a new method, I focus on Single Responsibility, readability, low coupling, and reusability.
+-> I keep the method focused on one business responsibility, avoid duplicate code, use meaningful names, keep the method reasonably small, and separate business logic from infrastructure concerns. 
+-> I also make sure the method is easy to test and handle exceptions appropriately.
+-> I would separate responsibilities.
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+Q) What is Clean Code? Is Clean Code a Design Pattern ?
+A) Clean Code means writing code that is easy to read, understand, maintain and test. 
+-> It focuses on meaningful names, small focused methods, Single Responsibility, avoiding duplicate code, low complexity, proper exception handling and avoiding unnecessary comments or complicated logic.
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+Q) Where did you use Singleton Pattern in Project. (Thread Pool)
+A) 1 Example is Shared Thread pool. I have used Singleton Design Pattern to configure 1 Shared ExecutorService as a Spring Singleton Bean.
+-> Multiple services reuse it, which avoids unnecessary thread creation and allows us to centrally control the thread pool size.
+
+Before — Every service creates its own Thread Pool
+public class EmployeeService {
+
+    private ExecutorService executorService = Executors.newFixedThreadPool(10);
+
+    public void processEmployee() {
+        executorService.submit(() -> {
+            System.out.println("Processing Employee");
+        });
+    }
+}
+
+public class PayrollService {
+
+    private ExecutorService executor = Executors.newFixedThreadPool(5);
+
+    public void processPayroll() {
+        executor.submit(() ->
+            System.out.println("Processing Payroll"));
+    }
+}
+-> EmployeeService → Thread Pool 1 → 5 Threads
+-> PayrollService  → Thread Pool 2 → 5 Threads
+-> If Every service creates its own thread pool, This can lead to:
+- Too many threads
+- More memory usage
+- More context switching
+- Difficult thread-pool management
+
+After — Shared Singleton Thread Pool (Manual Singleton Implementation)
+
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+public class ThreadPoolManager {
+
+    // 1. Create only one object
+    private static ThreadPoolManager instance;
+
+    // 2. Shared thread pool
+    private final ExecutorService executorService;
+
+    // 3. Private constructor
+    private ThreadPoolManager() {
+        executorService = Executors.newFixedThreadPool(5);
+    }
+
+    // 4. Control object creation
+    public static synchronized ThreadPoolManager getInstance() {
+
+        if (instance == null) {
+            instance = new ThreadPoolManager();
+        }
+
+        return instance;
+    }
+
+    public ExecutorService getExecutorService() {
+        return executorService;
+    }
+}
+
+public class EmployeeService {
+
+    private ExecutorService executor = ThreadPoolManager.getInstance().getExecutorService();
+
+    public void processEmployee() {
+        executor.submit(() -> System.out.println("Processing Employee"));
+    }
+}
+
+public class PayrollService {
+
+    private ExecutorService executor = ThreadPoolManager.getInstance().getExecutorService();
+
+    public void processPayroll() {
+        executor.submit(() -> System.out.println("Processing Payroll"));
+    }
+}
+-> All services use the same thread pool.
+-> We Made executorService variable as private so that it cannot be accessed directly from EmployeeService.
+-> So ThreadPoolManager.getInstance().executorService; // wont work.
+-> We provide a public method to access as "getExecutorService()"
+-> This is essentially encapsulation: keep the field private and expose only the access you need.
+
+ After — Shared Singleton Thread Pool (Spring Managed)
+-> Since you're using Spring Boot, the cleanest approach is to let Spring manage the Singleton.
+@Configuration
+public class ThreadPoolConfig {
+
+    @Bean
+    public ExecutorService executorService() {
+        return Executors.newFixedThreadPool(10);
+    }
+}
+-> Spring's default scope is Singleton, so there is one ExecutorService bean per ApplicationContext.
+
+-------------------------------------------------------------------------------------------------------------------------------------
+
+Q) How do you handle Handle Duplicate Data or How do you Implement Idempotency in Kafka
+-> Kafka Data Contains Below fileds,
+EmployeeId = 101
+EventId = EVT1001
+Name = Vikas
+-> Consider "EventId" is your idempotency key and EmployeeId as "message key" to decide the partition and maintain ordering for that key.
+Example:-
+---------
+ProducerRecord<String, Employee> record = new ProducerRecord<>("employee-topic", "101", employee);
+record.headers().add("idempotency-key","EVT1001".getBytes());
+kafkaTemplate.send(record);
+
+-------------------------------------------------------------------------------------------------------------------------------------
+Q) What is @EntityGraph
+A) @EntityGraph is used to solve N+1 Query.
+Example:-
+---------
+Query-1:- List<Employee> employees = employeeRepository.findAll(); //Fetches 3 Employees.
+Query-2:- 
+for (Employee emp : employees) {
+    System.out.println(emp.getAddress().getCity()); //For Each Employee, Query runs 3 times to fetch Address
+}
+-> Total 4 Queries.
+-> For 100 Employees, 1 + 100 = 101 Queries.
+
+@EntityGraph
+------------
+-> We can solve this Problem by fetching Together.
+Example:-
+---------
+public interface EmployeeRepository extends JpaRepository<Employee, Long> {
+    @EntityGraph(attributePaths = "address")
+    List<Employee> findAll();
+}
+-> Now Hibernate can fetch the employees and addresses together, commonly using a join.
+-> We use @EntityGraph When query need the related entity.
+
+------------------------------------------------------------------------------------------------------------------------
+
+Q) What is @BatchSize
+A) @BatchSize reduces the N+1 problem by grouping multiple lazy loads into batches using an IN clause, reducing number of database round trips.
+Example:- 
+---------
+@BatchSize(size = 10)
+@ManyToOne(fetch = FetchType.LAZY)
+private Address address;
+
+-> While Loading Employees only using findAll() Query, Hibernate knows Associated Address ID's.
+-> Since, Address is LAZY, Hibernate does not immediately execute: "SELECT * FROM address ..."
+-> When Lazy Address needs to be loaded, @Batch allows hibernate to batch them using in clause with Address ID's.
+Example:- SELECT * FROM address WHERE id IN (A1, A2, A3, ..., A10);
+-> If Employee Count is 3, then In Clause uses only 3 Address Id's though Batch size is 10.
+-> @BatchSize(size = 10) means up to 10, not necessarily exactly 10.
+
+------------------------------------------------------------------------------------------------------------------------
+
+Q) How PESSIMISTIC_READ Works
+A) When we use "PESSIMISTIC_READ" on "findById()" JPA Query, T1 acquires the Lock on Row-1.
+-> Now T1 holds the Lock on Row-1. Other Threads like T2 Cannot perform any Update Operation on Row-1.
+-> Lock is tied to T1's database transaction, not simply to the findById() method.
+-> T1 Only Releases the Lock When the Transaction is Completed.
+-> By This, Read safely; block conflicting writes
+
+@Lock(LockModeType.PESSIMISTIC_READ)
+Optional<Employee> findById(Long id);
+------------------------------------------------------------------------------------------------------------------------
+
+Q) What is PESSIMISTIC_FORCE_INCREMENT
+A) We use PESSIMISTIC_FORCE_INCREMENT with @Version.
+-> Primarily, We use this while Performing Read Operations like "findById()".
+-> PESSIMISTIC_FORCE_INCREMENT forces the version to change even though if we are only performing read operation.
+-> Lock + force @Version increment
+
+Example:-
+---------
+@Lock(LockModeType.PESSIMISTIC_FORCE_INCREMENT)
+Optional<Employee> findById(Long id);
+
+------------------------------------------------------------------------------------------------------------------------
+
+Q) What is PESSIMISTIC_WRITE
+A) We use PESSIMISTIC_WRITE to perform flow read → lock → modify → save/commit.
+-> You acquire the pessimistic write lock when fetching the row like findById().
+-> You don't normally put PESSIMISTIC_WRITE specifically on save().
+-> Purpose of PESSIMISTIC_WRITE is T2 transaction cannot modify that same row while T1 is working with it.
+-> Read + prepare to modify; block other reads/writes as required by DB
+
+Example:-
+---------
+@Lock(LockModeType.PESSIMISTIC_WRITE)
+Employee findEmployeeById(Long id);
+
+@Transactional
+public void updateSalary(Long id) {
+
+    Employee emp = repository.findEmployeeById(id); // lock
+    emp.setSalary(60000);
+    repository.save(emp); // update
+
+} // COMMIT → lock released
+
+------------------------------------------------------------------------------------------------------------------------
+
+Q) run() vs start() in Threads
+start():- creates a new thread and JVM internally invokes run() on that new thread.
+run():- If we directly call run(), it is just a normal method call and executes in the current thread; no new thread is created.
+
+Example:-
+---------
+class MyTask extends Thread {
+    public void run() {
+        System.out.println(Thread.currentThread().getName());
+    }
+}
+
+using start()
+-------------
+MyTask t = new MyTask();
+t.start();
+
+-> New Thread Created and JVM Internally invokes run() on this New Thread.
+-> Execution Happens on Separate Thread.
+
+using run() (Directly)
+----------------------
+MyTask t = new MyTask();
+t.run();
+
+-> run() executes in MAIN thread.
+-> normal method call and executes in the current thread, no new thread is created.
+
+------------------------------------------------------------------------------------------------------------------------
+
+Q) How HashMap works internally. What is Red Black Tree ?
+A) In HashMap, To Put the Element, we Usually Calculate Index based on hash(key) & n-1.
+-> Based on Index, We put the Element Between 1 to 15 Buckets.
+-> Each Bucket as a Node holds [hash | key | value | next]
+-> When Bucket has Multiple Nodes, we call it as Hash Collision.
+-> When HashMap Bucket has multiple Nodes like Below,
+Bucket[5] => [N1] → [N2] → [N3] → [N4] → [N5] → ...
+
+-> Too many Nodes in the SAME bucket. Suppose the bucket reaches around 8 nodes
+-> Searching can become slower because we may need to check nodes one by one.
+-> So, Java can convert the linked-list structure in that bucket into a Red-Black Tree to improve lookup performance.
+Bucket[5]
+
+             N4
+            /  \
+          N2    N6
+         / \    / \
+        N1 N3  N5 N7
+                    \
+                     N8
+-> Now Bucket[5] contains a tree instead of a linked list.
+-> This tree is specifically a Red-Black Tree, which is a self-balancing Binary Search Tree.
+
+------------------------------------------------------------------------------------------------------------------------
+
+Q) Which one should we extend while writing custom Exception. Exception or Runtime Exception. 
+A) It depends on whether you want your custom exception to be checked or unchecked.
+
+Checked Exception:-
+--------------------
+-> If We want our Custom Exception to be Checked Exception, then we should extends "Exception".
+-> By this, Java forces this Custom Exception to handle By Using try/Catch Block or throws Keyword.
+-> So if you extend only Exception, your custom exception becomes a checked exception.
+
+UnChecked Exception:-
+----------------------
+-> If We want our Custom Exception to be UnChecked Exception, then we should extends "RuntimeException".
+-> Now Java doesn't force you to use try-catch or throws. No compiler error.
+-> So if you extend only Exception, your custom exception becomes a checked exception.
+
+------------------------------------------------------------------------------------------------------------------------
+
+Q) Tell me some methods of Object class.
+getClass()
+hashCode()
+equals(Object obj)
+clone()
+toString()
+notify()
+notifyAll()
+wait()
+wait(long timeout)
+wait(long timeout, int nanos)
+finalize()   // deprecated
+
+------------------------------------------------------------------------------------------------------------------------
+
+Q) What is the difference between inheritance and composition?
+Inheritance:-
+-------------
+-> Inheritance represents an Is-A relationship
+-> In this relation, Manager class extends Employee class using "extends" keyword. Now Manager Is-A Employee.
+-> Now Manager automatically gets Employee's properties and behavior.
+
+Composition:-
+-------------
+-> Composition represents an HAS-A relationship but dependent
+-> One class contains/uses another class.
+-> Employee is Dependent on Department.
+-> If Department is destroyed, then Employee Object also be Destroyed.
+
+Example:-
+---------
+class Department {
+    private List<Employee> employees = new ArrayList<>();
+}
+
+------------------------------------------------------------------------------------------------------------------------
+
+Q) What is the difference between association and aggregation ?
+A) Both represent relationships between objects.
+Association:-
+-------------
+-> The objects can exist independently. Related To + Independent
+-> Employee can be related to a Department.
+-> If an Employee leaves the company, the Department can still exist.
+-> If a Department is removed, the Employee can be moved to another Department.
+-> Therefore, neither object depends on the other for its existence.
+Example:-
+---------
+class Employee {
+    Department department;
+}
+
+
+Aggregation:-
+-------------
+-> Aggregation is a HAS-A relationship where both objects can exist independently. HAS-A + Independent
+-> It represents a whole-part relationship.
+-> The Department contains/groups Employees, but Employees can exist independently of the Department.
+-> If the Department is removed, the Employees can still exist and can be associated with another Department.
+Example:-
+---------
+class Department {
+    List<Employee> employees;
+}
+
+------------------------------------------------------------------------------------------------------------------------
+
+Q) What is the difference between Serializable and Externalizable ?
+A) Both are used for Java object serialization.
+Example:-
+---------
+class Employee implements Serializable {
+    int id;
+    String name;
+    String password;
+    double salary;
+}
+
+Serializable:-
+--------------
+-> The process of writing the state of an object to a file is called serialization.
+-> process of converting an object from java supported form into a file-supported form
+-> It uses writeObject() / readObject() internally to Customize Object.
+
+-> When you serialize, Java automatically serializes all serializable fields.
+-> In serialization, everything is taken care of by JVM and the programmer doesn't have any control.
+-> But suppose we don't want to store password and we also don't want to store some unnecessary data.
+-> With Serializable, we can customize using writeObject() / readObject(), but the default mechanism is still available.
+-> It Means, Though We can customize Objects using writeObject(), But Again we have to use Java default serialization mechanism.
+-> By using this "defaultWriteObject()", we will end up again loosing control over Data.
+
+Externalizable:-
+----------------
+-> The main advantage of Externalizable over serialization is, everything is taken care of by the programmer and JVM doesn't have any control.
+-> Based on our requirements we can save either the total object or part of the object which improves the performance of the system.
+-> You explicitly decide: What Part of the Object to be serialized and Saved.
+-> Externalizable contains writeExternal(ObjectOutput oo) and readExternal(ObjectInput in) and have to override by class to control the Serialization and Deserialization process.
+Example:-
+---------
+public void writeExternal(ObjectOutput out) throws IOException {
+    out.writeInt(id);
+    out.writeObject(name);
+    // Don't write password
+}
+
+------------------------------------------------------------------------------------------------------------------------
+
+Q) StackOutOfMemory vs OutOfMemoryException
+StackOverflowError:-
+---------------------
+-> Occurs when Threads Stack memory exhausted
+-> Usually recursion / too many nested method calls
+
+OutOfMemoryError:-
+------------------
+-> JVM cannot allocate required memory.
+-> Usually heap objects consuming memory.
+
+------------------------------------------------------------------------------------------------------------------------
+
+Q) Ordered vs Non-Ordered Collections
+Ordered Collection:- It maintains the order of the elements based on the sequence in the collection.
+Example:- ArrayList, LinkedList, Stack, LinkedHashSet, TreeSet, LinkedHashMap and TreeMap.
+
+Non-Ordered Collections:- It does not maintains or preserve any order of Sequence in Collection.
+Example:- HashSet and HashMap
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Q) Class Level and Object Level Locking in java
+A) In Java, locks can be applied at the object level or class level using synchronized.
+Object-level locking:-
+-----------------------
+-> An object-level lock belongs to a specific object instance.
+-> When a thread enters a synchronized instance method, it locks the current object (this).
+-> Other threads cannot enter another synchronized instance method on the same object until the lock is released.
+
+Example:-
+---------
+class Counter {
+
+    public synchronized void increment() {
+        System.out.println("Incrementing");
+    }
+
+(or)
+
+public void increment() {
+        synchronized (this) {
+            System.out.println("Incrementing");
+        }
+    }
+
+Class-level locking:-
+--------------------
+-> A class-level lock belongs to the Class object, such as Counter.class.
+-> A static synchronized method locks the class object.
+-> Only 1 thread can execute any class-level synchronized code for that class at a time, regardless of how many instances exist.
+-> Only one thread can execute resetAll() at a time because both threads require the same Counter.class lock.
+
+Example:-
+---------
+class Counter {
+
+    public static synchronized void resetAll() {
+        // Locks Counter.class
+        System.out.println("Resetting all counters");
+    }
+
+(or)
+
+public static void resetAll() {
+        synchronized (Counter.class) {
+            System.out.println("Resetting all counters");
+        }
+    }
+}
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Q) What is Distributed Cache and Cluster ?
+A) A distributed cache is a cache shared across multiple application instances or microservices over the network.
+-> If all your microservices use the same Redis instance/cache, then you are already using a distributed cache.
+-> This differs from a local/in-memory cache, such as a Java HashMap or Caffeine cache running inside each service instance:
+
+Redis cluster
+-------------
+-> A Redis Cluster is a group of Redis servers working together instead of relying on one Redis server.
+-> Scalability: cache data is split across multiple Redis nodes.
+-> High availability: if one node fails, a replica can take over.
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Q) If a third-party service is slow, how would you handle it ?
+1. Set a timeout
+2. Retry carefully
+3. Circuit Breaker
+4. Fallback
+5. Bulkhead / resource isolation
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Q) Single Lock & Double Lock
+Single Lock — Object Level:-
+---------------------------
+-> Locks the current object instance.
+-> If multiple threads use the same object, only one can enter.
+-> But if there are multiple objects, each object has its own lock, so threads can execute concurrently.
+Example:-
+---------
+synchronized(this) {
+    // critical section
+}
+
+EmployeeService obj1 = new EmployeeService();
+EmployeeService obj2 = new EmployeeService();
+
+-> In the above Single Lock example, if we have multiple objects and multiple threads access them, each object has its own lock. 
+-> Therefore, threads using different objects can execute concurrently because synchronized(this) locks only the current object, not the entire class.
+-> If we need to ensure that only one thread across all objects/instances can execute the critical section, Single Lock is not enough.
+-> This is when we go for Class-Level Lock (synchronized(EmployeeService.class)).
+
+Double Lock — Object + Class Level
+-----------------------------------
+-> First locks the object, then locks the class-level monitor.
+-> Multiple objects may acquire their own object locks, but only one thread can acquire EmployeeService.class at a time.
+-> Therefore, the class-level section is protected across all instances of that class.
+Example:-
+---------
+synchronized(this) {								// Object-level lock
+    synchronized(EmployeeService.class) {			// Class-level lock
+        // critical section
+    }
+}
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Q) What benefits do Actuator endpoints provide ?
+A) Spring Boot Actuator provides production-ready endpoints to monitor and manage a Spring Boot application.
+Main Benefits:-
+---------------
+Health monitoring:- Tells whether the application and its dependencies like DB are healthy. (/actuator/health)
+Application metrics:- Provides metrics such as JVM memory, CPU, HTTP requests, threads, etc. (/actuator/metrics)
+Application information:- Displays application-related information. (/actuator/info)
+Monitoring HTTP requests:- Helps understand request count, response time, status codes, etc. (/actuator/metrics/http.server.requests)
+Application configuration/debugging:- Endpoints such as "/env, /beans, /mappings, /configprops" can help during troubleshooting.
+
+How do you restrict Actuator endpoints
+--------------------------------------
+-> There are mainly two levels of restriction:
+
+1. Restrict which endpoints are exposed
+----------------------------------------
+management.endpoints.web.exposure.include=health,info,metrics
+
+-> By configuring above properties in props file, only below endpoints are exposed over HTTP.
+/actuator/health
+/actuator/info
+/actuator/metrics
+
+We can also exclude specific endpoints:
+----------------------------------------
+management.endpoints.web.exposure.include=*
+management.endpoints.web.exposure.exclude=env,beans,configprops
+
+2. Secure Actuator endpoints with Spring Security
+----------------------------------------
+-> Even if an endpoint is exposed, we can require authentication/authorization.
+Example:-
+---------
+@Bean
+SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+    http
+        .authorizeHttpRequests(auth -> auth
+            .requestMatchers("/actuator/health").permitAll()
+            .requestMatchers("/actuator/**").hasRole("ACTUATOR")
+            .anyRequest().authenticated()
+        );
+
+    return http.build();
+}
+
+
+Important Actuator configurations to enable/disable endpoints
+--------------------------------------------------------------
+Expose specific endpoints:- management.endpoints.web.exposure.include=health,info,metrics
+Expose all endpoints:- management.endpoints.web.exposure.include=*
+Exclude endpoints:- management.endpoints.web.exposure.exclude=env,beans
+Enable/disable an endpoint completely:- management.endpoint.env.enabled=false  (env Actuator endpoint itself is disabled.)
+
+Change the Actuator base path
+------------------------------
+-> Default: /actuator/health, /actuator/info and /actuator/metrics
+-> We can change default path like "/actuator" to "/management" by below config
+Example:- management.endpoints.web.base-path=/management
+-> Now Endpoints will be /management/health, /management/info and /management/metrics
+
+Run Actuator on a different port
+---------------------------------
+management.server.port=8081
+
+Change individual endpoint paths
+---------------------------------
+Before:- /actuator/health
+After Config:- management.endpoints.web.path-mapping.health=healthcheck
+After:- /actuator/healthcheck
+
+Show detailed health information
+----------------------------------
+management.endpoint.health.show-details=always
+management.endpoint.health.show-details=when_authorized (Shown Health information only to authorized users)
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Q) Kafka Delivery Semantics
+A) Kafka commonly provides at-least-once delivery, so the same message can be delivered again if the consumer processes it but crashes before committing the offset.
+At-Most-Once (0 or 1):-  No duplicate, but possible loss
+At-Least-Once (1 or more):- No intentional loss, but possible duplicate
+Exactly-Once (Exactly 1*):- No duplicate + no loss within the supported transaction boundary
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Q) What are the different transaction propagation types in Spring ?
+A) Propagation level defines:- What should happen when one transactional method calls another transactional method?
+
+Transaction Propagation Types
+------------------------------
+REQUIRED:- Use existing transaction; if none exists, create one 
+REQUIRES_NEW:-Always create a new transaction; suspend existing one 
+SUPPORTS:- Use existing transaction if available; otherwise execute without one 
+NOT_SUPPORTED:- Always execute without a transaction; suspend existing one 
+MANDATORY:- Must have an existing transaction; otherwise exception 
+NEVER:- Must NOT have a transaction; otherwise exception 
+NESTED:- Execute within nested transaction/savepoint if supported
+
+Remember these three first:
+----------------------------
+REQUIRED:- Join existing / create new
+REQUIRES_NEW:- Always new transaction
+NESTED:- Same transaction + savepoint
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Q) What are the different transaction isolation levels ?
+A) Isolation controls how one transaction sees when changes made by another concurrent transaction.
+
+Transaction Isolation Levels
+----------------------------
+Isolation.DEFAULT
+-----------------
+-> Uses the default isolation level of the underlying database.
+-> Spring does not choose a fixed isolation level; it delegates to the database.
+Scenario:-
+-----------
+-> T1 starts a transaction and reads Employee Salary.
+-> Since Isolation.DEFAULT is used, the database's default isolation level decides how T1 sees the data.
+-> For example, MySQL/InnoDB → REPEATABLE_READ, while PostgreSQL → READ_COMMITTED.
+-> So, the behavior for dirty/non-repeatable/phantom reads depends on the database being used.
+
+Isolation.READ_UNCOMMITTED
+---------------------------
+-> Dirty Read.
+-> Transaction can read data that another transaction has not committed yet.
+Scenario:-
+-----------
+-> When T1 updates Salary from 40k to 50k and Not Committed
+-> T2 Sees and Reads Data as 50k.
+-> T1 RollBack to 40k. Now T2 Read Data as 50k which was never existed and committed.
+-> This We call as Dirty Read.
+
+Isolation.READ_COMMITTED
+------------------------
+-> Non-Repeatable Read.
+-> Only committed data can be read. No Dirty Read.
+-> READ_COMMITTED does NOT promise that the data you read at the beginning of your transaction will remain the same until the transaction finishes.
+Scenario:-
+-----------
+-> When T1 Read Salary as 40k.
+-> T2 Update Salary to 30k and Commits
+-> T1 Reads again, Salary is 30k inside same transaction.
+-> This is called: Non-Repeatable Read. Because T1 could not repeat the same read and get the same result.
+-> Same transaction, same query, different result.
+
+Isolation.REPEATABLE_READ
+--------------------------
+-> Phantom Read:- Same query executed twice, and extra rows appear/disappear.
+-> Once a row is read, repeated reads within the transaction should return the same committed version, depending on DB implementation.
+-> No Dirty Read and Non-Repeatable Read.
+Scenario:-
+-----------
+T1:- SELECT employees WHERE salary > 50000 (10 rows)
+T2:- INSERT employee salary = 60000 (COMMIT)
+T1:- SELECT employees WHERE salary > 50000 (11 rows)
+-> The new row is a phantom.
+
+Isolation.SERIALIZABLE
+----------------------
+-> Highest standard isolation level.
+-> Transactions behave as if they were executed one after another, rather than concurrently.
+-> It provides the strongest protection but can reduce concurrency and performance.
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Q) Serial GC vs Parallel GC
+Serial GC:-
+------------
+-> Uses a single thread for Garbage Collection.
+-> When GC runs, application threads are paused (Stop-The-World).
+-> Simple and has low memory/CPU overhead.
+-> Suitable for small applications / small heaps where long GC pauses are acceptable.
+
+Parallel GC:-
+-------------
+-> Uses multiple threads for Garbage Collection.
+-> JVM decides and provides the appropriate number of GC threads based on available CPUs and JVM settings.
+-> Application threads are still paused during major GC work.
+-> Multiple GC threads clean memory in parallel, so GC usually finishes faster than Serial GC.
+-> Suitable for multi-core systems where throughput is more important than very low pause times.
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Q) Fail-Fast and Fail-Safe
+Fail-Fast:-
+------------
+-> If the Collection is Structurally Modified during Iteration, throws ConcurrentModificationException.
+-> Works on Original Collection.
+Examples:- ArrayList and HashMap
+
+Fail-Safe:-
+-----------
+-> Iterates over copy/snapshot of Collection.
+-> Usually Does not throw ConcurrentModificationException.
+
+---------------------------------------------------------------------------------------------------------------------------------------
+
+Q) How do you Implement Authorization in JWT
+A) JWT validation gives you Authentication, while hasRole(), hasAnyRole(), and hasAuthority() allow you to implement Authorization rules in Spring Security.
+Example:-
+----------
+Payload:-
+----------
+{
+  "uname": "vikas",
+  "pwd": "123"
+}
+
+After successful authentication, your JWT can contain:
+-------------------------------------------------------
+{
+  "sub": "vikas",
+  "roles": ["ADMIN"],
+  "iat": 1720000000,
+  "exp": 1720003600
+}
+
+@Bean
+public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+
+    http.csrf(csrf -> csrf.disable())
+        .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+        .authorizeHttpRequests(auth -> auth
+
+            
+            .requestMatchers("/auth/login").permitAll()    // Authentication is NOT required for login
+            .requestMatchers("/employees").hasRole("ADMIN")   // Only ADMIN can access this
+            .requestMatchers("/employees/**").hasAnyRole("USER", "ADMIN")  // USER or ADMIN can access this
+            .anyRequest().authenticated()  // Any other API requires authentication
+        )
+        .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);  // Your JWT filter
+    return http.build();
+}
+
+---------------------------------------------------------------------------------------------------------------------------------------
+Q) What exactly @transactional annotation on a function causes issue in production If there are suppose 50 req per sccond 
+A) @Transactional itself is not a problem. The problem is how long the transaction stays open and how many concurrent requests hold database resources.
+Example:-
+---------
+@Transactional
+public void processOrder() {
+    // DB Call
+    // External API Call
+    // More DB Call
+}
+
+And we get 50 requests/sec
+
+Problem 1: Database Connections Get Occupied
+-> Every transaction typically holds a DB connection from the connection pool.
+-> If your pool size is 10 and 50 requests arrive simultaneously, then 40 requests waiting
+-> Eventually we face Connection Timeout.
+Example:-
+---------
+-> Req-1 to Req-10 -> Got DB Connections
+-> Req-11 to Req-50 -> Waiting
+-> Req-1 to Req-10 Commits
+-> Req-11 to Req-50 Faces Connection Timeout Issue and Fails.
+
+Problem 2: External API Calls Inside Transaction
+-> If externalService.call(); takes 5 seconds
+-> Connection occupied, Locks held and Other requests blocked.
+Solution:- Compute Business Logic 1st.  and 
+
+Problem 3: Locks Remain Longer
+-> On save(), DB may hold row locks until Transaction Commit
+-> If many requests update the same data, Since Request-1 holds lock row, Request-2 and Request-3 will have to wait.
+-> This will leads to Lock Contention
+
+Solution:-
+----------
+-> Compute Business Logic 1st.
+-> Keep transactional boundaries small.
+-> Avoid external API calls inside transactions.
+-> Transaction lasts only for DB update.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q) Spring Bean Life Cycle
+
+1) Bean Definition Loading:- Spring reads bean metadata from XML configuration, annotations such as @Component, @Service, or Java-based configuration using @Bean.
+
+2) Bean Instantiation:- Spring creates an instance of the bean using its constructor or a factory method.
+
+3) Dependency Injection:- Spring injects the required dependencies into the bean through constructor injection, setter injection, or field injection.
+
+4) Aware Interfaces Processing (Optional):- If the bean implements interfaces such as BeanNameAware, BeanFactoryAware, or ApplicationContextAware, Spring provides the relevant container information to the bean.
+
+5) BeanPostProcessor Before Initialization:- Spring invokes postProcessBeforeInitialization() of registered BeanPostProcessor implementations.
+
+6) Initialization Callbacks:- Spring executes initialization methods, such as:
+-> @PostConstruct:- It is used to execute initialization logic automatically after Spring injects all required dependencies into a bean.
+-> InitializingBean.afterPropertiesSet():- A callback method invoked by Spring after all bean properties and dependencies have been set.
+-> Custom init-method (init()):- A user-defined initialization method configured through XML or @Bean(initMethod = "...") invoked by Spring after dependency injection and before the bean is ready for use.
+
+7) BeanPostProcessor After Initialization:- Spring invokes postProcessAfterInitialization(). At this stage, Spring may create proxies for features such as AOP, transactions, and security.
+
+8) Bean Ready for Use:- The bean is fully initialized and available for use from the Spring container.
+
+9) Bean Destruction:- When the application context is closed, Spring invokes cleanup methods, such as:
+-> @PreDestroy
+-> DisposableBean.destroy()
+-> Custom destroy-method
+
+In short:- Bean Definition Loading → Instantiation → Dependency Injection → @PostConstruct → afterPropertiesSet() → Custom init() method → Bean Ready → Destruction.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q) How the main thread and child thread work when the child thread gets an exception in a multithreaded application ?
+A) By default, a child thread's exception does not affect the main thread.
+-> An uncaught exception in a child thread only terminates that thread.
+-> It does not automatically propagate to the main thread.
+-> It does not terminate the entire application unless it is the only running non-daemon thread.
+-> Other threads continue to execute independently.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q) How to handle an exception that occurs in a child thread from the main thread
+A) Exception reaches the main thread only if we explicitly propagate it using mechanisms like Future.get() or CompletableFuture.get()/join().
+Approach 1:-
+------------
+-> try-catch inside Child Thread
+-> Child thread handles its own exception.
+-> Main thread is not aware of the exception.
+
+Approach 2:- UncaughtExceptionHandler
+--------------------------------------
+-> Captures uncaught exceptions from child threads.
+-> Useful for centralized logging and monitoring.
+-> Main thread is not aware of the exception.
+Example:-
+---------
+Thread t = new Thread(() -> {
+    int x = 10 / 0;
+});
+
+t.setUncaughtExceptionHandler((thread, ex) -> {
+    System.out.println("Exception: " + ex.getMessage());
+});
+t.start();
+
+Approach 3:- ExecutorService + Future.get() (Recommended)
+----------------------------------------------------------
+-> Child thread exception is captured by the Executor Framework.
+-> Future.get() rethrows it as an ExecutionException to the main thread.
+-> Main thread can handle the exception using try-catch.
+-> If not handled, the main thread may terminate.
+
+Approach 4:- CompletableFuture
+-------------------------------
+-> Exception can be handled using exceptionally(), handle(), or whenComplete().
+-> Calling get() or join() propagates the exception to the calling thread.
+-> Suitable for asynchronous and non-blocking programming.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q) What is a Cascading Failure in a Distributed System?
+A) A cascading failure occurs when a problem in one component or service spreads to other dependent components, causing a growing portion of the system to fail.
+
+Common Causes of Cascading Failures
+------------------------------------
+-> Dependency failures:- Database overload and A third-party API outage
+-> Synchronous dependency chains:- Client → API Gateway → Service A → Service B → Service C → Database. If any service is slow, entire request can fail.
+-> Resource exhaustion:- Thread pools, Connection pools, CPU and Memory. Once resources are exhausted, even healthy endpoints may stop working.
+-> excessive timeouts:- With Excessive Timeouts, requests may wait indefinitely for a dependency.
+
+Preventing and Mitigating Cascading Failures in Microservices
+--------------------------------------------------------------
+1) Use timeouts everywhere:- Connection timeout and Read Timeout.
+2) Use circuit breakers:- A circuit breaker stops calls to a dependency that is repeatedly failing or responding too slowly.
+3) Isolate resources with bulkheads:- Isolate Application Resources like Threadpool and DB Connection Pool.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q) Explain Retry Mechanism and Exponential Backoff. 
+1) Retry Mechanism:-
+--------------------
+-> A retry mechanism means trying a failed request again after a temporary failure, such as a network timeout or a service being briefly unavailable.
+Example:- Machine Service sends a request to the Alerts MS to create an alert. If Alerts MS returns 503 Service Unavailable, Machine Service can retry the request.
+
+Simple Retry Strategy
+---------------------
+-> A simple retry retries immediately, for example:- Request failed → retry immediately → retry immediately → retry immediately.
+
+Problem with Simple Retry
+-------------------------
+-> Retry storm:- Many Machine Service instances may retry together, overwhelming Alerts MS.
+-> Thundering Herd Problem:- Many clients retry/request simultaneously, causing a traffic spike and system overload.
+-> Increases load:- If Alerts MS is already overloaded, immediate retries send even more requests.
+-> Delays recovery:- Alerts MS has less capacity to recover because it keeps processing repeated failed requests.
+
+2) Exponential Backoff:-
+------------------------
+-> Exponential backoff increases the waiting time between each retry.
+-> Example for Machine Service calling Alerts MS:
+1st retry after 1 second
+2nd retry after 2 seconds
+3rd retry after 4 seconds
+4th retry after 8 seconds
+
+How it improves stability
+--------------------------
+-> Reduces pressure: Alerts MS gets time to recover instead of receiving immediate repeated requests.
+-> Avoids resource exhaustion: Machine Service does not continuously consume connections, threads, or CPU retrying.
+-> Improves success chance: A temporary problem may resolve before later retries occurs.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q) What is jitter, and why is it important ?
+A) Jitter is a small random delay added to the retry wait time.
+
+Advantages of Jitter
+---------------------
+-> All Machine Service instances do not hit Alerts MS at the same moment.
+-> It prevents a sudden traffic spike when Alerts MS starts recovering.
+
+Example:-
+---------
+-> Spring Retry (@Retryable):- Add dependency: spring-retry and spring-boot-starter-aop
+-> Use @EnableRetry on Main Class(@SpringBootApplication) or Configuration Class.
+
+@GetMapping("/{machineId}/alert-details")
+@Retryable( retryFor = { ResourceAccessException.class, HttpServerErrorException.class },
+        maxAttempts = 4, backoff = @Backoff(
+            delay = 1000,        // First retry base delay: 1 second
+            multiplier = 2,      // 1s → 2s → 4s
+            maxDelay = 8000,     // Maximum wait: 8 seconds
+            random = true        // Adds jitter
+        )
+    )
+
+@Recover
+ public String recover(Exception ex) {
+     return "Fallback Response";
+}
+-> @Recover is the recovery/fallback method that Spring Retry invokes after all configured retry attempts are exhausted.
+
+Retry behavior
+---------------
+-> If Alerts MS fails:
+Attempt 1: Immediate call
+Retry 1: Around 1 second
+Retry 2: Around 2 seconds
+Retry 3: Around 4 seconds
+
+-> random = true enables jitter. 
+-> So, instead of every Machine MS instance retrying at exactly 1, 2, and 4 seconds, each instance waits for a slightly different duration.
+For example:
+Machine instance A retries near 1.2 seconds
+Machine instance B retries near 1.7 seconds
+Machine instance C retries near 2.0 seconds
+-> This prevents all Machine MS instances from hitting Alerts MS at the same time during recovery.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q) While Calling External API Call, What Retry Strategy Would You Design? 
+External API Retry Strategy:-
+-----------------------------
+-> Short timeout
+-> Maximum 2–3 retries
+-> Exponential backoff
+-> Random jitter
+-> Retry only temporary failures
+
+Errors That Should Be Retried
+------------------------------
+Network failures: connection reset, temporary DNS error, connection timeout
+HTTP 408: Request Timeout
+HTTP 500: Internal Server Error, if the API documentation indicates it may be transient
+HTTP 503: Service Unavailable
+HTTP 504: Gateway Timeout
+
+Errors That Should Never Be Retried
+-----------------------------------
+HTTP 400: Bad Request
+HTTP 401: Unauthorized — refresh credentials or fix authentication first
+HTTP 403: Forbidden
+HTTP 404: Not Found, unless eventual consistency is explicitly expected
+HTTP 405: Method Not Allowed
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q) How would you implement new Field change while ensuring zero downtime and full backward compatibility ?
+Assume an existing Kafka event:-
+--------------------------------
+{
+  "machineId": "M-101",
+  "status": "ACTIVE"
+}
+
+Step-1:- Add the new field as optional
+--------------------------------------
+{
+  "machineId": "M-101",
+  "status": "ACTIVE",
+  "location": "Plant-A"
+}
+-> Old Kafka messages will not contain location, so new consumers must handle it safely.
+
+Step-2:- Deploy consumers first
+-------------------------------
+-> Update every consumer to support both message versions
+Example:-
+---------
+@JsonIgnoreProperties(ignoreUnknown = true)
+public class MachineEvent {
+
+    private String machineId;
+    private String status;
+    private String location; // Optional
+
+}
+
+-> Consumer Logic:- String location = event.getLocation() != null ? event.getLocation() : "UNKNOWN";
+-> This ensures, Consumer(Old and New) and Kafka Messages(Old and New) Works because location is optional.
+-> Old consumers should use below Annotation. This prevents failure when they receive the new location field.
+Example:- @JsonIgnoreProperties(ignoreUnknown = true)
+
+Step-3:- Deploy producers after consumers
+------------------------------------------
+-> Because the field is optional, consumers that are not yet upgraded can still process the event if they ignore unknown fields.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q) DB Connection Pool in Spring Boot and What is HikariCP ?
+A) A database connection pool is a group of database connections that an application reuses.
+-> These DB Pool Connections can be reused when the application needs to communicate to the DB.
+-> Instead of creating and closing a brand-new connection for every single query, application borrows an active connection from pool, runs query, and instantly returns.
+Example:- Request → Borrow Connection from Pool → Query → Return Connection to Pool
+-> After queries complete, connections return to the pool so that New requests can reuse those same connections.
+-> The Default Connection Pool is HikariCP.
+
+What is HikariCP
+-----------------
+-> HikariCP is a high-performance JDBC connection pool library.
+-> It is the default connection pool in Spring Boot when using spring-boot-starter-data-jpa.
+-> Spring Boot automatically creates and manages a HikariDataSource if database properties are configured.
+
+Important HikariCP Properties
+------------------------------
+spring.datasource.url=jdbc:postgresql://localhost:5432/machinedb
+spring.datasource.username=machine_user
+spring.datasource.password=password
+
+spring.datasource.hikari.maximum-pool-size=10         // Maximum number of DB connections Machine MS can use at once.
+spring.datasource.hikari.minimum-idle=2               // Keeps at least 2 idle connections ready.
+spring.datasource.hikari.connection-timeout=30000     // Wait up to 30 seconds for a free connection. After that, HikariCP throws an exception.
+spring.datasource.hikari.idle-timeout=600000          // Closes connections that remain idle for 10 minutes.
+spring.datasource.hikari.max-lifetime=1800000         // Replaces connections after 30 minutes to avoid stale or database-closed connections.
+
+Note:- If there are 5 instance of Machines-MS and each has configured maximum-pool-size=10, then (5 instances × 10 connections) = 50 DB connections will be created.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q) What is the difference between BeanFactory and ApplicationContext ?
+BeanFactory:-
+-------------
+-> BeanFactory is the basic Spring container.
+-> BeanFactory provides Bean creation, dependency injection and Bean lifecycle management
+-> Usually lazy bean initialization — beans are created only when requested
+-> Use it when only basic dependency injection is needed.
+
+ApplicationContext:-
+--------------------
+-> ApplicationContext is an advanced Spring container that extends BeanFactory.
+-> It provides everything in BeanFactory with Additional Benefits like
+-> Eager initialization of singleton beans by default
+-> @Component, @Service, @Repository, and @Autowired support
+-> Internationalization support (i18n):- supports multiple languages and regional formats without changing application code.
+-> Environment and profile support
+-> Integration with Spring AOP
+-> Better support for configuration classes and Spring Boot
+-> In Most Spring Boot applications, ApplicationContext is used automatically.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q) What is Spring AOP Proxy
+A) An AOP Proxy is a Spring-created wrapper around actual bean.
+-> proxy can add common behavior without writing that code inside every service method.
+-> When you call a method, Spring can first route the call through a proxy, apply extra logic, and then call the real method.
+
+Common Uses:-
+-------------
+@Transactional — starts and commits/rolls back DB transactions
+@Async — runs a method asynchronously
+Logging, security, auditing, performance monitoring
+
+Example:-
+---------
+@Transactional
+public void createMachine() {
+    // DB operations
+}
+
+Below Steps Spring’s proxy does behind the scenes:
+---------------------------------------------------
+Starts a transaction
+Calls createMachine()
+Commits if successful
+Rolls back if an exception occurs
+
+-> The actual createMachine() method contains only business logic; the proxy handles the cross-cutting logic around it.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q) What is Virtual Threads
+-> Traditional Platform Threads creates large number of expensive OS threads.
+-> Traditional platform threads are relatively costly in memory and system resources.
+-> If thousands of requests are waiting on HTTP calls, database calls, or file I/O, thousands of platform threads can become expensive.
+-> Thread pool can become exhausted if we create costly platform threads to execute 1000 HTTP Requests.
+
+
+-> Virtual threads are lightweight threads managed by the JVM.
+-> Handle high concurrency: Thousands or millions of concurrent requests can be supported more easily.
+-> Improve blocking I/O scalability: A virtual thread waiting for DB or HTTP response usually frees the underlying platform thread to do other work.
+-> Reduce thread-pool tuning: Instead of carefully limiting request threads for I/O-heavy workloads, applications can often use one virtual thread per task/request.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q) How to Implement Cache Eviction in Spring Boot
+Configure Below Properties in Redis.conf file
+---------------------------------------------
+#maxmemory
+maxmemory 512mb
+
+#eviction policy
+maxmemory-policy allkeys-lfu
+
+-> When Redis memory becomes full, Based on Least Usage Cache Data will be removed Based on ID.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q) What isolation levels does a database provide ?
+A) The 4 standard transaction isolation levels are:
+1. READ UNCOMMITTED:- Dirty Read, Non-Repeatable Read and Phantom Read
+2. READ COMMITTED:- Non-Repeatable Read and Phantom Read
+3. REPEATABLE READ:- Phantom Read. Default in MySQL DB.
+4. SERIALIZABLE:- Highest Isolation Level.
+-> T2 Cannot perform any Operation Unless T1 Commits or RollBack.
+-> By This It Prevents Dirty Read, Repeatable Read and Phantom Read.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q) What Observability Tools Have You Used in Production to Troubleshoot
+-> In production, I have used a combination of logs, metrics, and distributed tracing to troubleshoot incidents effectively.
+
+Logs:- Tools such as ELK/EFK Stack (Elasticsearch, Logstash/Fluentd, Kibana), Splunk, Datadog Logs, and CloudWatch Logs.
+-> Logs tell you why the problem happened.
+-> I use structured logs with fields like request ID, user ID, service name, environment, error code, and timestamp.
+-> This helps identify exceptions, failed requests, application errors, and unusual behavior.
+-> Logs Provide detailed event-level information What exactly failed?, Which user or request was affected? What was the error message or stack trace?
+
+
+Metrics:- Tools such as Prometheus with Grafana, Datadog, New Relic, CloudWatch, and Azure Monitor.
+-> Metrics help me detect and measure the impact of an issue.
+-> I monitor CPU and memory usage, disk utilization, pod/container health, request rate, error rate, response latency and database connections
+-> Metrics show behavior over time. For example, a Grafana dashboard can show that memory has been gradually increasing for six hours, indicating a possible memory leak.
+
+Dashboards Metrics i Check First are:-
+--------------------------------------
+Service Overview:- Request rate and Error rate.
+Application or API Dashboard:- Affected endpoints, Status-code distribution: 2xx, 4xx, 5xx and Exception and timeout counts.
+Kubernetes Dashboard:- Pod status and Node health.
+
+Distributed Tracing:- Tools such as Jaeger, Zipkin and OpenTelemetry.
+-> To investigate a single customer request, We can Use Logs.
+-> This becomes difficult when Many Microservices are Running and Each Services run in Multiple Instances.
+
+-> Distributed traces tell you where the problem happened across services.
+-> distributed tracing tells you the complete request journey and where the failure or delay happened across multiple services.
+-> A distributed trace connects the same request across all involved components using a trace ID and span IDs.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q) If your application receives huge traffic, how will you handle it ?
+A) Below are the Steps we can handle huge traffic.
+
+1) Load Balancer:- Distribute incoming requests across multiple instances. Example: Nginx, AWS ALB.
+2) Horizontal Scaling:- Run multiple Spring Boot instances. Use Kubernetes/Auto Scaling Groups.
+3) Caching:- Use Redis for frequently accessed data. Reduce database hits.
+4) Database Optimization:- Create proper indexes. Use connection pooling (HikariCP).
+5) Asynchronous Processing:- Use Kafka/RabbitMQ for Asynchronous operations. Process tasks in the background.
+6) Rate Limiting:- Prevent abuse and traffic spikes. Example: API Gateway, Resilience4j.
+7) Retry + Circuit Breaker:- Handle temporary downstream failures. Use Resilience4j.
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q) What are the different ways to configure your Spring Boot application ?
+1) application.properties
+2) application.yml
+3) Java Configuration (@Configuration)
+4) Profile-Based Configuration
+5) @ConfigurationProperties:- Best approach for grouped configurations.
+Example:-
+----------
+@ConfigurationProperties(prefix = "employee")
+public class EmployeeProperties {
+
+    private String name;
+    private String location;
+
+}
+
+-------------------------------------------------------------------------------------------------------------------------------------------------------------------
+Q) How to Create Custome Annotations
+A) By using "@interface" keyword and declare standard meta annotations like @Target and @Retention.
+Example:-
+---------
+@Target(ElementType.Method)
+@Retention(RetentionPolicy.RUNTIME)
+public @interface LogExecutionTime{ }
+
+@Target (Meta Annotations)
+--------------------------
+-> It defines where the annotation can be used.
+-> It accepts an array of ElementType
+-> It can be applied on various Types like below Example,
+
+ElementType.METHOD:- On Method Level. @LogExecutionTime, @Transactional, @GetMapping
+ElementType.FIELD:-	On Class Variables. @ValidCurrency, @NotNull, @Autowired
+ElementType.TYPE:- On classes, Interfaces, and Enums. @RestController, @Entity, @Configuration
+ElementType.PARAMETER:- On Method parameters. @RequestBody, @PathVariable, @RequestParam
+ElementType.CONSTRUCTOR:- On constructors. @Autowired (on constructors)
+
+@Retention (Meta Annotations)
+-----------------------------
+-> Jave provides 3 retention policies
+
+1. RetentionPolicy.RUNTIME:- Annotation is available at runtime. Use Case: @Autowired, @Transactional and @Component (Spring reads them at runtime).
+2. RetentionPolicy.CLASS (Default):- Annotation is stored in .class file but not available at runtime. Use Case: Used by bytecode tools/compilers for processing class metadata.
+3. RetentionPolicy.SOURCE:- Annotation exists only in source code and is discarded during compilation. Use Case: @Override, @Lombok and @Data. (used only by compiler).
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q) Implement LRU Cache Implementation
+A) I Would use LinkedHashMap Data Structure to implement LRU Cache.
+-> LinkedHashMap maintains the insertion/access order of elements using a doubly linked list.
+-> When configured with accessOrder=true, every get() or put() moves the entry to the end, making it the Most Recently Used (MRU).
+-> By overriding removeEldestEntry(), the Least Recently Used (LRU) entry can be removed automatically in O(1) time.
+
+Example:-
+---------
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+public class LRUCache<K, V> extends LinkedHashMap<K, V> {
+
+    private final int capacity;
+
+    public LRUCache(int capacity) {
+        super(capacity, 0.75f, true); // true = access order
+        this.capacity = capacity;
+    }
+
+    @Override
+    protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+        return size() > capacity;
+    }
+
+    public static void main(String[] args) {
+
+        LRUCache<Integer, String> cache = new LRUCache<>(3);
+
+        cache.put(1, "A");
+        cache.put(2, "B");
+        cache.put(3, "C");
+
+        System.out.println(cache); // {1=A, 2=B, 3=C}
+
+        cache.get(1); // Access 1 => becomes most recently used
+
+        cache.put(4, "D"); // Evicts 2
+
+        System.out.println(cache); // {3=C, 1=A, 4=D}
+    }
+}
+
+-> Initial Cache was {1=A, 2=B, 3=C}
+-> Once we accessed Element 1, Now 1=A will become as Most Recently Used and will be shifted to Last Position of Cache.
+-> Now Cache Contains {2=B, 3=C, 1=A}. 1=A moved to MRU Position and Next Element will be marked as LRU. i.e 2=B.
+-> Once we Add new Element like {4=D}. Cache is Full. Since LRU is 2=B, 2=B will be evicted and 4=D will be added and marked as MRU.
+-> Now Cache Contains {3=C, 1=A, 4=D}
+-> New Elements will be considered for Most Recently Used and Will be added/inserted in last.
+
+-----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+Q) Difference Between RestTemplate and OpenFeignClient
+RestTemplate
+-------------
+-> It is an imperative, older and in Maintenance Mode.
+-> It requires more boilerplate code like "restTemplate.exchange(url, HttpMethod.GET, null, Employee.class);"
+-> We Manually Manage Urls's
+Example:-
+----------
+@RestController
+@RequestMapping("/users")
+public class UserController {
+
+private final RestTemplate restTemplate;
+
+@GetMapping("/{id}")
+    public String getUser(@PathVariable Long id) {
+        return restTemplate.getForObject("http://user-service/api/users/" + id, String.class);
+    }
+}
+
+
+OpenFeignClient
+---------------
+-> OpenFeign is Cleaner and declarative.
+-> It defines an interface, no manual URL building or request code.
+-> Less boilerplate and easier to read/maintain.
+-> Supports integrations such as load balancing, retries, and interceptors more easily in Spring Cloud.
+
+Example:-
+---------
+@FeignClient(name = "user-service", url = "http://user-service")
+public interface UserClient {
+
+    @GetMapping("/api/users/{id}")
+    String getUser(@PathVariable Long id);
+}
+
+Invoke From Rest Controller
+---------------------------
+@RestController
+@RequestMapping("/users")
+@AllArgsConstructor
+public class UserController {
+
+private final UserClient userClient;
+
+  @GetMapping("/{id}")
+    public String getUser(@PathVariable Long id) {
+        return userClient.getUser(id);
+    }
+}
+
+-----------------------------------------------------------------------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
