@@ -1,0 +1,287 @@
+Java & Spring Boot Interview Notes
+
+1. Explain your previous project and technology stack.
+
+→ My project was LabFlow, a healthcare application that integrates laboratory results from hospital systems and displays them to clinical users.
+→ Backend: Java 17, Spring Boot, Spring Security, REST APIs.
+→ Messaging and database: Apache Kafka and Oracle.
+→ Frontend: React. I worked on APIs, event processing, database consistency, performance optimization, testing, and production support.
+
+------------------------------------------------------------------------------------------------------------------
+
+2. Why is React better than other UI frameworks?
+
+→ React is component-based, so we can reuse UI components and maintain code easily.
+→ Its declarative approach makes UI updates easier to manage when application state changes.
+→ It has a strong ecosystem, including React Router and state-management libraries.
+→ React is not always better; Angular provides more built-in features, while the choice depends on project requirements.
+
+------------------------------------------------------------------------------------------------------------------
+
+3. What are the advantages of React Hooks?
+
+→ Hooks allow functional components to manage state and component behaviour.
+→ useState manages state, useEffect handles side effects, and useContext shares data.
+→ useMemo and useCallback help optimize expensive calculations and function references when needed.
+→ Custom hooks allow reusable logic across components.
+
+------------------------------------------------------------------------------------------------------------------
+
+4. Explain useMemo with an example.
+
+→ useMemo caches a calculated value between renders until its dependencies change.
+→ I use it when a calculation is expensive and its inputs have not changed.
+
+Example:
+
+const filteredStudents = useMemo(() => {
+    return students.filter(s => s.marks > 80);
+}, [students]);
+
+→ The filtering calculation reruns when the students reference changes.
+→ I avoid using useMemo for every calculation because it adds complexity and has its own overhead.
+
+------------------------------------------------------------------------------------------------------------------
+
+5. Monolithic vs Microservices architecture
+
+→ Monolithic: All major modules run as one deployable application.
+→ Microservices: Business capabilities are split into independently deployable services.
+→ Monoliths are simpler to develop and deploy initially.
+→ Microservices support independent scaling and deployment but introduce network failures, distributed transactions, and operational complexity.
+
+------------------------------------------------------------------------------------------------------------------
+
+6. What are the advantages of microservices?
+
+→ Independent deployment of services.
+→ Independent scaling based on workload.
+→ Clear ownership of business functionality.
+→ Better fault isolation when designed correctly.
+→ Trade-off: More complex monitoring, security, communication, and data consistency.
+
+------------------------------------------------------------------------------------------------------------------
+
+7. How do you migrate a monolith to microservices?
+
+→ First, identify business boundaries and tightly coupled modules.
+→ Extract one suitable module into a separate service.
+→ Introduce APIs or events and use the Strangler pattern to migrate functionality gradually.
+→ Monitor the new service, compare results, and keep rollback options.
+→ Avoid migrating everything at once; move incrementally.
+
+------------------------------------------------------------------------------------------------------------------
+
+8. Explain Kafka and asynchronous communication.
+
+→ Kafka is a distributed event-streaming platform that stores events in topics.
+→ Producers publish events, and consumers process them independently.
+→ Example: When a lab result is saved, an event can trigger a notification without making the original API wait for notification processing.
+→ Kafka supports replay, consumer groups, and scalable event processing.
+→ Consumers should handle duplicate delivery safely through idempotent processing.
+
+------------------------------------------------------------------------------------------------------------------
+
+9. Which Spring Boot version have you used?
+
+→ My project used Java 17 with Spring Boot.
+→ In an interview, I would state the exact Spring Boot version from the project's pom.xml.
+→ Spring Boot version and Java version are different; one specifies the framework version and the other the runtime/language version.
+→ I choose supported versions compatible with the project's dependencies and deployment environment.
+
+------------------------------------------------------------------------------------------------------------------
+
+10. What is Spring Security?
+
+→ Spring Security handles authentication and authorization.
+→ Authentication verifies who the user is.
+→ Authorization checks what the user is allowed to access.
+→ I use JWT or OAuth2-based authentication, role-based access, HTTPS, and resource-level permission checks where required.
+
+------------------------------------------------------------------------------------------------------------------
+
+11. What are Spring Bean scopes?
+
+→ Singleton: One bean instance per Spring IoC container.
+→ Prototype: A new instance whenever the container is asked for the bean.
+→ Request: One instance per HTTP request in a web application.
+→ Session: One instance per HTTP session.
+→ Application: One instance per ServletContext.
+→ WebSocket: One instance per WebSocket session.
+
+------------------------------------------------------------------------------------------------------------------
+
+12. What is the Singleton scope used for?
+
+→ Singleton is the default Spring bean scope.
+→ It is suitable for stateless services such as StudentService or NotificationService.
+→ Spring creates and manages the bean instance.
+→ I avoid storing request-specific mutable data in singleton fields because multiple threads may access the same instance.
+
+------------------------------------------------------------------------------------------------------------------
+
+13. Can Spring Boot handle only one DataSource?
+
+→ Yes, Spring Boot can configure a single DataSource automatically using application properties.
+→ I configure the database URL, username, password, and driver.
+→ Spring Boot can create the DataSource and configure JdbcTemplate or JPA repositories.
+→ Multiple DataSources require additional configuration to identify the correct DataSource and transaction manager.
+
+------------------------------------------------------------------------------------------------------------------
+
+14. Difference between @Primary and @Qualifier
+
+→ @Primary marks the default bean when multiple beans of the same type exist.
+→ @Qualifier selects a specific bean by name or qualifier.
+→ Example: If EmailService and SmsService implement NotificationService, @Qualifier("smsService") selects the SMS implementation.
+→ Use @Primary for a default implementation and @Qualifier when a particular implementation is required.
+
+------------------------------------------------------------------------------------------------------------------
+
+15. Java Streams: Count each word in a string.
+
+Input:
+
+String ss = "paragrah epam ubs paragrah epam ubs paragrah epam ubs prasad";
+
+Approach:
+
+→ Split the string into words.
+→ Group identical words using groupingBy().
+→ Use counting() to count occurrences.
+
+Code:
+
+Map<String, Long> map = Arrays.stream(ss.split("\\s+"))
+    .collect(Collectors.groupingBy(
+        Function.identity(),
+        Collectors.counting()
+    ));
+
+→ Function.identity() returns the word itself as the grouping key.
+→ Note: Java uses Function.identity(), not Function.Identity().
+
+------------------------------------------------------------------------------------------------------------------
+
+16. Count words across multiple sentences.
+
+Approach:
+
+→ Store all sentences in a List<String>.
+→ Convert each sentence into an array of words using split("\\s+").
+→ Use flatMap(Arrays::stream) to combine all words into one stream.
+→ Group the words and count their occurrences.
+
+Code:
+
+List<String> list1 = new ArrayList<>();
+list1.add(ss);
+list1.add(ss1);
+
+Map<String, Long> wordCounts = list1.stream()
+    .flatMap(sentence -> Arrays.stream(sentence.split("\\s+")))
+    .filter(word -> !word.isEmpty())
+    .collect(Collectors.groupingBy(
+        Function.identity(),
+        Collectors.counting()
+    ));
+
+→ flatMap() converts multiple streams of words into one stream.
+→ The List must be created using new ArrayList<>(); a String cannot be assigned directly to List<String>.
+
+------------------------------------------------------------------------------------------------------------------
+
+17. Sort employees by salary; if equal, sort by ID.
+
+Approach:
+
+→ First, compare employees by salary.
+→ If salaries are equal, compare their IDs.
+→ Use thenComparing() to add the secondary sorting condition.
+
+Code:
+
+employees.stream()
+    .sorted(
+        Comparator.comparingDouble(Employee::getSalary)
+            .thenComparing(Employee::getId)
+    );
+
+→ This sorts salary in ascending order and uses ID in ascending order for ties.
+→ For descending salary, use Comparator.comparingDouble(Employee::getSalary).reversed() and then add the ID comparator separately.
+
+------------------------------------------------------------------------------------------------------------------
+
+18. What are idempotent REST API methods?
+
+→ An operation is idempotent when repeating the same request has the same intended effect as making it once.
+→ GET: Safe and idempotent.
+→ PUT: Idempotent when implemented according to its intended semantics.
+→ DELETE: Idempotent in intended effect, although repeated requests may return different status codes.
+→ POST is generally not idempotent unless the API explicitly implements idempotency, such as through an idempotency key.
+
+------------------------------------------------------------------------------------------------------------------
+
+19. ArrayList vs LinkedList
+
+→ ArrayList uses a dynamic array and provides fast indexed access, typically O(1).
+→ LinkedList uses linked nodes and indexed access takes O(n).
+→ ArrayList is usually better for reading and iterating through elements.
+→ LinkedList can insert or remove elements efficiently when the relevant node position is already available, but locating that position can take O(n).
+
+------------------------------------------------------------------------------------------------------------------
+
+20. Explain logging levels and centralized logging with Trace ID.
+
+→ TRACE: Very detailed diagnostic information.
+→ DEBUG: Information useful for debugging.
+→ INFO: Important application events.
+→ WARN: Unexpected situations that may need attention.
+→ ERROR: Failures that prevent an operation from succeeding.
+
+Centralized logging approach:
+
+→ Generate or propagate a trace ID across incoming requests.
+→ Add the trace ID to logs using MDC or tracing instrumentation.
+→ Propagate trace context to downstream services and Kafka messages where appropriate.
+→ Collect logs centrally using ELK or Grafana Loki.
+→ Use the trace ID to find related logs across multiple microservices.
+
+------------------------------------------------------------------------------------------------------------------
+
+21. Explain Singleton and Adapter design patterns.
+
+→ Singleton ensures a class has one instance within its intended scope and provides a way to access it.
+→ In Spring, singleton scope means one bean instance per container, not necessarily one instance across the entire JVM.
+→ Adapter allows incompatible interfaces to work together by converting one interface into another expected by the client.
+→ Example: An adapter can convert an external payment provider's API into the application's standard PaymentService interface.
+
+------------------------------------------------------------------------------------------------------------------
+
+22. Explain Circuit Breaker and Saga patterns.
+
+→ Circuit Breaker prevents repeated calls to a failing downstream service.
+→ It has three common states: CLOSED, OPEN, and HALF_OPEN.
+→ Saga manages a business transaction across multiple services using a sequence of local transactions and compensating actions.
+→ Example: If an order is created and payment succeeds but inventory reservation fails, the Saga can initiate a refund.
+→ Circuit Breaker protects service availability; Saga handles distributed business transaction consistency.
+
+------------------------------------------------------------------------------------------------------------------
+
+QUICK REVISION
+
+→ React: Reusable components and declarative UI.
+→ useMemo: Caches an expensive calculated value.
+→ Microservices: Independent services with distributed-system complexity.
+→ Kafka: Event streaming and asynchronous processing.
+→ Spring Security: Authentication and authorization.
+→ Bean scope: Controls bean instance lifecycle.
+→ @Primary: Default bean.
+→ @Qualifier: Specific bean.
+→ flatMap(): Flattens nested streams.
+→ thenComparing(): Adds secondary sorting.
+→ Idempotency: Repeating a request does not repeat its intended effect.
+→ Trace ID: Connects logs across services.
+→ Circuit Breaker: Limits calls to failing services.
+→ Saga: Coordinates distributed business transactions.
+------------------------------------------------------------------------------------------------------------------
