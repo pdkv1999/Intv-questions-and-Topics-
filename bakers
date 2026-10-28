@@ -1,0 +1,125 @@
+## 1. Describe your architectural background and experience
+
+→ I have experience in designing and developing Java-based microservices using Java 17, Spring Boot, Kafka, Oracle, and React.
+
+→ I focus on scalable architecture, API design, database performance, security, fault tolerance, and system integration.
+
+→ In my LabFlow project, I worked on reliable event processing, duplicate handling, transactional outbox, and optimistic locking.
+
+## 2. How will you design a School Management System?
+
+→ I would use microservices such as Student, Teacher, Attendance, Examination, Fees, Notification, and Authentication services.
+
+→ I would use an API Gateway for routing, OAuth2/JWT for security, and Kafka for asynchronous communication.
+
+→ I would use React or Angular for the frontend, Spring Boot for backend services, and PostgreSQL or Oracle for relational data.
+
+→ I would deploy services on AWS EKS using Docker and Kubernetes, with centralized logging, monitoring, and CI/CD.
+
+## 3. Explain your choice of databases and architecture
+
+→ I would choose a microservices architecture because each service can be developed, deployed, and scaled independently.
+
+→ I would use PostgreSQL or Oracle for structured data such as students, fees, and examination records because transactions and data consistency are important.
+
+→ I would use Redis for caching frequently accessed data and Kafka for asynchronous communication.
+
+→ Each service would own its database to reduce coupling, and I would use Saga or eventual consistency when a business transaction spans multiple services.
+
+## 4. Where do you host this microservices solution?
+
+→ I would prefer AWS because it provides managed services, scalability, security, and high availability.
+
+→ I would deploy containers on Amazon EKS, store images in Amazon ECR, and use RDS for relational databases.
+
+→ I would use an Application Load Balancer, IAM, CloudWatch, and Secrets Manager for traffic management, monitoring, access control, and secrets.
+
+## 5. Discuss hosting and deployment strategy
+
+→ I would containerize each microservice using Docker and deploy it on Kubernetes.
+
+→ I would use Jenkins or GitHub Actions for CI/CD, including build, unit tests, security scans, and deployment.
+
+→ I would use rolling or canary deployments to minimize downtime and reduce deployment risks.
+
+→ I would configure health checks, auto-scaling, centralized logs, metrics, alerts, and rollback mechanisms.
+
+## 6. Technology stack and tools
+
+→ Backend: Java 17/21, Spring Boot, Spring Security, Spring Data JPA, REST APIs.
+
+→ Frontend: React or Angular, JavaScript/TypeScript, HTML, CSS.
+
+→ Database and messaging: Oracle/PostgreSQL, Redis, Apache Kafka.
+
+→ DevOps and monitoring: Docker, Kubernetes, Jenkins/GitHub Actions, AWS, Git, SonarQube, Prometheus, and Grafana.
+
+## 7. Java method overloading
+
+→ Method overloading means defining multiple methods with the same name but different parameter lists in the same class.
+
+→ Parameters can differ in number, type, or order.
+
+→ Return type alone cannot be used to overload a method.
+
+→ Example: `add(int a, int b)` and `add(double a, double b)`. The compiler selects the appropriate method at compile time.
+
+## 8. Spring Boot experience and team management
+
+→ I have worked with Spring Boot to develop REST APIs, integrate databases, implement security, and build microservices.
+
+→ I follow constructor injection, layered architecture, exception handling, logging, unit testing, and code review practices.
+
+→ While managing technical work, I break requirements into tasks, clarify responsibilities, review pull requests, and help team members resolve blockers.
+
+→ I also coordinate with QA, product owners, and other teams during integration, UAT, and production releases.
+
+## 9. Describe a complex problem you solved
+
+→ In my LabFlow project, we faced challenges with duplicate and out-of-order Kafka events and concurrent updates to laboratory results.
+
+→ Duplicate events could cause repeated processing, while concurrent updates could overwrite the latest result.
+
+→ I used idempotent processing, result versioning, the Transactional Outbox pattern, and optimistic locking to improve reliability and data consistency.
+
+→ I also worked on performance optimization and production troubleshooting, including Kafka consumer lag and notification failures.
+
+## 10. Leadership experience and scaling teams
+
+→ My approach is to understand requirements, define the technical design, divide work into manageable tasks, and assign clear ownership.
+
+→ I encourage code reviews, knowledge sharing, automated testing, and consistent coding standards.
+
+→ For scaling teams, I establish common design principles, documentation, CI/CD pipelines, and reusable components.
+
+→ I focus on mentoring developers, resolving technical blockers, and delivering features without compromising quality.
+
+## 11. AI tools usage in development
+
+→ I use AI coding assistants such as ChatGPT and GitHub Copilot to understand code, generate initial implementations, and explore alternative solutions.
+
+→ I use them for test-case generation, debugging support, documentation, refactoring suggestions, and learning unfamiliar technologies.
+
+→ I always review generated code, validate edge cases, run tests, and check security and performance before accepting it.
+
+→ I never share confidential project data, credentials, or sensitive customer information with unauthorized AI tools.
+
+## 12. Current project and team size
+
+→ My project is LabFlow, a healthcare application that integrates laboratory results from hospital systems and displays them to clinicians.
+
+→ The backend uses Java, Spring Boot, Kafka, and Oracle, while React provides the user interface.
+
+→ My responsibilities include backend development, event processing, database optimization, testing, and production support.
+
+→ Team size: Mention your actual team size and composition, including developers, QA engineers, and the technical lead. Do not guess this figure.
+
+## 13. Discussion on role preference and fit
+
+→ I am looking for a role where I can contribute to architecture, hands-on Java development, microservices, and technical decision-making.
+
+→ I enjoy solving complex problems, improving application performance, and building reliable, scalable systems.
+
+→ I am comfortable collaborating with cross-functional teams, mentoring developers, and taking ownership of delivery.
+
+→ I would prefer a role that combines hands-on engineering with increasing architectural and technical leadership responsibilities.
