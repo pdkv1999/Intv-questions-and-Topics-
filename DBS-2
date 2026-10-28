@@ -1,0 +1,229 @@
+Java & Spring Boot Interview Notes
+
+1. How would you design a notification service for SMS, email, and push notifications?
+
+→ I would create a Notification Service using Spring Boot and Kafka.
+→ The service accepts notification requests and publishes events to Kafka.
+→ Separate consumers handle email, SMS, and push notifications using provider-specific adapters.
+→ I would use retry, dead-letter topics, templates, and idempotency to make processing reliable.
+
+Architecture:
+Application → Notification API → Kafka → Email Consumer
+                                      → SMS Consumer
+                                      → Push Consumer
+
+------------------------------------------------------------------------------------------------------------------
+
+2. Two user groups exist, and some topics should go only to the push notification group. How would you handle this?
+
+→ I would classify notifications by type, tenant, or business event.
+→ I would use separate Kafka topics, such as email-notifications, sms-notifications, and push-notifications.
+→ The notification producer routes each event to the correct topic based on its notification channel.
+→ I would apply Kafka ACLs so each consumer group can access only the topics it needs.
+
+------------------------------------------------------------------------------------------------------------------
+
+3. Both consumers consume the same topic, but some messages should go to both and others only to one. What would you do?
+
+→ If both consumers must receive the same event, I would use separate consumer groups.
+→ If only one consumer should receive an event, I would route it using separate topics or filter by event type.
+→ Consumers can also filter messages, but filtering alone does not prevent the other consumer from receiving the message.
+→ I would prefer explicit routing when delivery requirements are important.
+
+Example:
+EVENT_A → Email Consumer + Push Consumer
+EVENT_B → Email Consumer only
+EVENT_C → Push Consumer only
+
+------------------------------------------------------------------------------------------------------------------
+
+4. A message is published to a specific Kafka partition. What happens with different consumer groups?
+
+→ Kafka stores the message in the selected partition.
+→ Different consumer groups maintain independent offsets, so each group can consume the same message.
+→ Within one consumer group, a partition is assigned to only one consumer at a time.
+→ If the partition key is the same, messages with that key are normally routed to the same partition, preserving order within that partition.
+
+Example:
+Topic: notifications
+Partition: 2
+
+Consumer Group A → Reads partition 2
+Consumer Group B → Also reads partition 2 independently
+
+------------------------------------------------------------------------------------------------------------------
+
+5. How do you handle failed messages, templates, and idempotency?
+
+→ Retry transient failures with exponential backoff and a maximum retry count.
+→ After repeated failures, send the message to a Dead Letter Topic for investigation and replay.
+→ Store templates with versioning and use variables such as customerName and verificationCode.
+→ Use an idempotency key, such as tenantId + notificationId + channel, and enforce uniqueness in the database to prevent duplicate notifications.
+
+Important:
+→ Kafka transactions do not make an external SMS or email provider call exactly-once.
+→ For provider timeouts, check provider delivery status or use provider-supported idempotency before retrying.
+
+------------------------------------------------------------------------------------------------------------------
+
+6. How do you secure a multi-tenant application?
+
+→ Identify the tenant from a trusted source, such as a validated JWT claim or authenticated tenant context.
+→ Never trust a tenantId supplied directly by the client without validating access.
+→ Every database query must enforce the current tenant's identity.
+→ Use tenant-aware authorization, encryption, audit logging, and tenant-specific rate limits where required.
+
+------------------------------------------------------------------------------------------------------------------
+
+7. A method should execute only once for each tenant. How would you implement it?
+
+→ Create a database table with a unique constraint on tenant_id and operation_name.
+→ Before executing the operation, attempt to insert a record for that tenant and operation.
+→ If the insert succeeds, the operation can proceed; if the unique constraint rejects it, the operation has already been claimed or completed.
+→ Use a transaction and a status field such as IN_PROGRESS, COMPLETED, or FAILED to manage retries safely.
+
+Example:
+tenant_id | operation_name | status
+101       | INITIAL_SETUP  | COMPLETED
+102       | INITIAL_SETUP  | COMPLETED
+
+------------------------------------------------------------------------------------------------------------------
+
+8. How do you prevent the method from executing for other tenants?
+
+→ Validate the authenticated tenant identity before calling the method.
+→ Check whether that tenant is explicitly authorized for the operation.
+→ Use tenant-level permissions or an allowlist stored in a database.
+→ Enforce the restriction in the service layer and, where possible, at the database level.
+
+------------------------------------------------------------------------------------------------------------------
+
+9. Is there a Spring annotation for tenant-specific execution?
+
+→ There is no standard Spring annotation that automatically guarantees one execution per tenant.
+→ I can create a custom annotation such as @OncePerTenant and implement it using Spring AOP.
+→ The aspect can validate the tenant and call a database-backed guard.
+→ The database unique constraint is essential because an annotation or in-memory flag alone cannot prevent concurrent execution across multiple application instances.
+
+------------------------------------------------------------------------------------------------------------------
+
+10. How do you secure tenant data at the database level?
+
+→ Use tenant_id on tenant-owned tables and include it in queries and indexes.
+→ In PostgreSQL, use Row-Level Security (RLS) policies to restrict rows to the current tenant.
+→ Use separate database credentials with least privilege and prevent the application from bypassing tenant policies.
+→ For stronger isolation, consider separate schemas or databases for tenants with stricter requirements.
+
+------------------------------------------------------------------------------------------------------------------
+
+11. One table contains tenant details. How do you prevent tenants from seeing each other's data?
+
+→ If the table stores tenant-owned records, include tenant_id in each row.
+→ Every read, update, and delete must be restricted to the authenticated tenant.
+→ Use composite keys or indexes where appropriate, such as (tenant_id, customer_id).
+→ For PostgreSQL, configure RLS so the database also enforces tenant isolation.
+
+Example:
+SELECT *
+FROM tenant_details
+WHERE tenant_id = :currentTenantId;
+
+Important:
+→ If this table is only a global tenant registry, do not expose the entire registry to tenant users. Return only the current tenant's permitted details.
+
+------------------------------------------------------------------------------------------------------------------
+
+12. How do you refresh a cache containing more than 50,000 customers?
+
+→ I would use Redis for a distributed cache or Caffeine for an in-memory cache.
+→ Use TTL, size limits, and eviction policies to prevent unbounded memory usage.
+→ Refresh frequently accessed data on demand, and use scheduled or event-driven refresh for other data.
+→ Invalidate or update cache entries when customer records change.
+
+Important:
+→ I would not reload all 50,000 customers for every request.
+→ Use pagination or batch loading, and avoid a cache stampede by controlling concurrent refreshes.
+
+------------------------------------------------------------------------------------------------------------------
+
+13. How do you retrieve all users' data?
+
+→ I would use database pagination or cursor-based retrieval instead of loading every record into memory.
+→ Fetch records in manageable batches, such as 1,000 records per batch.
+→ For large exports, use a background job and stream results to a file or object storage.
+→ Always apply tenant authorization and required filters before returning data.
+
+Example:
+GET /users?page=0&size=1000
+
+------------------------------------------------------------------------------------------------------------------
+
+14. What if the number of users keeps increasing?
+
+→ Use pagination, database indexes, and query optimization.
+→ Use Redis or Caffeine caching for frequently accessed data.
+→ Scale application instances horizontally behind a load balancer.
+→ Use database read replicas, partitioning, or sharding when measurements show they are needed.
+→ Use Kafka for asynchronous workloads and monitor latency, throughput, and resource usage.
+
+------------------------------------------------------------------------------------------------------------------
+
+15. Implement an LRU (Least Recently Used) cache.
+
+→ LRU removes the least recently accessed entry when the cache reaches capacity.
+→ Java's LinkedHashMap supports access-order iteration.
+→ Set accessOrder to true so recently accessed entries move to the end.
+→ Override removeEldestEntry() to remove the oldest entry when the capacity is exceeded.
+
+Code:
+
+import java.util.LinkedHashMap;
+import java.util.Map;
+
+class LRUCache<K, V> extends LinkedHashMap<K, V> {
+    private final int capacity;
+
+    public LRUCache(int capacity) {
+        super(capacity, 0.75f, true);
+        this.capacity = capacity;
+    }
+
+    @Override
+    protected boolean removeEldestEntry(Map.Entry<K, V> eldest) {
+        return size() > capacity;
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        LRUCache<Integer, String> cache = new LRUCache<>(3);
+
+        cache.put(1, "A");
+        cache.put(2, "B");
+        cache.put(3, "C");
+
+        cache.get(1);          // Key 1 becomes recently used
+        cache.put(4, "D");     // Key 2 is removed
+
+        System.out.println(cache);
+    }
+}
+
+→ Time complexity: get() and put() are O(1) on average.
+→ This implementation is not thread-safe; use synchronization or a concurrent cache library if multiple threads access it.
+
+------------------------------------------------------------------------------------------------------------------
+
+QUICK REVISION
+
+→ Kafka consumer groups: Independent groups can read the same event.
+→ Message routing: Use topics, event types, or routing rules.
+→ Failed messages: Retry, then use a Dead Letter Topic.
+→ Idempotency: Prevent duplicate business effects.
+→ Multi-tenancy: Enforce tenant identity and data isolation.
+→ Once per tenant: Use a database unique constraint.
+→ Spring annotation: Custom annotation + AOP, backed by database enforcement.
+→ Cache refresh: TTL, event invalidation, and controlled refresh.
+→ Large datasets: Pagination, batching, and streaming.
+→ LRU: LinkedHashMap with accessOrder=true.
+------------------------------------------------------------------------------------------------------------------
