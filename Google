@@ -1,52 +1,51 @@
-# Java, Spring Boot & Angular Interview Answers
+Java & Spring Boot Interview Notes
 
-### 1. What is `volatile`, `synchronized`, and `ReentrantLock`?
+1. What is volatile, synchronized, and ReentrantLock?
 
-→ `volatile` ensures that changes to a variable made by one thread are visible to other threads. It does not make compound operations like `count++` atomic.
+→ volatile ensures that changes to a variable are visible to other threads.
+→ synchronized allows only one thread at a time to access a protected block for the same lock.
+→ ReentrantLock provides explicit locking, timed lock attempts, and interruptible locking.
+→ Example: Use volatile for a stop flag, synchronized for simple shared data, and ReentrantLock when you need more control.
 
-→ `synchronized` allows only one thread at a time to execute a protected block for the same monitor lock. It also ensures memory visibility.
+------------------------------------------------------------------------------------------------------------------
 
-→ `ReentrantLock` provides explicit locking and unlocking, with features like timed lock attempts, interruptible locking, and optional fairness.
+2. What is multithreading? What is its practical use in your project? What are the alternatives?
 
-→ Example: Use `volatile` for a stop flag, `synchronized` for simple shared-state protection, and `ReentrantLock` when you need more control over locking.
+→ Multithreading means executing multiple tasks concurrently using different threads.
+→ In my LabFlow project, concurrent processing can help handle multiple requests and independent tasks efficiently.
+→ Alternatives include ExecutorService, CompletableFuture, Java 21 virtual threads, and asynchronous Kafka processing.
+→ I choose the approach based on workload, ordering requirements, and whether tasks are CPU-bound or I/O-bound.
 
-### 2. What is multithreading? Where did you use it in your project?
+------------------------------------------------------------------------------------------------------------------
 
-→ Multithreading means executing multiple tasks using different threads within the same application.
+3. How does HashMap work internally?
 
-→ In LabFlow, concurrent processing can help handle multiple lab-result requests and Kafka events efficiently.
+→ HashMap stores key-value pairs in an array of buckets. The key's hash helps determine the bucket index.
+→ If two keys map to the same bucket, a collision occurs. Java handles collisions using linked nodes and can convert heavily populated buckets into balanced trees.
+→ When the number of entries exceeds capacity × load factor, HashMap generally resizes. The default initial capacity is 16 and the default load factor is 0.75, so the initial threshold is 12.
+→ If the same key is inserted with a new value, the old value is replaced and the map size remains unchanged.
+→ Keys should have consistent equals() and hashCode() implementations.
 
-→ For independent tasks, I can use Java executors or `CompletableFuture`; for blocking I/O workloads, I can consider virtual threads in Java 21.
+------------------------------------------------------------------------------------------------------------------
 
-→ Alternatives include asynchronous event processing using Kafka, reactive programming, or sequential processing when ordering is important.
+4. How do you handle transaction rollback when a connected microservice fails?
 
-### 3. How does HashMap work internally?
+→ If the remote service fails before my local transaction commits, I can propagate the exception so Spring rolls back the local transaction.
+→ @Transactional rolls back the local database transaction; it cannot automatically undo a transaction already committed by another microservice.
+→ For distributed business transactions, I use the Saga pattern with compensating actions.
+→ For reliable asynchronous communication, I use the Transactional Outbox pattern, Kafka retries, and idempotent consumers.
 
-→ `HashMap` stores key-value pairs in an array of buckets. A hash derived from the key determines the bucket index.
+------------------------------------------------------------------------------------------------------------------
 
-→ If two keys map to the same bucket, a collision occurs. Java handles collisions using linked nodes and can convert heavily populated buckets into balanced trees under suitable conditions.
+5. Write an Employee class and find the second-highest salary per department, handling nulls.
 
-→ When the number of entries exceeds `capacity × load factor` (normally 16 × 0.75 = 12 initially), the map generally resizes and redistributes entries.
+→ First, filter employees whose department or salary is null.
+→ Group employees by department and remove duplicate salaries.
+→ Sort salaries in descending order, skip the highest, and select the next salary.
+→ If a department has fewer than two distinct salaries, return Optional.empty().
 
-→ If the same key is inserted again, its value is replaced, and the map size remains unchanged. Keys are considered the same when their `equals()` comparison matches.
+Code:
 
-### 4. How do you handle rollback when another microservice fails?
-
-→ A local `@Transactional` transaction can roll back database changes in the current service, but it cannot automatically roll back a committed transaction in another microservice.
-
-→ For synchronous calls, I can use timeouts, retries where safe, and appropriate exception handling. If the remote failure occurs before the local transaction commits, I can propagate the exception to trigger a local rollback.
-
-→ For distributed business transactions, I would use the Saga pattern with compensating actions to undo completed business steps.
-
-→ For reliable asynchronous communication, I would use the Transactional Outbox pattern with Kafka, retries, idempotent consumers, and dead-letter handling where appropriate.
-
-### 5. Create an Employee class and find the second-highest salary per department, handling nulls
-
-→ First, filter employees with null department or salary.
-
-→ Group employees by department, remove duplicate salaries, sort in descending order, skip the highest, and select the next salary.
-
-```
 import java.util.*;
 import java.util.stream.*;
 
@@ -97,38 +96,36 @@ public class Main {
         );
     }
 }
-```
 
-→ Output: `IT -> 80000.0`, `HR -> null`.
+Output:
+IT -> 80000.0
+HR -> null
 
-→ `Optional.empty()` means the department does not have two distinct valid salaries. The example skips records with null department or salary.
+------------------------------------------------------------------------------------------------------------------
 
-### 6. What is the difference between Angular Signals and RxJS Observables?
+6. What is the difference between Angular Signals and RxJS Observables?
 
-→ Signals hold a current value and automatically notify Angular when that value changes. They are useful for component state and derived values.
+→ Signals store a current value and notify Angular when that value changes.
+→ Observables represent streams of values over time and support operators for asynchronous operations.
+→ Signals are useful for component state; Observables are useful for HTTP requests, search events, and WebSocket streams.
+→ Example: Use a Signal for a selected tab and an Observable for search input with debounceTime().
 
-→ Observables represent streams of values over time. They support operators for asynchronous operations, events, cancellation, and combining streams.
+------------------------------------------------------------------------------------------------------------------
 
-→ Signals are synchronous when reading their current value, while Observables may emit synchronously or asynchronously depending on their source.
+7. What are Default and OnPush change detection strategies?
 
-→ Example: Use Signals for selected tabs or counters; use RxJS Observables for HTTP streams, search input, and WebSocket events.
+→ Default checks the component tree during normal Angular change-detection cycles.
+→ OnPush allows Angular to skip checking a component subtree until a relevant trigger occurs.
+→ Triggers include changed input values, events, and updates to Signals read by the template.
+→ OnPush can improve performance in large applications when inputs and state updates are handled correctly.
 
-### 7. What are Default and OnPush change detection strategies?
+------------------------------------------------------------------------------------------------------------------
 
-→ Default: Angular checks the component and its descendants during normal change-detection cycles.
+8. Explain switchMap, mergeMap, and concatMap.
 
-→ OnPush: Angular can skip checking a component subtree until a relevant trigger occurs, such as a changed input, an event in the subtree, or a signal update read by the template.
+→ switchMap cancels the previous inner subscription when a new value arrives. Use it for search suggestions.
+→ mergeMap runs inner operations concurrently. Use it for independent requests that can run in parallel.
+→ concatMap processes operations sequentially in order. Use it when one operation must finish before the next begins.
+→ Easy memory trick: switchMap = latest wins; mergeMap = parallel; concatMap = one by one.
 
-→ `OnPush` helps reduce unnecessary checks in large applications when components are designed properly.
-
-→ Example: For a large student list, I would use `OnPush` with immutable input updates and Signals where appropriate.
-
-### 8. Explain `switchMap`, `mergeMap`, and `concatMap`
-
-→ `switchMap` cancels the previous inner subscription when a new value arrives. Use it for search suggestions where only the latest query matters.
-
-→ `mergeMap` runs inner operations concurrently. Use it when multiple independent requests can execute in parallel.
-
-→ `concatMap` processes inner operations sequentially, preserving their order. Use it when one update must finish before the next begins.
-
-→ Easy way to remember: `switchMap` = latest wins; `mergeMap` = parallel; `concatMap` = one by one.
+------------------------------------------------------------------------------------------------------------------
