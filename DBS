@@ -1,0 +1,285 @@
+Follow the below guidelines which you might be already aware of but will be a good refresher.
+ 
+Ensure you are strong in basics
+Try to use key words while answering questions instead of a lengthy answer
+Try to explain the “Why” part while explaining the code written on why you feel it’s a optimal code and why you have chosen it among “n” of options available.
+Best practices (fail-fast/fail-safe), structured problem-solving (understand → explain → implement → optimize)
+Understand the problem statement
+Explain the solution approach to the panel
+Implement a functional code
+Discuss about the optimisation techniques or trade-offs
+Additionally: Logging, Security, Best practices
+Speak openly on AI usage how you validate the AI output to ensure there is no hallucination etc.
+ 
+Always focus on the Why part very thoroughly which will be helpful in showing your strength
+ 
+1. Background, Role & Ways of Working
+Introduce yourself: experience, technical skills, current project, and your roles and responsibilities.
+Walk through your most recent project end to end, including how it's promoted to production.
+Did you build the project from scratch or join midway? Are you involved in design decisions, or only implementation?
+What is your day-to-day activity? Walk through your workflow from user story to production.
+How does work land in your queue, and how are SLAs handled?
+Do you follow Agile/Scrum? How long are your sprints?
+You mentioned a team lead role. Can you elaborate?
+How would you rate yourself in Java/Spring on a scale of 10?
+Which IDE do you use? Which Java, Spring Boot and build tool (Maven/Gradle) versions do you use?
+2. Behavioral, Prioritization & Estimation
+How do you estimate a requirement or task?
+You're given a 4-day timeline and can't meet it. What do you do?
+How do you manage three high-priority tasks in parallel with no one to help?
+How do you prioritize tasks coming from multiple business teams? Where do performance issues rank relative to security, production fixes, escalations and new features?
+If there's a huge workload that needs weekend work, what would you prefer?
+3. AI Tools in Development
+Do you use AI tools (Copilot, Claude, Gemini)? For what: code generation, production support, deployment?
+Walk through your end-to-end workflow with an AI tool. How much manual intervention is still needed?
+What percentage of AI-generated code matches your requirements?
+How do agentic AI tools differ from earlier AI tools?
+IDEs already generate boilerplate. What does Copilot add?
+Write a sample prompt for a real requirement, for example user CRUD APIs or transaction validation.
+How do you anonymize sensitive data in logs before passing them to AI tools? How does the input differ from the output?
+Have you built or integrated AI agents or MCP servers? Is your CI/CD automated with AI?
+Is your Claude access personal or provided by the office?
+4. AI / LLM / RAG Applications
+Which LLM and version do you use? Do you fine-tune or rely only on prompts?
+Why was an AI chatbot introduced? Explain the end-to-end chatbot workflow.
+How are policies or documents stored and passed to the chatbot? How do you find the matching document?
+Which framework/workflow do you use? Did you create agents?
+Chunking strategy (character, word or semantic based), embedding model, and pure vector vs. hybrid search.
+How do you search for exact values such as part numbers or expiry dates?
+How are documents ranked for relevance?
+Long-term memory vs. session context. How do you manage multi-turn history? What is your context window limit?
+How do you detect or reduce hallucinations? What is your error rate?
+How do you mask sensitive data and restore the real values after the LLM responds?
+How is user feedback (thumbs up/down, partial vs. full dissatisfaction) captured and used to improve the system?
+5. Core Java Fundamentals
+Why is Java platform independent? What are the main components, and how does a program run?
+What makes up the JVM? Explain the JVM memory areas, and heap vs. stack.
+== vs. .equals(). For example, is "Vikas".equals("VIKAS") true, and is "Vikas" == "VIKAS"?
+Why are hashCode() and equals() used together?
+What is immutability? What is StringBuilder?
+What is a singleton class? Write one. Can a singleton class be extended?
+Method overloading vs. overriding (with code). What is extends used for?
+What is a default method, and when would you use it?
+What is Optional?
+transient keyword vs. the @Transient annotation. What is Serializable? How do you exclude a password from serialization?
+Serialization vs. Parcelable. Can Parcelable be used in Java/Spring Boot?
+Records: purpose, how they provide immutability/security, the generated constructor, record vs. POJO, and whether a record can be a controller response.
+Checked vs. unchecked exceptions, with examples. Is a "compile-time exception" thrown at compile time or only flagged? How many types of exception handling are there?
+6. Collections
+ArrayList vs. LinkedList vs. HashMap: when to use each.
+Reading all items from 10,000 elements, or deleting at a known position: ArrayList or LinkedList, and why?
+How does HashMap store data? Are duplicate keys allowed? Duplicate values?
+HashMap vs. Hashtable vs. ConcurrentHashMap.
+What is your favorite collection? Do you choose by use case?
+7. Java 8+ Features: Streams, Lambdas & Functional Interfaces
+Advantages of streams (beyond readability). When and why do you use them?
+Looping by index vs. a stream over a million objects: which is faster?
+map() vs. filter(). Do they modify the original collection? What is flatMap()?
+Intermediate vs. terminal operations.
+What is a lambda expression? Can one exist without a functional interface? Describe a real use in your project.
+Functional interface vs. normal interface. Standard examples (Runnable, Predicate, Consumer, Supplier, Function).
+Consumer vs. Supplier. What is a Predicate? Streams vs. Functions.
+Java 8 vs. Java 17: benefits and features actually used.
+Java 21 features (virtual threads). Biggest features of Java 25.
+8. Multithreading & Concurrency
+Where have you used multithreading? What did parallelizing achieve, and how do you aggregate results?
+synchronized vs. volatile vs. AtomicInteger.
+How does ConcurrentHashMap work, why is its concurrency higher, what are its advantages over HashMap, and where would you use it?
+One thread writes to a HashMap while another reads. What issues arise? How do you handle multiple threads accessing a HashMap?
+Race conditions and how they relate to ConcurrentHashMap.
+Write HashMap and ConcurrentHashMap methods, and decide programmatically which to call based on thread-safety.
+ExecutorService vs. ThreadPoolExecutor. Fixed, cached and virtual thread pools.
+Virtual threads: resource constraints and pinning/locking issues.
+CompletableFuture: what it is, and how to wait for 5 parallel API calls to all complete.
+Two dependent calls to System B: sync or async?
+What is join() in the thread lifecycle?
+How do you make parallel/async calls in Spring Boot? How do you propagate MDC context to child threads?
+How do you handle concurrency in high-volume banking transaction processing?
+9. Memory, Garbage Collection & JVM Troubleshooting
+How does garbage collection work? What is the default GC? Is explicit GC logic needed?
+What happens when the heap is full? Which errors occur when the heap vs. the stack is full?
+Write code that causes a StackOverflowError and an OutOfMemoryError.
+How do you debug an OOM in production (heap dumps, leak analysis, JVisualVM)? What could the root cause be?
+Large payloads or millions of records causing OOM: how do you resolve it (pagination, chunking)? What happens if data exceeds the chunk size?
+How would you read a 5 GB JSON file without memory issues (streaming vs. chunking, Jackson), and persist it?
+How do you approach a memory leak or performance issue?
+10. Design Principles & Design Patterns
+What are the SOLID principles? Give project examples for each, especially SRP, OCP and DIP (for example, SLF4J vs. Logback).
+What problems occur if OCP isn't followed? A class keeps changing for new features: which principle is violated?
+What principles do you apply when writing a new service-layer business method?
+What is Clean Code? Is it a design pattern?
+Which design patterns have you used? Singleton: its purpose, a real project example (config, thread pool), and why make a thread pool singleton.
+Builder pattern for constructors with many dependencies.
+One endpoint serves India and Singapore with shared validation but different downstream APIs. Implement it without duplication or if-else, scalable to 10+ countries (strategy via an interface, @Profile, missing country in the body).
+11. Spring Core: Dependency Injection, IoC & Beans
+What are DI and IoC? What types of injection exist?
+Which type is preferable and why? Isn't constructor injection more tightly coupled than field injection?
+How do you inject a DAO into a service? How do you manage growing constructor parameters? Optional vs. required dependencies.
+How does each layer call the next (controller → service → repository)?
+@Qualifier vs. @Primary, and how they relate.
+Bean lifecycle. Default scope. Request vs. session scope. Is a Spring bean singleton by default?
+@Component vs. @Service vs. @Repository vs. @Controller. Are @Service/@Repository mandatory? @Controller vs. @RestController.
+Circular dependency: when it occurs, an example, and how to avoid it.
+Can you have multiple @Configuration classes? What is @Configuration used for?
+12. Spring Boot Fundamentals & Configuration
+What is Spring Boot, and why use it over Spring (even with annotation-based Spring)?
+Starter dependencies. What does @SpringBootApplication contain? How do you disable auto-configuration?
+How does auto-configuration work? Write a custom auto-configuration. Conditional annotations (@ConditionalOnProperty).
+Spring MVC architecture.
+How do you externalize and separate configuration per environment (dev, SIT, UAT, prod, blue-green)?
+Profiles: file naming (application-{profile}), properties vs. YAML, and loading extra files like database.properties.
+Precedence when the same key is in application.properties, a profile file and an environment variable or runtime argument.
+External configuration: Spring Cloud Config Server.
+Environment-specific log levels.
+Startup optimization: reducing startup time and component scanning.
+Loading data before startup (@PostConstruct, CommandLineRunner, ApplicationRunner, ApplicationReadyEvent).
+Feature toggles: disable a failing feature in production without rollback, at config level, and why not in the controller.
+Enable or disable Redis purely by a config property.
+What issues did you face migrating Spring Boot 2 → 3 or Java 11 → 17?
+13. JPA, Hibernate & Transactions
+Which ORM do you use? JPA vs. Hibernate. What is a Hibernate dialect? How do you generate entity classes?
+How are transactions managed? How does @Transactional behave in a debit-succeeds, credit-fails scenario?
+Roll back multiple DB operations if one fails. Skip rollback for certain exceptions. @Transactional with try-catch.
+findById vs. custom queries, and the need for @Query.
+14. Concurrency Control & Locking
+When does Hibernate throw OptimisticLockException? How do you handle it?
+Walk through a race condition: two requests read the same version, one commits, the other fails.
+How do you resolve the conflict without losing the transaction? Does a retry need to re-fetch the latest version?
+Why doesn't Redis plus a transaction ID alone prevent the conflict? How often does this happen in banking?
+Optimistic vs. pessimistic locking, and when to use each.
+15. REST API Design
+Steps to build a REST API from scratch, including all layers, DTOs and configuration.
+What makes an API production-ready? What is a data dictionary?
+PUT vs. PATCH. GET vs. POST for sensitive data. Query param vs. path variable.
+@RequestBody vs. @PathVariable vs. @RequestParam.
+Full CRUD design for user accounts.
+API versioning: is it needed, and how (context path vs. other approaches)?
+Backward compatibility: supporting old and new consumers (for example, an added email step) without a new microservice. Concrete example with a customer object. Feature flags vs. true compatibility.
+Regional APIs: country-specific data, multi-region configuration, deploying separately to Hong Kong vs. India.
+The most complex REST API you've built and its main challenges.
+How do you test an endpoint? How do you enable Swagger?
+16. Validation & Exception Handling
+How do you validate that an incoming request is valid? Custom validators.
+End-to-end validation for a credit-limit increase beyond the allowed range.
+Where does validation like "price not negative" belong?
+Global exception handling: @ControllerAdvice/@RestControllerAdvice, its scope, and how it differs from controller-level @ExceptionHandler.
+Write a custom exception (for example, ResourceNotFoundException) and show where it's thrown and handled.
+Functional error codes vs. a generic 500. How do you identify the exact exception from a code?
+HTTP codes: 405, 503, 4xx vs. 5xx. Status code for an expired token.
+Best practices for exception handling in microservices.
+17. Security, Authentication & Authorization
+How is authentication implemented? Explain the JWT flow, how to validate a JWT, and token expiry configuration.
+OAuth2: implementation with Spring Security, refreshing expired tokens, and handling 401 gracefully.
+Session-based authentication: who validates the session ID, and how does the front end know the user is authenticated?
+Role-based authorization (for example, only admins create users). A filter that allows public GET but secures create/update.
+Zero trust, centralized security across microservices, and the purpose of each filter in the chain.
+Calling a secured external service: generating and passing tokens. Auth between microservices with Feign.
+Multi-tenancy: onboarding tenants, method-level security annotations, and row-level security for shared tables.
+Is storing account details in the session a good idea at large banking scale?
+18. Microservices Architecture & Communication
+Microservices vs. monolith. REST services vs. microservices. Types of microservices.
+How do you decide when to create a new microservice?
+How do microservices communicate? RestTemplate vs. Feign vs. HTTP client.
+API Gateway: purpose, and gateway vs. a normal service. What is rate limiting?
+Eureka service discovery.
+Sync vs. async communication. Async method calls (@Async) for non-critical work like audit logging. Converting an API to async.
+Two developers deploy the same endpoint to one environment: what happens?
+19. Resilience & Fault Tolerance
+A downstream service is down or failing: retries, backoff and DLQ.
+Circuit breaker: purpose, the open, half-open and closed states, fallback content, annotations, and alternatives.
+Timeout design. Your timeout is 10s, downstream processes in 15s: how do you avoid duplicate processing? Is this specific to payments?
+The service must stay available 24/7 even if downstream or the DB is down, with no Kafka (outbox or retry table).
+20. Distributed Transactions & Saga
+Maintaining transactions across multiple databases and rollback across services.
+Saga pattern: orchestration vs. choreography. Two-phase commit.
+Money transfer design: auth, validations, notifications, rate limiting, and preventing double debit/credit (idempotency key plus locking) when the Account service is separate.
+21. Distributed Tracing & Logging
+Find which of services A–F (or 1–10) is failing.
+Correlation/trace ID: what it is and how it's propagated (Sleuth/Zipkin, Micrometer Tracing).
+What if Splunk logs aren't enough to trace a request?
+How do you enable logging, where do you view logs (Splunk, Grafana, CloudWatch), and how do logs reach CloudWatch?
+22. Kafka & Messaging
+Why Kafka in your project: the use case, message type, and producer or consumer role.
+Topics, partitions, offsets and consumer groups. Partition vs. offset. Are partitions mandatory? Multiple consumers on one topic.
+Where do you define topics? Integrating Kafka into microservices.
+Kafka vs. MQ (ActiveMQ, RabbitMQ): when to use each, and why Kafka is faster.
+Ack modes (0, 1, all), delivery semantics, and retries.
+Idempotency and duplicate prevention (producer and consumer). Message ordering per customer.
+The consumer isn't consuming: possible reasons, and where offsets are tracked.
+Processing fails after the offset moves: manual commit and seek(). Remove a message only after successful processing. Deleting messages after all consumers read them.
+A producer adds a new schema field the consumer doesn't expect.
+Cross-environment consumption (Integration vs. UAT).
+Order → Payment → Inventory: who is the producer and consumer at each step?
+Kafka connection requirements and authentication.
+Failed messages and DLQ implementation. Other message queues used.
+23. Caching
+How do you implement caching? Caching annotations.
+Redis with TTL in code. Redis vs. Aerospike.
+Refresh, eviction and TTL policies. Full vs. partial data load.
+Cache inconsistency (stale balance): how do you handle it?
+Fetching full details behind cached counts for reports at million-record scale.
+Implement an LRU cache (LinkedHashMap removeEldestEntry or a doubly linked list plus HashMap). Tracking recency, not insertion order.
+24. Databases & SQL
+Which databases (Oracle, MySQL, DynamoDB, NoSQL)? Do you write SQL yourself? How do you split work with seniors, and what makes a requirement "critical"?
+Stored procedures and functions: where and why. Migrating stored procedures to microservices.
+JDBC connection requirements.
+Joins: INNER vs. LEFT vs. RIGHT, with real use cases and queries.
+Indexes: purpose, and whether to index all 10 columns. A query on an indexed ID plus a non-indexed name. Is SELECT * good practice?
+Optimizing for reads vs. writes. Fetching 1 record from 10 lakh rows. A slow table as rows grow. Fast locally but slow in production.
+Schema changes: Flyway/Liquibase, and new tables without breaking constraints. What is a BLOB?
+Duplicate records from another system: save only unique ones.
+Data housekeeping: purge data older than 3 months across services, DB tools, and Spring Batch.
+Query exercises:
+Highest, second-highest and third-highest salary (DENSE_RANK, ties, DISTINCT).
+Departments with more than 5 employees.
+Count of duplicate names.
+Students per department (and why ORDER BY).
+Successful transactions by channel for a date range, and counts per status per channel.
+25. Production Support & Debugging
+How do you handle a P1 defect? Walk through a real incident and its RCA.
+How do you access production logs? Do you have direct production or DB access?
+A slow production API (layer isolation, query plans). UAT is fine but production is slow with normal CPU and memory.
+Service unavailable, DB connection exhaustion, and a production DB connection failing when UAT works.
+Memory reaching 10 GB or CPU at 80–100% hours after startup: what do you request from SRE? Is "app is up" the same as "no issue"? Does traffic drive CPU? Does scaling fix it?
+A service fails in QA: how are you notified and how do you debug?
+Performance issues you've resolved, and what to consider when one hits production.
+How do you improve Spring Boot request performance and DB access?
+26. Scalability, Load Balancing & System Design
+Load balancing across services, the built-in algorithms, and failover when one instance goes down (including in microservices).
+Is scaling handled by load balancing alone? How do you handle peak traffic?
+5M customers with a 100–200 ms SLA: high-level design and code-level best practices.
+How does a request route from the UI through the gateway and load balancer?
+Notification service (SMS, email, push): triggers, user-group targeting, topics vs. consumer groups, failures, idempotency and DLQ.
+Batch processing of lakhs of records on 1 GB of memory (Spring Batch chunking, batch inserts). EC2 vs. Lambda vs. Fargate/AWS Batch for a 1–2 hour daily job.
+Sketch your project's high-level architecture.
+27. DevOps, CI/CD, Testing & Code Quality
+Have you written CI/CD pipelines? How is code promoted across environments and to AWS? Is CD automated?
+Git strategy: feature branches, a master that moves ahead, and which branch is deployed.
+Zero-downtime and blue-green deployments. Regression testing.
+JUnit/Mockito and coverage targets. JaCoCo → SonarQube flow, issue types in Sonar reports, and build-failing quality gates.
+Static/dynamic analysis and open-source library scanning tools.
+Cron job vs. EventBridge for scheduling.
+28. Cloud, Containers & Infrastructure
+Which cloud (AWS, OCP, PCF)? Deployment and log verification on the cloud.
+AWS services: ECS launch types, Lambda, Cognito, API Gateway, SNS, Step Functions, CloudWatch.
+Private cloud and container platforms (OpenShift, Pivotal). Where are Docker images deployed?
+Kubernetes: YAML contents (replicas, min/max pods) and secrets management.
+Linux commands, and transferring files between systems.
+29. Front-end (React / Angular)
+React: version and migration, hooks, micro-frontends (connecting host and remotes, sharing data), CSS styling, and front-end form validation.
+Angular: version used, AngularJS vs. Angular 2+, component-based vs. MVC, component lifecycle, and structuring a page (header, footer, carousel, form).
+30. Live Coding Exercises (Java)
+Swap two integers without a third variable.
+Convert a String to an int without parseInt (ASCII walkthrough, "923").
+Reverse a string without StringBuilder or Collections.reverse, then optimize.
+Character frequency ("AABBCCC" → A2B2C3) using streams and plain loops.
+Unique characters ("Swiss" → w, i). First repeated and first non-repeating characters ("banana"), with and without a HashMap or Set.
+Word occurrence count, distinct words (with distinct()), most frequent word, and longest word in a sentence.
+Remove duplicates from a list. Even numbers 1–10 with a stream and Predicate. A lambda filter.
+Balanced brackets (stack and counting approaches). Merge overlapping intervals.
+Subset sum: existence, count and listing (DP vs. recursion).
+LRU cache.
+Spring Boot from scratch: an employee POST API with mandatory and optional fields, validation, 400 on failure, H2, Lombok/builder, DTO-to-entity mapping, @ControllerAdvice, returning the saved record or generated ID, converting it to GET with a query param, and calling an external department service.
+A shopping cart REST skeleton (add and delete items).
+User CRUD APIs with a security filter.
+
