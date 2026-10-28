@@ -118,6 +118,8 @@ const filteredStudents = useMemo(() => {
 → Spring creates and manages the bean instance.
 → I avoid storing request-specific mutable data in singleton fields because multiple threads may access the same instance.
 
+Logging, security, Database config
+
 ------------------------------------------------------------------------------------------------------------------
 
 13. Can Spring Boot handle only one DataSource?
