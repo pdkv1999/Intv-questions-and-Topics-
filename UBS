@@ -1,0 +1,288 @@
+# Java + Spring Boot Interview Preparation — Simple Explanation
+
+## 1. How have you implemented transactions in your project?
+
+→ In my LabFlow project, I used Spring's `@Transactional` annotation to maintain data consistency when saving laboratory results and related database records.
+
+→ If all database operations succeed, the transaction commits. If a runtime exception occurs, Spring rolls back the transaction by default.
+
+→ For Kafka communication, I used the Transactional Outbox pattern so database updates and event publishing could be coordinated reliably.
+
+→ Example: If saving a lab result fails halfway, the database changes are rolled back so we don't keep incomplete data.
+
+## 2. Explain transaction propagation in Spring
+
+Think of a transaction like a school exam: one method starts the exam, and another method may join it or start a separate exam.
+
+| Propagation     | Simple meaning                                                          |
+| --------------- | ----------------------------------------------------------------------- |
+| `REQUIRED`      | Join the existing transaction; create one if none exists.               |
+| `REQUIRES_NEW`  | Suspend the existing transaction and start a new one.                   |
+| `SUPPORTS`      | Join an existing transaction if available; otherwise run without one.   |
+| `MANDATORY`     | An existing transaction must be present; otherwise, throw an exception. |
+| `NOT_SUPPORTED` | Suspend the existing transaction and run without one.                   |
+| `NEVER`         | Fail if a transaction already exists.                                   |
+| `NESTED`        | Use a nested transaction or savepoint if supported.                     |
+
+→ In most business operations, I use `REQUIRED` because multiple service methods can participate in the same transaction.
+
+→ I use `REQUIRES_NEW` when an operation must commit independently, such as recording an audit entry, while remembering that it uses a separate transaction and does not guarantee that the outer operation succeeds.
+
+Interview answer: Spring transaction propagation defines how a method behaves when a transaction already exists. `REQUIRED` is the default, while `REQUIRES_NEW` starts an independent transaction.
+
+## 3. How have you implemented security in your project?
+
+→ I used Spring Security to protect REST APIs and validate authentication credentials.
+
+→ I would use JWT-based authentication, HTTPS, role-based authorization, and endpoint-level security to protect sensitive laboratory information.
+
+→ I configure security rules to allow public endpoints, such as health checks where appropriate, and require authentication for protected APIs.
+
+→ I also follow secure secret management, input validation, and the principle of least privilege.
+
+Example: An unauthenticated user cannot access a patient's laboratory results.
+
+## 4. Explain token-based security flow from UI to backend and between services
+
+Think of a JWT as a digital ID card. The backend checks the card before allowing access.
+
+1\. User logs in
+
+React / Angular sends username and password over HTTPS.
+
+2\. Authentication
+
+Spring Security validates the credentials.
+
+3\. Token issued
+
+An identity provider or authentication service issues an access token.
+
+4\. API request
+
+UI sends `Authorization: Bearer <token>`.
+
+5\. Validate and authorize
+
+Backend validates the token and checks permissions before processing the request.
+
+→ The backend checks the token's signature, expiry, issuer, audience, and other required claims. A valid token does not automatically mean the user can access every resource.
+
+→ For service-to-service communication, I would use OAuth2 client credentials or workload identity, with each service receiving only the permissions it needs.
+
+→ For example, if the Lab Results service calls the Notification service, it must authenticate as an approved service and have the required permission.
+
+Interview answer: I use token-based authentication with Spring Security. The UI sends a bearer token over HTTPS, the backend validates it, and authorization rules determine whether the request is allowed. Service-to-service calls use separate service identities and least-privilege permissions.
+
+## 5. How have you implemented authorization, and how does it work?
+
+→ Authentication checks who you are; authorization checks what you are allowed to do.
+
+→ I would implement role-based access control using roles such as `ADMIN`, `DOCTOR`, and `LAB_TECHNICIAN`.
+
+→ In Spring Security, I can use `@PreAuthorize("hasRole('DOCTOR')")` to restrict a method to users with the required role.
+
+→ I would also check resource ownership and patient access permissions, because having the doctor role alone should not automatically grant access to every patient's records.
+
+Example:
+
+```
+@PreAuthorize("hasRole('DOCTOR')")
+@GetMapping("/lab-results/{id}")
+public LabResult getResult(@PathVariable Long id) {
+    return labResultService.getResult(id);
+}
+```
+
+→ This method requires the `DOCTOR` role, but the service must still verify that the doctor is allowed to access that particular result.
+
+## 6. Have you worked on a customer-facing project?
+
+→ Yes, my LabFlow project has a user-facing React application used by clinical users to view laboratory results, patient history, trends, and critical-result alerts.
+
+→ The backend integrates hospital systems, processes lab-result events through Kafka, and stores data in Oracle.
+
+→ I focus on reliability, performance, data consistency, and clear API contracts because failures can affect the information clinicians see.
+
+→ If asked about direct customer interaction, explain honestly whether you personally attended customer meetings, gathered requirements, or mainly worked with product owners and QA.
+
+## 7. Explain the CI/CD workflow of your project
+
+Think of CI/CD as an automated factory: every code change is checked, packaged, and prepared for release.
+
+#### 1
+
+Developer commits code
+
+Git branch and pull request
+
+#### 2
+
+Build and test
+
+Maven, unit tests, integration tests
+
+#### 3
+
+Quality and security checks
+
+SonarQube and dependency scanning
+
+#### 4
+
+Build Docker image
+
+Tag and push to container registry
+
+#### 5
+
+Deploy to environment
+
+Dev → QA/UAT → Production
+
+#### 6
+
+Verify and monitor
+
+Health checks, logs, metrics, rollback
+
+→ I would use Jenkins or GitHub Actions to automate the pipeline and require appropriate approvals before production deployment.
+
+→ Database migrations should be version-controlled and backward-compatible wherever possible.
+
+→ After deployment, I check application health, error rates, Kafka consumer lag, and logs. If a release causes issues, I use the rollback strategy or a corrective deployment.
+
+Important: Mention the CI/CD tool you actually used in your project. The above is a standard workflow, not a claim that every tool was used in LabFlow.
+
+## 8. Explain Spring HTTP message converters
+
+Think of HTTP message converters as translators. They convert Java objects into HTTP response formats and convert incoming request bodies back into Java objects.
+
+| Converter                                | Simple explanation                  | Example                       |
+| ---------------------------------------- | ----------------------------------- | ----------------------------- |
+| `MappingJackson2HttpMessageConverter`    | Java objects ↔ JSON                 | REST API request and response |
+| `StringHttpMessageConverter`             | Strings ↔ text                      | Plain-text response           |
+| `MappingJackson2XmlHttpMessageConverter` | Java objects ↔ XML                  | XML-based integrations        |
+| `ByteArrayHttpMessageConverter`          | Byte arrays ↔ binary data           | Image or PDF bytes            |
+| `ResourceHttpMessageConverter`           | Resource objects ↔ resource content | Serving files or downloads    |
+
+→ Spring Boot automatically configures commonly used converters based on the classpath and application configuration.
+
+→ For example, when a controller returns a Java object, the JSON converter serializes it into JSON if JSON is negotiated and supported.
+
+→ When a request contains JSON, the converter deserializes it into the Java object expected by `@RequestBody`.
+
+Example:
+
+```
+@PostMapping("/students")
+public Student createStudent(@RequestBody Student student) {
+    return studentService.save(student);
+}
+```
+
+→ Spring reads the incoming JSON, converts it into a `Student` object, calls the method, and normally converts the returned object into JSON.
+
+Interview answer: HTTP message converters handle serialization and deserialization between Java objects and HTTP body formats such as JSON, XML, text, and binary data.
+
+## 9. How did you deploy services? Which orchestration tool did you use?
+
+→ I would package each Spring Boot microservice as a Docker image so it runs consistently across environments.
+
+→ I would use Kubernetes, such as Amazon EKS, for container orchestration, service discovery, health checks, rolling deployments, and horizontal scaling.
+
+→ Each service would have its own deployment and configuration, with secrets managed securely and environment-specific settings kept outside the application image.
+
+→ I would monitor CPU, memory, application errors, and Kafka consumer lag to identify production issues.
+
+Interview follow-up: Docker packages the application; Kubernetes manages and runs the containers. Do not claim EKS was your actual project platform unless you used it.
+
+## 10. Java Streams — Average salary per department
+
+Imagine a school with teachers in different departments. We want to calculate the average salary for each department.
+
+```
+Map<String, Double> avgDeptSal = employees.stream()
+    .collect(Collectors.groupingBy(
+        Employee::getDepartment,
+        Collectors.averagingDouble(Employee::getSalary)
+    ));
+```
+
+→ `stream()` processes the employee list.
+
+→ `groupingBy()` groups employees by department.
+
+→ `averagingDouble()` calculates the average salary for each group.
+
+→ The result is a `Map` where the key is the department and the value is its average salary.
+
+Example:
+
+| Department | Salaries       | Average |
+| ---------- | -------------- | ------- |
+| IT         | 40,000, 60,000 | 50,000  |
+| HR         | 30,000, 50,000 | 40,000  |
+
+Interview answer: I use `groupingBy()` with `averagingDouble()` to calculate the average salary department-wise in a single stream pipeline.
+
+## 11. Second-highest salary per department
+
+Imagine each department has many employees. We need the second-highest distinct salary in each department.
+
+```
+Map<String, Optional<Double>> result = employees.stream()
+    .collect(Collectors.groupingBy(
+        Employee::getDepartment,
+        Collectors.mapping(
+            Employee::getSalary,
+            Collectors.collectingAndThen(
+                Collectors.toSet(),
+                salaries -> salaries.stream()
+                    .sorted(Comparator.reverseOrder())
+                    .skip(1)
+                    .findFirst()
+            )
+        )
+    ));
+```
+
+### Understand it like a kid
+
+→ `groupingBy()` separates employees department-wise.
+
+→ `mapping()` extracts only the salaries.
+
+→ `toSet()` removes duplicate salaries. For example, `90000, 90000, 70000` becomes `90000, 70000`.
+
+→ `sorted(Comparator.reverseOrder())` sorts salaries from highest to lowest; `skip(1)` skips the highest, and `findFirst()` returns the second-highest.
+
+Example:
+
+| Department | Salaries               | Result |
+| ---------- | ---------------------- | ------ |
+| IT         | 90,000, 80,000, 70,000 | 80,000 |
+| HR         | 60,000, 50,000         | 50,000 |
+| Finance    | 40,000                 | Empty  |
+
+→ `Optional<Double>` is used because a department might have fewer than two distinct salaries.
+
+Important correction: In your original code, `Comparator.comparingDouble(Employee::getSalary)` is incorrect because, after extracting salaries, the stream contains `Double` values, not `Employee` objects. Use `Comparator.reverseOrder()`.
+
+### Quick interview revision
+
+→ Transactions: `@Transactional` manages commit and rollback.
+
+→ Propagation: `REQUIRED` joins an existing transaction or creates one.
+
+→ Security: Authentication verifies identity; authorization checks permissions.
+
+→ JWT: The backend validates the token before allowing access.
+
+→ CI/CD: Automates building, testing, and deployment.
+
+→ Message converters: Convert Java objects to and from HTTP formats.
+
+→ Orchestration: Kubernetes manages container deployment and scaling.
+
+→ Streams: `groupingBy()` groups data, `averagingDouble()` calculates averages, and `sorted() + skip(1) + findFirst()` finds the second-highest distinct value.
