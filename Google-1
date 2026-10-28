@@ -1,0 +1,222 @@
+GOOGLE FIBER – INTERVIEW NOTES
+
+1. Tell me about your last project and your roles and responsibilities?
+
+→ My last project was LabFlow, a healthcare application that integrates laboratory results from hospital systems and displays them to clinical users.
+
+→ I worked with Java, Spring Boot, Kafka, Oracle, and React.
+
+→ My responsibilities included developing REST APIs, processing Kafka events, handling duplicate and out-of-order messages, and maintaining database consistency.
+
+→ I also worked on performance optimization, automated testing, UAT support, and production troubleshooting.
+
+------------------------------------------------------------------------------------------------------------------
+
+2. What are the pros and cons of microservices architecture?
+
+→ Pros: Independent deployment, independent scaling, technology flexibility, and better fault isolation.
+
+→ Cons: Distributed transactions, network failures, complex debugging, data consistency challenges, and increased infrastructure costs.
+
+→ I choose microservices when the system has clear business boundaries and requires independent scaling or deployment.
+
+→ For smaller applications, a modular monolith may be simpler and more cost-effective.
+
+------------------------------------------------------------------------------------------------------------------
+
+3. Difference between Kafka and RabbitMQ? When do you use each?
+
+→ Kafka is a distributed event-streaming platform designed for high-throughput event processing and replayable event streams.
+
+→ RabbitMQ is a message broker that supports queues, routing, acknowledgements, and flexible message delivery patterns.
+
+→ I prefer Kafka for event streaming, audit events, analytics, and processing large volumes of events.
+
+→ I prefer RabbitMQ for task queues, command distribution, and complex routing requirements.
+
+------------------------------------------------------------------------------------------------------------------
+
+4. What are the different communication methods in microservices?
+
+→ Synchronous: REST APIs or gRPC. The caller waits for a response.
+
+→ Asynchronous: Kafka or RabbitMQ. The producer sends a message without waiting for the consumer to finish processing it.
+
+→ Synchronous communication is suitable when an immediate response is required.
+
+→ Asynchronous communication is suitable for background processing, event-driven workflows, and reducing direct dependencies between services.
+
+------------------------------------------------------------------------------------------------------------------
+
+5. How do you migrate endpoints without downtime or affecting existing clients?
+
+→ First, I introduce the new endpoint while keeping the old endpoint operational.
+
+→ I make the new endpoint backward-compatible and test it with existing business scenarios.
+
+→ I gradually move traffic using feature flags, API gateway routing, or canary deployment.
+
+→ After monitoring errors, latency, and business results, I migrate all clients and retire the old endpoint only after confirming it is no longer used.
+
+→ I also maintain a rollback plan in case the new endpoint fails.
+
+------------------------------------------------------------------------------------------------------------------
+
+6. What is a feature flag?
+
+→ A feature flag allows us to enable or disable functionality without deploying new code.
+
+→ For example, I can enable a new API for 10% of users before enabling it for everyone.
+
+→ Feature flags help with gradual releases, A/B testing, and quickly disabling problematic functionality.
+
+→ I use tools such as LaunchDarkly or configuration-based flags, with proper access control and cleanup of obsolete flags.
+
+------------------------------------------------------------------------------------------------------------------
+
+7. A new endpoint suddenly starts failing in production. What will you do?
+
+→ First, I check alerts, logs, HTTP status codes, traces, and recent deployments to identify the cause.
+
+→ I check dependencies such as the database, Kafka, authentication, and downstream services.
+
+→ If the failure started after a deployment, I roll back or disable the feature flag when safe.
+
+→ After identifying the root cause, I fix it, test the solution, redeploy, and monitor the endpoint.
+
+→ I also document the root cause and add tests or alerts to prevent recurrence.
+
+------------------------------------------------------------------------------------------------------------------
+
+8. Two teams disagree about synchronous versus asynchronous communication. As a lead, what will you do?
+
+→ First, I listen to both teams and understand their technical concerns.
+
+→ I compare latency, reliability, coupling, ordering, complexity, and business requirements.
+
+→ If an immediate response is required, I consider REST or gRPC. If independent processing is sufficient, I consider Kafka or RabbitMQ.
+
+→ If necessary, I run a small proof of concept and compare the results against agreed performance and reliability criteria.
+
+→ I document the decision and its trade-offs so both teams understand the reasoning.
+
+------------------------------------------------------------------------------------------------------------------
+
+9. How do you handle a conflict of opinion with a client?
+
+→ First, I listen carefully to understand the client's business requirement and concerns.
+
+→ I explain the technical options, risks, cost, and long-term impact in simple language.
+
+→ I support my recommendation with data, examples, or a proof of concept rather than personal opinions.
+
+→ If the client chooses another feasible approach, I align with the decision, document the risks, and work towards the agreed outcome.
+
+------------------------------------------------------------------------------------------------------------------
+
+10. Java coding problem: Library, Authors, and Books
+
+Requirements:
+→ TODO #1: Assign books to the correct authors and store them in authorsBooks.
+→ TODO #2: Return all books of a particular BookType.
+→ TODO #3: Set each author's booksAmount based on the map.
+
+Solution:
+
+import java.util.*;
+import java.util.stream.*;
+
+class Library {
+    Map<Author, List<Book>> authorsBooks;
+    List<Author> authors;
+
+    public Library() {
+        authorsBooks = new HashMap<>();
+        authors = AuthorDataProvider.getAuthors();
+        initialize();
+    }
+
+    private void initialize() {
+        List<Book> books = List.of(
+            new Book(1, "The Way of Kings", BookType.FANTASY),
+            new Book(1, "Mistborn", BookType.FANTASY),
+            new Book(1, "Elantris", BookType.FANTASY),
+            new Book(2, "Thinking, Fast and Slow", BookType.FACT),
+            new Book(2, "Noise", BookType.FACT),
+            new Book(3, "The Witcher", BookType.FANTASY),
+            new Book(4, "A Brief History of Time", BookType.SCIENCE),
+            new Book(4, "Brief Answers To The Big Questions", BookType.SCIENCE)
+        );
+
+        // TODO #1: Assign books to their authors.
+        for (Author author : authors) {
+            List<Book> authorBooks = books.stream()
+                .filter(book -> book.getAuthorId() == author.getId())
+                .collect(Collectors.toList());
+
+            authorsBooks.put(author, authorBooks);
+        }
+
+        // TODO #3: Set the number of books for each author.
+        for (Author author : authors) {
+            author.setBooksAmount(
+                authorsBooks.get(author).size()
+            );
+        }
+    }
+
+    // TODO #2: Return books of a particular type.
+    public List<Book> getBooksOfType(BookType bookType) {
+        return authorsBooks.values().stream()
+            .flatMap(Collection::stream)
+            .filter(book -> book.getBookType() == bookType)
+            .collect(Collectors.toList());
+    }
+
+    public List<Book> getBooksByAuthorId(int id) {
+        Author author = authors.stream()
+            .filter(a -> a.getId() == id)
+            .findFirst()
+            .orElseThrow();
+
+        return authorsBooks.get(author);
+    }
+
+    private int getBooksAmount(int authorId) {
+        return authors.stream()
+            .filter(a -> a.getId() == authorId)
+            .findFirst()
+            .orElseThrow()
+            .getBooksAmount();
+    }
+}
+
+------------------------------------------------------------------------------------------------------------------
+
+11. Explain the Library solution.
+
+→ TODO #1: For every author, filter books using authorId and store the result in the authorsBooks map.
+
+→ TODO #2: Use flatMap() to combine all authors' book lists into one stream, then filter by BookType.
+
+→ TODO #3: Use the size of each author's book list to update booksAmount.
+
+→ Time complexity: Assigning books is O(A × B), where A is the number of authors and B is the number of books. Retrieving books by type is O(B) overall, assuming the map contains all books.
+
+→ Note: The solution assumes each author's ID is unique and every book has a valid author ID.
+
+------------------------------------------------------------------------------------------------------------------
+
+QUICK REVISION
+
+→ Microservices: Independent services with distributed-system trade-offs.
+→ Kafka: Event streaming and replayable event processing.
+→ RabbitMQ: Message queues and flexible routing.
+→ REST/gRPC: Synchronous communication.
+→ Kafka/RabbitMQ: Asynchronous communication.
+→ Zero-downtime migration: Backward compatibility, gradual rollout, monitoring, and rollback.
+→ Feature flag: Enable or disable features without redeployment.
+→ Production incident: Investigate, mitigate, fix, validate, and prevent recurrence.
+→ Leadership: Resolve disagreements using requirements, evidence, and documented trade-offs.
+→ Java Streams: filter(), flatMap(), collect(), and grouping operations help process collections.
+------------------------------------------------------------------------------------------------------------------
