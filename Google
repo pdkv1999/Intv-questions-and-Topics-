@@ -1,0 +1,134 @@
+# Java, Spring Boot & Angular Interview Answers
+
+### 1. What is `volatile`, `synchronized`, and `ReentrantLock`?
+
+→ `volatile` ensures that changes to a variable made by one thread are visible to other threads. It does not make compound operations like `count++` atomic.
+
+→ `synchronized` allows only one thread at a time to execute a protected block for the same monitor lock. It also ensures memory visibility.
+
+→ `ReentrantLock` provides explicit locking and unlocking, with features like timed lock attempts, interruptible locking, and optional fairness.
+
+→ Example: Use `volatile` for a stop flag, `synchronized` for simple shared-state protection, and `ReentrantLock` when you need more control over locking.
+
+### 2. What is multithreading? Where did you use it in your project?
+
+→ Multithreading means executing multiple tasks using different threads within the same application.
+
+→ In LabFlow, concurrent processing can help handle multiple lab-result requests and Kafka events efficiently.
+
+→ For independent tasks, I can use Java executors or `CompletableFuture`; for blocking I/O workloads, I can consider virtual threads in Java 21.
+
+→ Alternatives include asynchronous event processing using Kafka, reactive programming, or sequential processing when ordering is important.
+
+### 3. How does HashMap work internally?
+
+→ `HashMap` stores key-value pairs in an array of buckets. A hash derived from the key determines the bucket index.
+
+→ If two keys map to the same bucket, a collision occurs. Java handles collisions using linked nodes and can convert heavily populated buckets into balanced trees under suitable conditions.
+
+→ When the number of entries exceeds `capacity × load factor` (normally 16 × 0.75 = 12 initially), the map generally resizes and redistributes entries.
+
+→ If the same key is inserted again, its value is replaced, and the map size remains unchanged. Keys are considered the same when their `equals()` comparison matches.
+
+### 4. How do you handle rollback when another microservice fails?
+
+→ A local `@Transactional` transaction can roll back database changes in the current service, but it cannot automatically roll back a committed transaction in another microservice.
+
+→ For synchronous calls, I can use timeouts, retries where safe, and appropriate exception handling. If the remote failure occurs before the local transaction commits, I can propagate the exception to trigger a local rollback.
+
+→ For distributed business transactions, I would use the Saga pattern with compensating actions to undo completed business steps.
+
+→ For reliable asynchronous communication, I would use the Transactional Outbox pattern with Kafka, retries, idempotent consumers, and dead-letter handling where appropriate.
+
+### 5. Create an Employee class and find the second-highest salary per department, handling nulls
+
+→ First, filter employees with null department or salary.
+
+→ Group employees by department, remove duplicate salaries, sort in descending order, skip the highest, and select the next salary.
+
+```
+import java.util.*;
+import java.util.stream.*;
+
+class Employee {
+    private String name;
+    private String department;
+    private Double salary;
+
+    Employee(String name, String department, Double salary) {
+        this.name = name;
+        this.department = department;
+        this.salary = salary;
+    }
+
+    public String getDepartment() { return department; }
+    public Double getSalary() { return salary; }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        List<Employee> employees = Arrays.asList(
+            new Employee("A", "IT", 90000.0),
+            new Employee("B", "IT", 80000.0),
+            new Employee("C", "IT", 90000.0),
+            new Employee("D", "HR", 60000.0),
+            new Employee("E", "HR", null),
+            new Employee("F", null, 50000.0)
+        );
+
+        Map<String, Optional<Double>> result = employees.stream()
+            .filter(e -> e.getDepartment() != null && e.getSalary() != null)
+            .collect(Collectors.groupingBy(
+                Employee::getDepartment,
+                Collectors.mapping(
+                    Employee::getSalary,
+                    Collectors.collectingAndThen(
+                        Collectors.toSet(),
+                        salaries -> salaries.stream()
+                            .sorted(Comparator.reverseOrder())
+                            .skip(1)
+                            .findFirst()
+                    )
+                )
+            ));
+
+        result.forEach((dept, salary) ->
+            System.out.println(dept + " -> " + salary.orElse(null))
+        );
+    }
+}
+```
+
+→ Output: `IT -> 80000.0`, `HR -> null`.
+
+→ `Optional.empty()` means the department does not have two distinct valid salaries. The example skips records with null department or salary.
+
+### 6. What is the difference between Angular Signals and RxJS Observables?
+
+→ Signals hold a current value and automatically notify Angular when that value changes. They are useful for component state and derived values.
+
+→ Observables represent streams of values over time. They support operators for asynchronous operations, events, cancellation, and combining streams.
+
+→ Signals are synchronous when reading their current value, while Observables may emit synchronously or asynchronously depending on their source.
+
+→ Example: Use Signals for selected tabs or counters; use RxJS Observables for HTTP streams, search input, and WebSocket events.
+
+### 7. What are Default and OnPush change detection strategies?
+
+→ Default: Angular checks the component and its descendants during normal change-detection cycles.
+
+→ OnPush: Angular can skip checking a component subtree until a relevant trigger occurs, such as a changed input, an event in the subtree, or a signal update read by the template.
+
+→ `OnPush` helps reduce unnecessary checks in large applications when components are designed properly.
+
+→ Example: For a large student list, I would use `OnPush` with immutable input updates and Signals where appropriate.
+
+### 8. Explain `switchMap`, `mergeMap`, and `concatMap`
+
+→ `switchMap` cancels the previous inner subscription when a new value arrives. Use it for search suggestions where only the latest query matters.
+
+→ `mergeMap` runs inner operations concurrently. Use it when multiple independent requests can execute in parallel.
+
+→ `concatMap` processes inner operations sequentially, preserving their order. Use it when one update must finish before the next begins.
+
+→ Easy way to remember: `switchMap` = latest wins; `mergeMap` = parallel; `concatMap` = one by one.
