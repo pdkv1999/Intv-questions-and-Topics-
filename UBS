@@ -1,424 +1,60 @@
-# Java, Spring Boot & Microservices Interview Preparation
-
-Simple explanations with real-world examples and interview-ready answers.
-
-## 1. Transaction Management in Spring Boot
-
-### What is a transaction?
-
-A transaction is a group of database operations that should succeed together or fail together.
-
-**Example:** When transferring money, the amount must be deducted from one account and added to another. Both operations should succeed, or both should be rolled back.
-
-### How do we implement transactions?
-
-```java
-@Transactional
-public void saveLabResult(LabResult result) {
-    labResultRepository.save(result);
-}
-```
-
-- `@Transactional` starts or joins a transaction according to its propagation setting.
-- If the operation succeeds, the transaction commits.
-- If a runtime exception occurs, Spring rolls back by default.
-- Checked exceptions do not trigger rollback by default unless configured.
-
-### Transactional Outbox Pattern
-
-In a microservices application, saving database data and publishing a Kafka event are separate operations.
-
-The Transactional Outbox pattern solves this problem:
-
-1. Save the business data and an outbox event in the same database transaction.
-2. A separate publisher reads pending outbox events.
-3. Publish events to Kafka.
-4. Mark events as published or retry failed deliveries.
-5. Make consumers idempotent to handle duplicate deliveries safely.
-
-**Interview answer:** I use `@Transactional` for database consistency and the Transactional Outbox pattern to reliably coordinate database updates with Kafka event publishing.
-
----
-
-## 2. Transaction Propagation
-
-Transaction propagation defines how a method behaves when another transaction already exists.
-
-| Propagation | Meaning |
-|---|---|
-| `REQUIRED` | Join the existing transaction or create a new one. |
-| `REQUIRES_NEW` | Suspend the existing transaction and start a new one. |
-| `SUPPORTS` | Join a transaction if one exists; otherwise run without one. |
-| `MANDATORY` | Require an existing transaction. |
-| `NOT_SUPPORTED` | Suspend the existing transaction and run without one. |
-| `NEVER` | Fail if a transaction exists. |
-| `NESTED` | Use a nested transaction or savepoint when supported. |
-
-Example:
-
-```java
-@Transactional(propagation = Propagation.REQUIRED)
-public void saveStudent() {
-    // Database operations
-}
-```
-
-**Interview answer:** `REQUIRED` is the default propagation. It allows multiple methods to participate in the same transaction.
-
----
-
-## 3. Spring Security
-
-### What is Spring Security?
-
-Spring Security protects applications by authenticating users and controlling access to APIs.
-
-### How is it implemented?
-
-- Use Spring Security to validate authentication credentials and protect REST endpoints.
-- Use JWT or an OAuth2/OIDC identity provider for token-based authentication.
-- Use HTTPS to protect data in transit.
-- Apply role-based and resource-level authorization.
-- Store secrets securely and follow the principle of least privilege.
-
-Example:
-
-```java
-@PreAuthorize("hasRole('DOCTOR')")
-@GetMapping("/lab-results/{id}")
-public LabResult getResult(@PathVariable Long id) {
-    return labResultService.getResult(id);
-}
-```
-
-The method requires the `DOCTOR` role. The service must also check whether that doctor is permitted to access the specific patient's result.
-
----
-
-## 4. JWT Authentication Flow
-
-JWT stands for JSON Web Token. Think of it as a digitally signed identity card.
-
-### UI-to-backend flow
-
-1. The user logs in through the UI.
-2. The authentication service validates the credentials.
-3. An identity provider issues an access token.
-4. The UI sends the token in the HTTP Authorization header.
-5. Spring Security validates the token and establishes the authenticated security context.
-6. Authorization rules decide whether the user can access the requested resource.
-
-Example request:
-
-```http
-GET /api/lab-results/101
-Authorization: Bearer <access-token>
-```
-
-The backend validates the signature, expiry, issuer, audience, and relevant claims.
-
-### Service-to-service communication
-
-For example:
-
-`Lab Results Service -> Notification Service`
-
-- The calling service authenticates using OAuth2 client credentials or an approved workload identity.
-- The receiving service validates the service identity and token.
-- The token must contain the appropriate audience and permissions.
-- Each service receives only the permissions it needs.
-
-**Interview answer:** JWT provides token-based authentication. Spring Security validates the token, and authorization rules determine whether the authenticated user or service can perform the operation.
-
----
-
-## 5. Authentication vs Authorization
-
-| Authentication | Authorization |
-|---|---|
-| Checks who you are. | Checks what you can do. |
-| Validates credentials or tokens. | Checks roles, permissions, and resource access. |
-| Example: Doctor logs in. | Example: Doctor accesses an authorized patient's results. |
-
-Example authorization rule:
-
-```java
-@PreAuthorize("hasRole('ADMIN')")
-public void deleteStudent(Long id) {
-    // Delete student after required checks
-}
-```
-
-Enable method security in the application:
-
-```java
-@Configuration
-@EnableMethodSecurity
-public class SecurityConfig {
-}
-```
-
-Role checks alone may not be enough. Sensitive applications must also validate resource ownership and access policies.
-
----
-
-## 6. Customer-Facing Project Experience
-
-### Project: LabFlow
-
-LabFlow is a healthcare application that integrates laboratory results from hospital systems and displays them to clinical users.
-
-**Technology stack:**
-
-- Backend: Java, Spring Boot
-- Messaging: Apache Kafka
-- Database: Oracle
-- Frontend: React
-
-**Key functionality:**
-
-- Display laboratory results and patient history.
-- Show result trends and critical-result alerts.
-- Process lab-result events reliably.
-- Handle duplicate and out-of-order events.
-- Maintain data consistency during concurrent updates.
-
-**Interview answer:** My LabFlow project provides a user-facing application for clinical users. I worked on backend APIs, reliable event processing, database consistency, performance optimization, and production troubleshooting.
-
----
-
-## 7. CI/CD Workflow
-
-CI/CD automates the process of building, testing, and deploying software.
-
-### Typical workflow
-
-1. Developer pushes code to Git.
-2. Jenkins or GitHub Actions starts the pipeline.
-3. Maven builds the application.
-4. Unit and integration tests run.
-5. Code quality and security checks execute.
-6. Docker builds the application image.
-7. The image is pushed to a container registry.
-8. The application is deployed to the target environment.
-9. Health checks and monitoring verify the deployment.
-
-### Common tools
-
-| Purpose | Tools |
-|---|---|
-| Version control | Git |
-| Build | Maven |
-| CI/CD | Jenkins, GitHub Actions |
-| Code quality | SonarQube |
-| Containerization | Docker |
-| Orchestration | Kubernetes |
-| Monitoring | Prometheus, Grafana |
-| Cloud | AWS |
-
-**Interview answer:** CI/CD automates builds, testing, quality checks, image creation, and deployment. I would also use deployment approvals, health checks, and rollback mechanisms to reduce production risk.
-
-Use the tools that match your actual project experience when answering interview questions.
-
----
-
-## 8. Spring HTTP Message Converters
-
-HTTP message converters translate HTTP request and response bodies into Java objects and back.
-
-| Converter | Purpose |
-|---|---|
-| `MappingJackson2HttpMessageConverter` | Converts Java objects to and from JSON. |
-| `StringHttpMessageConverter` | Reads and writes text. |
-| `MappingJackson2XmlHttpMessageConverter` | Converts Java objects to and from XML when the required XML support is available. |
-| `ByteArrayHttpMessageConverter` | Reads and writes byte arrays. |
-| `ResourceHttpMessageConverter` | Reads and writes resource content, such as file content. |
-
-### Example
-
-```java
-@PostMapping("/students")
-public Student createStudent(@RequestBody Student student) {
-    return studentService.save(student);
-}
-```
-
-If the client sends JSON:
-
-```json
-{
-  "name": "Ravi",
-  "department": "IT"
-}
-```
-
-Spring uses a suitable converter to deserialize the JSON into a `Student` object. The returned object is serialized into the negotiated response format, commonly JSON.
-
-**Interview answer:** HTTP message converters handle serialization and deserialization between Java objects and HTTP body formats such as JSON, XML, text, and binary content.
-
----
-
-## 9. Docker and Kubernetes
-
-### Docker
-
-Docker packages an application and its dependencies into a container image.
-
-### Kubernetes
-
-Kubernetes manages containers across a cluster. It supports deployment, scaling, service discovery, health checks, and recovery.
-
-### Typical deployment architecture
-
-```text
-Client
-  |
-Load Balancer
-  |
-API Gateway
-  |
-Kubernetes Cluster
-  |
-  +-- Student Service
-  +-- Teacher Service
-  +-- Lab Results Service
-  +-- Notification Service
-  |
-  +-- Oracle / PostgreSQL
-  +-- Kafka
-  +-- Redis
-```
-
-### Deployment process
-
-1. Build a Docker image.
-2. Push the image to a container registry.
-3. Update the Kubernetes Deployment.
-4. Kubernetes starts the required pods.
-5. Readiness and liveness probes check application health.
-6. Configure resource limits and autoscaling.
-7. Monitor the application and roll back unhealthy releases when needed.
-
-**Interview answer:** Docker containerizes the services, while Kubernetes orchestrates their deployment, availability, and scaling. AWS EKS is one option for managed Kubernetes.
-
----
-
-## 10. Java Streams: Average Salary by Department
-
-### Problem
-
-Calculate the average salary of employees in every department.
-
-### Code
-
-```java
-Map<String, Double> avgDeptSal = employees.stream()
-    .collect(Collectors.groupingBy(
-        Employee::getDepartment,
-        Collectors.averagingDouble(Employee::getSalary)
-    ));
-```
-
-### Explanation
-
-- `stream()` processes the employee collection.
-- `groupingBy()` groups employees by department.
-- `Employee::getDepartment` extracts the department name.
-- `averagingDouble(Employee::getSalary)` calculates the average salary for each group.
-- The final result is a map of department names to average salaries.
-
-### Example output
-
-```text
-IT      -> 50000.0
-HR      -> 40000.0
-Finance -> 45000.0
-```
-
-**Interview answer:** I use `groupingBy()` with `averagingDouble()` to calculate average salary department-wise in a single stream pipeline.
-
----
-
-## 11. Java Streams: Second-Highest Distinct Salary by Department
-
-### Problem
-
-Find the second-highest distinct salary in every department.
-
-### Code
-
-```java
-Map<String, Optional<Double>> result = employees.stream()
-    .collect(Collectors.groupingBy(
-        Employee::getDepartment,
-        Collectors.mapping(
-            Employee::getSalary,
-            Collectors.collectingAndThen(
-                Collectors.toSet(),
-                salaries -> salaries.stream()
-                    .sorted(Comparator.reverseOrder())
-                    .skip(1)
-                    .findFirst()
-            )
-        )
-    ));
-```
-
-### Explanation
-
-1. `groupingBy()` separates employees by department.
-2. `mapping()` extracts the salary from each employee.
-3. `toSet()` removes duplicate salaries.
-4. `sorted(Comparator.reverseOrder())` sorts salaries from highest to lowest.
-5. `skip(1)` skips the highest salary.
-6. `findFirst()` returns the second-highest salary.
-
-### Example
-
-| Department | Salaries | Second-highest |
-|---|---|---:|
-| IT | 90000, 80000, 70000 | 80000 |
-| HR | 60000, 50000 | 50000 |
-| Finance | 40000 | Empty |
-
-`Optional<Double>` handles departments that have fewer than two distinct salaries.
-
-**Important:** After `mapping()` extracts salaries, the stream contains `Double` values. Therefore, use `Comparator.reverseOrder()`, not `Comparator.comparingDouble(Employee::getSalary)`.
-
-### Null handling
-
-The above solution assumes department names and salaries are non-null. If salaries can be null, filter them before grouping:
-
-```java
-Map<String, Optional<Double>> result = employees.stream()
-    .filter(e -> e.getDepartment() != null)
-    .filter(e -> e.getSalary() != null)
-    .collect(Collectors.groupingBy(
-        Employee::getDepartment,
-        Collectors.mapping(
-            Employee::getSalary,
-            Collectors.collectingAndThen(
-                Collectors.toSet(),
-                salaries -> salaries.stream()
-                    .sorted(Comparator.reverseOrder())
-                    .skip(1)
-                    .findFirst()
-            )
-        )
-    ));
-```
-
----
-
-## Quick Interview Revision
-
-- **Transactions:** `@Transactional` manages database commit and rollback.
-- **Propagation:** Defines how transactions behave when another transaction exists.
-- **Security:** Authentication verifies identity; authorization checks permissions.
-- **JWT:** A signed token carries claims used to establish authenticated identity.
-- **Service-to-service security:** Use authenticated service identities and least-privilege access.
-- **CI/CD:** Automates building, testing, and deployment.
-- **Message converters:** Translate HTTP body formats and Java objects.
-- **Docker:** Packages an application into a container image.
-- **Kubernetes:** Orchestrates containers and supports scaling and recovery.
-- **Streams:** Use `groupingBy()` for grouping, `averagingDouble()` for averages, and `sorted()`, `skip()`, and `findFirst()` for second-highest distinct values.
+1. How did you implement transactions?
+→ Used @Transactional for database transactions.
+→ Used the Transactional Outbox pattern for reliable Kafka event publishing.
+
+2. What is transaction propagation?
+→ REQUIRED: Joins an existing transaction or creates a new one.
+→ REQUIRES_NEW: Starts an independent transaction.
+
+3. How did you implement security?
+→ Used Spring Security to protect REST APIs.
+→ Used JWT for authentication and roles for authorization.
+→ Used HTTPS to protect data in transit.
+
+4. Explain the JWT flow.
+→ User logs in through the UI.
+→ Authentication service validates credentials and issues a token.
+→ UI sends the token with API requests.
+→ Backend validates the token and checks permissions.
+
+5. What is authorization?
+→ Authentication checks who you are.
+→ Authorization checks what you can access.
+→ Used role-based access and resource-level permission checks.
+
+6. Have you worked on a customer-facing project?
+→ Worked on LabFlow, a healthcare application for clinical users.
+→ It displays lab results, patient history, trends, and critical alerts.
+→ Worked on APIs, Kafka processing, and database consistency.
+
+7. Explain your CI/CD pipeline.
+→ Code pushed to Git.
+→ Jenkins builds the application and runs tests.
+→ Docker creates the container image.
+→ Pipeline deploys the application.
+→ Monitoring and health checks verify deployment.
+
+8. What are HTTP message converters?
+→ MappingJackson2HttpMessageConverter: JSON.
+→ StringHttpMessageConverter: Plain text.
+→ MappingJackson2XmlHttpMessageConverter: XML.
+→ ByteArrayHttpMessageConverter: Byte arrays.
+→ ResourceHttpMessageConverter: Files and resource content.
+
+9. How did you deploy microservices?
+→ Docker packages the services into containers.
+→ Kubernetes manages deployment and scaling.
+→ Health checks detect failures.
+→ Rolling deployments reduce downtime.
+
+10. Average salary per department:
+→ groupingBy() groups employees by department.
+→ averagingDouble() calculates the average salary.
+
+11. Second-highest salary per department:
+→ Group employees by department.
+→ Remove duplicate salaries using toSet().
+→ Sort salaries in descending order.
+→ skip(1) skips the highest salary.
+→ findFirst() returns the second-highest salary.
+→ Optional.empty() is returned if fewer than two distinct salaries exist.
