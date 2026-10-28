@@ -1,0 +1,314 @@
+Java & Spring Boot Interview Notes
+
+1. Write a GET API and POST API from scratch.
+
+→ Entity: Represents the database table.
+→ Repository: Communicates with the database.
+→ Service: Contains business logic.
+→ Controller: Exposes REST APIs.
+
+Entity:
+
+@Entity
+public class Student {
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    private String name;
+
+    public Student() {}
+
+    public Student(String name) {
+        this.name = name;
+    }
+
+    public Long getId() { return id; }
+    public String getName() { return name; }
+    public void setName(String name) { this.name = name; }
+}
+
+Repository:
+
+public interface StudentRepository
+        extends JpaRepository<Student, Long> {
+}
+
+Service:
+
+@Service
+public class StudentService {
+    private final StudentRepository repository;
+
+    public StudentService(StudentRepository repository) {
+        this.repository = repository;
+    }
+
+    public List<Student> getAll() {
+        return repository.findAll();
+    }
+
+    public Student save(Student student) {
+        return repository.save(student);
+    }
+}
+
+Controller:
+
+@RestController
+@RequestMapping("/students")
+public class StudentController {
+    private final StudentService service;
+
+    public StudentController(StudentService service) {
+        this.service = service;
+    }
+
+    @GetMapping
+    public List<Student> getStudents() {
+        return service.getAll();
+    }
+
+    @PostMapping
+    public ResponseEntity<Student> create(
+            @RequestBody Student student) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(service.save(student));
+    }
+}
+
+→ GET /students returns all students.
+→ POST /students saves a student and returns HTTP 201 Created.
+
+------------------------------------------------------------------------------------------------------------------
+
+2. Difference between @RequiredArgsConstructor, @NoArgsConstructor, and @AllArgsConstructor
+
+→ @RequiredArgsConstructor creates a constructor for final fields and fields marked @NonNull.
+→ @NoArgsConstructor creates a constructor without parameters.
+→ @AllArgsConstructor creates a constructor with parameters for all instance fields.
+→ These are Lombok annotations that reduce boilerplate code.
+
+------------------------------------------------------------------------------------------------------------------
+
+3. What are the three annotations inside @SpringBootApplication?
+
+→ @SpringBootConfiguration: Marks the class as a Spring Boot configuration class.
+→ @EnableAutoConfiguration: Configures beans based on dependencies and settings.
+→ @ComponentScan: Scans packages for Spring components such as @Service and @Repository.
+
+------------------------------------------------------------------------------------------------------------------
+
+4. How do you manage logs across different environments?
+
+→ I use Logback with SLF4J for application logging.
+→ I maintain environment-specific configuration using application-dev.yml, application-qa.yml, and application-prod.yml.
+→ I use INFO in production for important events and DEBUG when detailed troubleshooting is needed.
+→ I centralize logs using tools such as ELK or Grafana Loki.
+
+------------------------------------------------------------------------------------------------------------------
+
+5. Difference between INFO and DEBUG log levels
+
+→ INFO records important application events, such as successful startup or business operations.
+→ DEBUG provides detailed information for troubleshooting application behaviour.
+→ Production normally uses INFO to reduce log volume.
+→ DEBUG can be enabled temporarily when investigating an issue, while avoiding sensitive data.
+
+------------------------------------------------------------------------------------------------------------------
+
+6. What is @Profile? What if a required component is missing?
+
+→ @Profile creates a bean only when the specified Spring profile is active.
+→ Example: @Profile("dev") creates a development-specific implementation only in the dev profile.
+→ If another required bean depends on it, application startup may fail with an unsatisfied dependency.
+→ I would activate the correct profile, provide a default implementation, or use @ConditionalOnProperty or @ConditionalOnMissingBean where appropriate.
+
+Example:
+
+@Service
+@Profile("dev")
+public class DevNotificationService implements NotificationService {
+}
+
+→ If NotificationService is required in every environment, I would ensure that each environment has a suitable implementation.
+
+------------------------------------------------------------------------------------------------------------------
+
+7. What are @Primary and @Qualifier?
+
+→ @Primary marks the default bean when multiple beans of the same type exist.
+→ @Qualifier selects a specific bean by its qualifier.
+→ @Primary is useful for a default implementation.
+→ @Qualifier is useful when I need a particular implementation.
+
+Example:
+
+@Service("emailService")
+class EmailService implements NotificationService {}
+
+@Service("smsService")
+class SmsService implements NotificationService {}
+
+@Autowired
+@Qualifier("smsService")
+private NotificationService notificationService;
+
+------------------------------------------------------------------------------------------------------------------
+
+8. How do you perform health checks? What is Spring Boot Actuator?
+
+→ Spring Boot Actuator provides endpoints for application monitoring and management.
+→ /actuator/health reports application health.
+→ Readiness checks determine whether the service can receive traffic.
+→ Liveness checks determine whether the application should be restarted.
+
+Example:
+
+management.endpoints.web.exposure.include=health,info
+
+→ In Kubernetes, I configure readiness and liveness probes to monitor the application.
+→ I secure Actuator endpoints and avoid exposing sensitive information publicly.
+
+------------------------------------------------------------------------------------------------------------------
+
+9. How do microservices communicate inside Kubernetes?
+
+→ Each service can be exposed internally through a Kubernetes Service.
+→ Other services call it using its DNS name, such as http://student-service:8080.
+→ Synchronous communication uses REST or gRPC.
+→ Asynchronous communication uses Kafka or another message broker.
+→ Kubernetes handles service discovery, while timeouts, retries, and circuit breakers improve resilience.
+
+------------------------------------------------------------------------------------------------------------------
+
+10. How do you manage secrets? How do you cache them? What is secrets.yaml?
+
+→ I store credentials, API keys, and database passwords in a secret manager such as AWS Secrets Manager or HashiCorp Vault.
+→ Applications retrieve secrets using IAM roles or workload identity rather than hardcoded credentials.
+→ If caching is needed, I cache secrets in memory with a short lifetime and refresh or invalidate them when rotated.
+→ A Kubernetes secrets.yaml file defines Kubernetes Secret resources. It does not automatically retrieve secrets from a KMS.
+
+→ If a KMS or secret manager is already used, I can integrate it through External Secrets Operator or the Secrets Store CSI Driver.
+→ Kubernetes Secret values are base64-encoded by default, not encrypted merely because they are encoded. Configure encryption at rest and restrict access using RBAC.
+
+------------------------------------------------------------------------------------------------------------------
+
+11. What is FeignClient?
+
+→ FeignClient is a declarative HTTP client used to call another service.
+→ I define an interface and annotate it with @FeignClient.
+→ Spring creates the implementation and handles the HTTP request.
+→ It reduces boilerplate code compared with manually building HTTP requests.
+
+Example:
+
+@FeignClient(name = "student-service")
+public interface StudentClient {
+    @GetMapping("/students/{id}")
+    Student getStudent(@PathVariable Long id);
+}
+
+→ I configure timeouts, error handling, and retries where appropriate.
+
+------------------------------------------------------------------------------------------------------------------
+
+12. How do you implement retry and timeout in WebClient?
+
+→ A timeout prevents a request from waiting indefinitely.
+→ Retry repeats a failed operation a limited number of times.
+→ I use Reactor's timeout() and retryWhen() operators.
+→ I retry only appropriate transient failures and avoid blindly retrying non-idempotent operations.
+
+Example:
+
+WebClient client = WebClient.builder()
+    .baseUrl("http://student-service")
+    .build();
+
+Mono<String> response = client.get()
+    .uri("/students/1")
+    .retrieve()
+    .bodyToMono(String.class)
+    .timeout(Duration.ofSeconds(2))
+    .retryWhen(
+        Retry.backoff(3, Duration.ofMillis(200))
+            .filter(ex -> ex instanceof TimeoutException)
+    );
+
+→ This example retries timeouts up to three times, with exponential backoff.
+→ In production, I would also handle HTTP 5xx responses, connection failures, and total request deadlines carefully.
+
+------------------------------------------------------------------------------------------------------------------
+
+13. How do you implement global exception handling?
+
+→ @RestControllerAdvice handles exceptions across controllers.
+→ @ExceptionHandler defines how a particular exception should be handled.
+→ Custom exceptions represent specific business errors.
+→ I return meaningful HTTP status codes and consistent error responses without exposing internal details.
+
+Example:
+
+@ResponseStatus(HttpStatus.NOT_FOUND)
+class StudentNotFoundException extends RuntimeException {
+    public StudentNotFoundException(Long id) {
+        super("Student not found: " + id);
+    }
+}
+
+@RestControllerAdvice
+class GlobalExceptionHandler {
+
+    @ExceptionHandler(StudentNotFoundException.class)
+    public ResponseEntity<String> handleNotFound(
+            StudentNotFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ex.getMessage());
+    }
+}
+
+→ If the student does not exist, I throw StudentNotFoundException.
+→ The global handler returns HTTP 404 instead of an unhandled server error.
+→ In production, I prefer a structured error response with an error code, message, and correlation ID.
+
+------------------------------------------------------------------------------------------------------------------
+
+14. What is time complexity? Explain common search and sort algorithms.
+
+→ Time complexity describes how an algorithm's execution time grows as input size increases.
+→ Big O notation describes the growth rate as input size increases.
+
+SEARCH ALGORITHMS
+
+→ Linear Search: O(n) — checks elements one by one.
+→ Binary Search: O(log n) — repeatedly halves a sorted search space.
+
+SORTING ALGORITHMS
+
+→ Bubble Sort: O(n²) average and worst case.
+→ Selection Sort: O(n²) average and worst case.
+→ Insertion Sort: O(n²) average and worst case; O(n) in the best case.
+→ Merge Sort: O(n log n) in best, average, and worst cases.
+→ Quick Sort: O(n log n) average; O(n²) worst case.
+→ Heap Sort: O(n log n) in the worst case.
+
+→ For large datasets, O(n log n) sorting algorithms are generally preferred.
+→ Binary search requires sorted data or another structure that supports the necessary ordering.
+
+------------------------------------------------------------------------------------------------------------------
+
+QUICK REVISION
+
+→ @Transactional: Manages database transactions.
+→ @SpringBootApplication: Combines configuration, auto-configuration, and component scanning.
+→ @Profile: Controls bean creation by active profile.
+→ @Primary: Selects the default bean.
+→ @Qualifier: Selects a specific bean.
+→ Actuator: Provides monitoring and health endpoints.
+→ FeignClient: Simplifies HTTP calls between services.
+→ WebClient: Supports reactive HTTP communication.
+→ @RestControllerAdvice: Handles exceptions globally.
+→ Big O: Describes algorithm growth as input size increases.
+
+------------------------------------------------------------------------------------------------------------------
