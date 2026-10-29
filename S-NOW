@@ -122,3 +122,519 @@ class SmsService implements NotificationService {
 → A class can extend one abstract or concrete class but implement multiple interfaces.
 → I prefer interfaces for loose coupling and abstract classes when related classes need shared code.
 ------------------------------------------------------------------------------------------------------------------
+
+
+
+
+Java & Spring Boot Interview Notes
+Production Issues, Microservices, Kafka & Java
+
+------------------------------------------------------------------------------------------------------------------
+
+1. Tested the production API in Postman, but the UI is not getting a response. What could be the issue?
+
+→ First, check the browser Network tab to see the request URL, status code, and response.
+→ Check CORS configuration, authentication headers, request payload, and HTTP method.
+→ Verify whether the UI is calling the correct environment and endpoint.
+→ Check browser console errors, API Gateway logs, and backend logs.
+→ If Postman works but the browser fails, CORS or browser-specific security restrictions are common possibilities.
+
+------------------------------------------------------------------------------------------------------------------
+
+2. M1 → M2 → M3. If M3 responds slowly, how do you optimize it?
+
+→ First, use distributed tracing to identify where the request is spending time.
+→ Configure connection and response timeouts between services.
+→ Optimize M3 database queries, indexes, and external API calls.
+→ Use caching if M3 repeatedly returns data that does not change frequently.
+→ If the business flow allows it, process the M3 operation asynchronously using Kafka.
+→ Apply a Circuit Breaker to prevent repeated calls to a failing service.
+
+------------------------------------------------------------------------------------------------------------------
+
+3. If we change a name in M1, how do we ensure the same change appears in M2 and M3?
+
+→ M1 publishes a change event to Kafka after successfully saving the updated data.
+→ M2 and M3 consume the event and update their local data.
+→ Use the Transactional Outbox pattern to avoid losing events between database updates and publishing.
+→ Include an entity ID and version in the event to handle duplicates and out-of-order updates.
+→ Use retries and dead-letter handling for failed messages.
+
+------------------------------------------------------------------------------------------------------------------
+
+4. M1 updates its database but fails to send the same data to M2 and M3. How do you handle it?
+
+→ The problem is that the database update succeeded, but event publishing failed.
+→ I would use the Transactional Outbox pattern to save the business data and event in the same database transaction.
+→ A background publisher reads pending events and sends them to Kafka.
+→ If publishing fails, the publisher retries without losing the event.
+→ Consumers must be idempotent so retrying an event does not cause duplicate business operations.
+
+------------------------------------------------------------------------------------------------------------------
+
+5. How do you trace a request if something goes wrong in M2?
+
+→ I propagate a trace ID across M1, M2, and M3.
+→ Each service includes the trace ID in its logs.
+→ I use distributed tracing tools such as OpenTelemetry with Jaeger or Zipkin.
+→ I check the trace to identify which service is slow or failing.
+→ I correlate the trace with logs, HTTP status codes, and database timings.
+
+------------------------------------------------------------------------------------------------------------------
+
+6. Describe your approach to debugging a production issue.
+
+→ First, understand the impact, affected users, and when the issue started.
+→ Check logs in CloudWatch, ELK, or Splunk using the request or trace ID.
+→ Check metrics such as CPU, memory, API latency, error rate, and database connections.
+→ Use distributed tracing to identify the failing service or dependency.
+→ Mitigate the impact through rollback, traffic reduction, or disabling a problematic feature.
+→ Fix the root cause, test the solution, and add monitoring to prevent recurrence.
+
+------------------------------------------------------------------------------------------------------------------
+
+7. What do you do during a high-severity production incident?
+
+→ Assess the severity and immediately notify the responsible team.
+→ Prioritize restoring service and reducing customer impact.
+→ Roll back the release or disable the faulty feature if that is the safest option.
+→ Keep stakeholders updated with clear information.
+→ After recovery, perform root-cause analysis and document preventive actions.
+
+------------------------------------------------------------------------------------------------------------------
+
+8. How do you connect a Spring Boot application to Kafka?
+
+→ Configure the Kafka bootstrap servers in application.yml.
+→ Configure serializers and deserializers for the message format.
+→ Use KafkaTemplate to publish messages and @KafkaListener to consume them.
+→ Configure authentication, TLS, and ACLs if the cluster requires them.
+→ Monitor consumer lag, retries, and failed messages.
+
+Example:
+
+spring:
+  kafka:
+    bootstrap-servers: localhost:9092
+    consumer:
+      group-id: notification-group
+      auto-offset-reset: earliest
+
+------------------------------------------------------------------------------------------------------------------
+
+9. Does Kafka require username and password, or is the broker address enough?
+
+→ For a local unsecured Kafka cluster, the broker address may be sufficient.
+→ In production, Kafka commonly uses TLS, SASL authentication, or both.
+→ Credentials and certificates must be stored securely.
+→ Kafka ACLs control which topics a producer or consumer can access.
+→ The exact configuration depends on the Kafka cluster's security setup.
+
+------------------------------------------------------------------------------------------------------------------
+
+10. What makes Kafka fast compared with traditional message queues?
+
+→ Kafka writes messages sequentially to partition logs, which supports efficient disk I/O.
+→ It uses batching and compression to reduce overhead.
+→ Partitioning enables parallel processing across consumers.
+→ Consumers pull messages and track offsets, allowing messages to be replayed.
+→ Performance depends on configuration, message size, hardware, and workload; Kafka is not automatically faster for every use case.
+
+------------------------------------------------------------------------------------------------------------------
+
+11. A Kafka consumer is lagging. How do you troubleshoot it?
+
+→ First, check consumer lag, processing time, and incoming message rate.
+→ Review business logic for slow database inserts and external API calls.
+→ Increase consumer parallelism when partitions and downstream capacity allow it.
+→ Optimize database queries, batch operations where appropriate, and use asynchronous processing carefully.
+→ Configure retries and dead-letter handling for poison messages.
+→ Use read_committed isolation when consuming transactional Kafka messages and only committed data is required.
+
+------------------------------------------------------------------------------------------------------------------
+
+12. How do you prevent a Singleton from serialization, cloning, and reflection?
+
+→ Prefer an enum Singleton because Java protects enum instances against normal serialization and cloning attacks.
+→ For a traditional Singleton, use a private constructor and a static instance.
+→ Override clone() to prevent cloning.
+→ Use readResolve() to preserve the Singleton instance during deserialization.
+→ Reflection can still attack ordinary Singleton implementations, so constructor checks are useful; enum Singleton is generally the stronger choice.
+
+Example:
+
+enum AppConfig {
+    INSTANCE;
+
+    public void display() {
+        System.out.println("Application configuration");
+    }
+}
+
+------------------------------------------------------------------------------------------------------------------
+
+13. What is a BlockingQueue?
+
+→ BlockingQueue is a thread-safe queue used to exchange data between threads.
+→ If the queue is empty, take() waits until an item becomes available.
+→ If a bounded queue is full, put() waits until space becomes available.
+→ It is useful for producer-consumer problems and background job processing.
+→ Examples include ArrayBlockingQueue and LinkedBlockingQueue.
+
+------------------------------------------------------------------------------------------------------------------
+
+14. Can a Java record be used as a REST controller response?
+
+→ Yes, records are suitable for immutable response DTOs.
+→ They automatically provide a constructor, accessors, equals(), hashCode(), and toString().
+→ Spring Boot can serialize records to JSON using Jackson versions with record support.
+→ Records are useful for transferring data without writing boilerplate getters and constructors.
+
+Example:
+
+public record StudentResponse(Long id, String name) {}
+
+------------------------------------------------------------------------------------------------------------------
+
+15. How do you enable logging in Spring Boot?
+
+→ Spring Boot uses SLF4J with Logback by default in a typical starter configuration.
+→ Configure logging levels in application.yml.
+→ Use INFO for important events, DEBUG for detailed troubleshooting, WARN for unexpected situations, and ERROR for failures.
+→ Include trace IDs in logs to connect requests across services.
+→ Send logs to a centralized platform such as CloudWatch, ELK, or Grafana Loki.
+
+Example:
+
+logging:
+  level:
+    root: INFO
+    com.example: DEBUG
+
+------------------------------------------------------------------------------------------------------------------
+
+16. How do you enable Swagger for REST APIs?
+
+→ Add the springdoc-openapi dependency.
+→ Configure the application and expose the API documentation endpoints.
+→ Swagger UI is commonly available at /swagger-ui/index.html.
+→ The OpenAPI document is commonly available at /v3/api-docs.
+→ Secure the documentation endpoints if they expose internal APIs.
+
+------------------------------------------------------------------------------------------------------------------
+
+17. How do you view application logs in AWS CloudWatch?
+
+→ Configure the application or container environment to send logs to CloudWatch.
+→ For EKS, use a supported logging agent or collector to forward container logs.
+→ Open CloudWatch Logs and select the relevant log group and stream.
+→ Search using trace IDs, error messages, timestamps, or service names.
+→ Configure metrics and alarms for recurring errors or unusual behaviour.
+
+------------------------------------------------------------------------------------------------------------------
+
+18. How does ExecutorService reuse threads?
+
+→ ExecutorService manages a pool of worker threads.
+→ After a task finishes, a worker thread can execute another task instead of being recreated.
+→ A fixed thread pool maintains a configured number of workers.
+→ A cached thread pool can create additional threads when needed and reuse idle ones.
+→ A scheduled thread pool executes tasks after delays or at fixed intervals.
+→ shutdown() stops accepting new tasks and allows submitted tasks to finish; shutdownNow() attempts to interrupt running tasks.
+
+------------------------------------------------------------------------------------------------------------------
+
+19. What is the difference between synchronized and ReentrantLock?
+
+→ synchronized automatically releases the monitor when execution exits the synchronized block.
+→ ReentrantLock requires unlock() in a finally block.
+→ ReentrantLock supports tryLock(), timed acquisition, and interruptible lock acquisition.
+→ Use synchronized for straightforward locking and ReentrantLock when additional lock-control features are required.
+
+------------------------------------------------------------------------------------------------------------------
+
+20. What happens if a mutable object is used as a HashMap key?
+
+→ HashMap uses the key's hashCode() to find the bucket and equals() to compare keys.
+→ If fields used by hashCode() or equals() change after insertion, the map may no longer find the entry using that key.
+→ This can make get() or remove() fail even though the entry is still stored in the map.
+→ Prefer immutable keys, such as String or immutable value objects.
+
+------------------------------------------------------------------------------------------------------------------
+
+21. What happens if two threads update the same key in ConcurrentHashMap?
+
+→ ConcurrentHashMap safely supports concurrent access and updates.
+→ Individual operations such as put() and compute() are thread-safe.
+→ If two threads call put() on the same key, the value from the operation that takes effect last remains.
+→ Use compute() or merge() for atomic per-key updates.
+→ A sequence of separate operations is not automatically atomic just because ConcurrentHashMap is thread-safe.
+
+------------------------------------------------------------------------------------------------------------------
+
+22. A batch job fails after processing 50,000 of 100,000 records. How do you resume safely?
+
+→ Process records in manageable batches and maintain a checkpoint.
+→ Store the last successfully processed record or batch in a durable location.
+→ On restart, resume from the checkpoint rather than processing everything again.
+→ Use idempotent writes or unique business keys to avoid duplicate records.
+→ Record failed items separately and retry them according to the failure type.
+→ For Spring Batch, use JobRepository and restartable job configuration where appropriate.
+
+------------------------------------------------------------------------------------------------------------------
+
+23. What happens if multiple Spring profiles are active?
+
+→ Multiple profiles can be active at the same time.
+→ Beans whose @Profile expressions match the active profiles can be created together.
+→ If two profiles create beans of the same required type, Spring may encounter ambiguity unless one is marked @Primary or selected using @Qualifier.
+→ Profile-specific configuration properties may override values according to configuration precedence.
+→ I avoid activating incompatible profiles together and test each supported combination.
+
+------------------------------------------------------------------------------------------------------------------
+
+24. What happens if Tomcat has 200 worker threads and 300 requests arrive?
+
+→ Up to 200 requests can execute concurrently on those worker threads, assuming all are available.
+→ Additional requests may wait for an available worker, subject to connection handling and the accept queue.
+→ If the queue fills or connections exceed configured limits, requests may experience delays, timeouts, or connection failures.
+→ I would check thread-pool utilization, request latency, database connection pools, and downstream bottlenecks before increasing limits.
+→ Raising thread counts alone can make the situation worse if the database or another dependency is already saturated.
+
+------------------------------------------------------------------------------------------------------------------
+
+25. What are the disadvantages of pessimistic locking?
+
+→ It blocks competing transactions from accessing or modifying locked rows.
+→ Long-running transactions can reduce throughput and occupy database connections.
+→ Transactions that acquire locks in different orders can cause deadlocks.
+→ Lock contention can increase latency under heavy traffic.
+→ I use pessimistic locking when conflicts are likely and strict coordination is necessary; optimistic locking is often better when conflicts are uncommon.
+
+------------------------------------------------------------------------------------------------------------------
+
+26. Explain the Liskov Substitution Principle (LSP).
+
+→ LSP states that a subtype should be usable wherever its parent type is expected without breaking the program's expected behaviour.
+→ If an interface requires both PDF generation and Excel export, a PDF-only implementation may not be able to honour that contract.
+→ I would split the interface into smaller contracts, such as ReportGenerator and ExcelExporter.
+→ This follows the Interface Segregation Principle and makes implementations easier to substitute correctly.
+
+------------------------------------------------------------------------------------------------------------------
+
+27. How does a request flow internally in Spring Boot?
+
+→ The client sends an HTTP request to the embedded Tomcat server.
+→ Tomcat passes the request to the DispatcherServlet.
+→ HandlerMapping identifies the appropriate controller.
+→ The controller calls the service layer, which calls the repository when database access is needed.
+→ The repository interacts with the database.
+→ The response returns through the controller and DispatcherServlet to the client.
+→ Filters and Spring Security may process the request before it reaches the controller.
+
+------------------------------------------------------------------------------------------------------------------
+
+28. What is the Strategy Design Pattern?
+
+→ Strategy defines multiple interchangeable behaviours behind a common interface.
+→ Each behaviour is implemented in a separate class.
+→ The application selects the required implementation at runtime.
+→ It avoids large if-else blocks when behaviour varies by type.
+
+Example:
+
+interface Report {
+    void generate();
+}
+
+class PDFReport implements Report {
+    public void generate() {
+        System.out.println("Generating PDF");
+    }
+}
+
+class ExcelReport implements Report {
+    public void generate() {
+        System.out.println("Generating Excel");
+    }
+}
+
+------------------------------------------------------------------------------------------------------------------
+
+29. What is the difference between a database function, stored procedure, and view?
+
+→ A function returns a value or table and can be used in SQL expressions where supported.
+→ A stored procedure executes a sequence of database operations and can support input/output parameters.
+→ A view is a stored SQL query presented like a virtual table.
+→ A materialized view stores query results and needs refreshing to reflect underlying changes.
+→ Use a view for reusable queries, a materialized view for expensive reads, and a procedure for multi-step database operations.
+
+------------------------------------------------------------------------------------------------------------------
+
+30. How do you troubleshoot a slow SQL query?
+
+→ Identify the slow query and measure its execution time.
+→ Use EXPLAIN or EXPLAIN ANALYZE to inspect the execution plan.
+→ Check indexes, joins, table scans, row estimates, and returned row counts.
+→ Review database locks, statistics, connection-pool usage, and query patterns.
+→ Apply changes and compare performance using representative data.
+
+------------------------------------------------------------------------------------------------------------------
+
+31. What is the difference between INNER JOIN and LEFT JOIN?
+
+→ INNER JOIN returns only rows that match in both tables.
+→ LEFT JOIN returns every row from the left table and matching rows from the right table.
+→ If there is no right-side match, the right-side columns contain NULL.
+→ Use INNER JOIN when a match is required and LEFT JOIN when unmatched left-side records must also be included.
+
+------------------------------------------------------------------------------------------------------------------
+
+32. How do you find a missing number in an array of consecutive integers?
+
+→ If the array contains numbers from 1 to n with exactly one number missing, use the expected sum minus the actual sum.
+→ Expected sum = n × (n + 1) / 2.
+→ Missing number = expected sum − actual sum.
+→ For large numbers, use long to avoid integer overflow.
+→ If the range is arbitrary or duplicates are possible, validate the assumptions or use a different approach.
+
+------------------------------------------------------------------------------------------------------------------
+
+33. How do you find an integer without a pair?
+
+→ If every other integer occurs exactly twice, XOR all the elements.
+→ Since x ^ x = 0 and x ^ 0 = x, duplicate pairs cancel out.
+→ The remaining XOR value is the unpaired integer.
+→ This approach takes O(n) time and O(1) extra space.
+
+------------------------------------------------------------------------------------------------------------------
+
+34. How do you find common words between two strings, including positions and counts?
+
+→ Split both strings into tokens.
+→ Build a frequency map for each string.
+→ Find words that appear in both maps.
+→ For each common word, record its count in each string and its token positions.
+→ Clarify whether positions mean character indexes or word indexes and whether matching is case-sensitive.
+
+------------------------------------------------------------------------------------------------------------------
+
+35. Java Streams: Filter employees by age and sort by salary.
+
+→ Filter employees using age conditions.
+→ Sort the filtered employees using Comparator.comparingDouble(Employee::getSalary).
+→ Use reversed() if descending salary order is required.
+→ Handle null salary values explicitly if they are allowed.
+
+------------------------------------------------------------------------------------------------------------------
+
+36. Java Streams: Group employees by department and calculate average salary.
+
+→ Use groupingBy(Employee::getDepartment) to group employees.
+→ Use averagingDouble(Employee::getSalary) to calculate each department's average.
+→ Use max() with a salary comparator to find the highest-paid employee.
+→ Decide how null departments and salaries should be handled before processing.
+
+------------------------------------------------------------------------------------------------------------------
+
+37. How do you calculate total revenue by product category for completed orders?
+
+→ Filter orders where status is COMPLETED.
+→ Extract each order's product category and revenue.
+→ Group orders by category using groupingBy().
+→ Use Collectors.reducing() or a suitable summing collector for BigDecimal values.
+→ BigDecimal is preferred for financial calculations because it avoids binary floating-point rounding errors.
+
+------------------------------------------------------------------------------------------------------------------
+
+38. How do you find unique characters in "Swiss"?
+
+→ Count the frequency of each character.
+→ Keep characters whose frequency is exactly one.
+→ For "Swiss", the unique characters are 'w' and 'i'.
+→ Use LinkedHashMap if the original character order must be preserved.
+
+------------------------------------------------------------------------------------------------------------------
+
+39. How do you find the first non-repeating character?
+
+→ Count character frequencies while preserving insertion order.
+→ Iterate through the characters again.
+→ Return the first character whose frequency is one.
+→ Return an Optional or another explicit result when every character repeats.
+
+------------------------------------------------------------------------------------------------------------------
+
+40. How do you check balanced parentheses?
+
+→ Use a stack.
+→ Push opening brackets onto the stack.
+→ For each closing bracket, verify that the stack contains the matching opening bracket.
+→ At the end, the string is balanced only if no unmatched opening brackets remain.
+→ Time complexity is O(n).
+
+------------------------------------------------------------------------------------------------------------------
+
+41. How do you merge overlapping intervals?
+
+→ Sort intervals by their start value.
+→ Add the first interval to the result.
+→ If the next interval overlaps the last result interval, extend the end value.
+→ Otherwise, add a new interval.
+→ Time complexity is O(n log n), mainly due to sorting.
+
+------------------------------------------------------------------------------------------------------------------
+
+42. How do you find the longest substring without repeating characters?
+
+→ Use a sliding window with two pointers.
+→ Maintain a set or map of characters in the current window.
+→ Move the left pointer when a repeated character is found.
+→ Track the maximum window length.
+→ With a suitable character-index map, the algorithm runs in O(n) time.
+
+------------------------------------------------------------------------------------------------------------------
+
+43. How do you insert a value at a specific position in a list?
+
+→ Use ArrayList.add(index, value).
+→ For example, inserting 8 at index 2 in [1, 2, 4, 5] produces [1, 2, 8, 4, 5].
+→ ArrayList shifts later elements to make space.
+→ The index must be between 0 and the current list size, inclusive.
+
+------------------------------------------------------------------------------------------------------------------
+
+44. What happens if @Transactional is used under high traffic?
+
+→ @Transactional does not automatically cause a performance problem.
+→ Long transactions can hold database connections and locks for too long.
+→ Under high traffic, this may exhaust the connection pool and increase latency.
+→ Keep transactions short, optimize SQL, avoid remote API calls inside database transactions, and monitor HikariCP metrics.
+→ Remember that Spring's default proxy-based transaction management can be bypassed by self-invocation.
+
+------------------------------------------------------------------------------------------------------------------
+
+45. What is the problem with this cache implementation?
+
+if (!cache.containsKey(userId)) {
+    UserProfile profile = loadFromDatabase(userId);
+    cache.put(userId, profile);
+}
+return cache.get(userId);
+
+→ Two threads can both observe that the key is missing and load the same profile.
+→ This causes duplicate database calls.
+→ If null values are involved, the behaviour also needs to be handled explicitly.
+→ Use a cache library such as Caffeine or an atomic loading strategy with ConcurrentHashMap.computeIfAbsent() when appropriate.
+→ For distributed applications, use Redis if cache state must be shared across instances.
+
+------------------------------------------------------------------------------------------------------------------
+
+46. How do you merge two lists of strings, remove duplicates, and find the longest string?
+
+→ Combine the lists using Stream.concat().
+→ Use distinct() to remove duplicate strings.
+→ Use max(Comparator.comparingInt(String::length)) to find the longest string.
+→ If multiple strings have the same maximum length, define whether the first or all longest strings should be returned.
+
+------------------------------------------------------------------------------------------------------------------
