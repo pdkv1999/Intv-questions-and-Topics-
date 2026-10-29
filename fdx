@@ -1,0 +1,453 @@
+Java & Spring Boot Interview Notes
+
+------------------------------------------------------------------------------------------------------------------
+
+1. Explain the Internal Working of HashMap in Java.
+
+1. HashMap stores data as key-value pairs. It uses the key's hashCode() to calculate the bucket index where the entry should be stored.
+2. If multiple keys map to the same bucket, HashMap handles the collision using a linked list and, under suitable conditions, a balanced tree.
+3. When we retrieve a value, HashMap calculates the bucket index and uses hashCode() and equals() to find the correct key.
+4. The default initial capacity is 16 and the default load factor is 0.75. When the threshold is exceeded, HashMap resizes its internal table.
+
+------------------------------------------------------------------------------------------------------------------
+
+2. Why Do We Need ConcurrentHashMap When We Already Have HashMap? How Does It Work Internally?
+
+1. HashMap is not thread-safe. ConcurrentHashMap supports concurrent access by multiple threads without requiring us to synchronize the entire map.
+2. In Java 8 and later, it uses CAS operations and synchronized locking on individual bins when necessary, allowing better concurrency.
+3. Read operations are generally non-blocking, while competing updates to the same bin may need synchronization.
+4. ConcurrentHashMap does not allow null keys or null values, and its iterators are weakly consistent rather than fail-fast in the usual HashMap style.
+
+------------------------------------------------------------------------------------------------------------------
+
+3. What Happens When Two Different Keys, A and B, Return the Same Hash Code?
+
+1. Both keys may map to the same bucket because they have the same hash code.
+2. HashMap stores both entries in that bucket; one entry does not overwrite the other merely because the hash codes are equal.
+3. When retrieving a value, HashMap uses equals() to distinguish between the keys.
+4. If A and B are not equal, both entries can exist independently in the same HashMap.
+
+------------------------------------------------------------------------------------------------------------------
+
+4. What Is the Purpose of equals() in a HashMap?
+
+1. hashCode() helps identify the bucket, while equals() checks whether two keys are logically equal.
+2. If two keys have the same hash code, HashMap uses equals() to determine whether they represent the same key.
+3. If equals() returns true for an existing key, putting a new value replaces the value associated with that key.
+4. We should override hashCode() and equals() consistently when using custom objects as HashMap keys.
+
+------------------------------------------------------------------------------------------------------------------
+
+5. What Is a Hash Collision, and How Does It Occur?
+
+1. A hash collision occurs when two different keys produce the same hash code or map to the same bucket.
+2. It can happen because the number of possible keys is much larger than the number of available buckets.
+3. HashMap handles collisions using a linked list and may convert the bin into a balanced tree when its thresholds and capacity conditions are met.
+4. A good hashCode() implementation distributes keys evenly and helps reduce collisions.
+
+------------------------------------------------------------------------------------------------------------------
+
+6. What Happens When Multiple Write Operations Target the Same Bucket in a HashMap?
+
+1. HashMap is not thread-safe, so concurrent writes can cause race conditions and inconsistent results.
+2. Two threads may interfere while inserting or updating entries, and updates can be lost.
+3. In modern Java versions, collision handling uses linked lists or trees, but this does not make HashMap thread-safe.
+4. For concurrent updates, use ConcurrentHashMap or synchronize access to the map appropriately.
+
+------------------------------------------------------------------------------------------------------------------
+
+7. What Is Serialization in Java, and How Does It Help?
+
+1. Serialization converts an object's state into a byte stream so it can be stored or transferred.
+2. A class generally implements the Serializable interface to support default Java serialization.
+3. Deserialization reconstructs an object from the serialized byte stream.
+4. It can be used for persistence or data transfer, but both sides must handle compatibility and security carefully.
+
+Example:
+
+    class Employee implements Serializable {
+        private static final long serialVersionUID = 1L;
+        private String name;
+    }
+
+------------------------------------------------------------------------------------------------------------------
+
+8. How Can You Prevent a Field, Such as a Key, from Being Serialized?
+
+1. Declare the field as transient to exclude it from default Java serialization.
+2. During deserialization, a transient reference field normally receives its default value, which is null.
+3. Example: `private transient String key;`
+4. If the field must be restored, custom serialization logic can explicitly handle it. Do not serialize secrets unnecessarily.
+
+------------------------------------------------------------------------------------------------------------------
+
+9. What Is Externalization in Java, and How Does It Differ from Serialization?
+
+1. Serialization uses the Serializable interface and provides default serialization of eligible fields.
+2. Externalization uses Externalizable and gives the developer explicit control over how an object's data is written and read.
+3. An Externalizable class implements `writeExternal()` and `readExternal()` and must have a public no-argument constructor.
+4. Externalization offers more control but requires more implementation and careful maintenance when the data format changes.
+
+------------------------------------------------------------------------------------------------------------------
+
+10. What Is a Functional Interface? Write a Simple Example.
+
+1. A functional interface has exactly one abstract method.
+2. It is used with lambda expressions and method references in Java.
+3. The `@FunctionalInterface` annotation is optional, but it helps the compiler validate the interface.
+4. Example:
+
+    @FunctionalInterface
+    interface Calculator {
+        int add(int a, int b);
+    }
+
+------------------------------------------------------------------------------------------------------------------
+
+11. Can a Functional Interface Have More Than One Method?
+
+1. Yes, it can contain multiple methods, but it must have only one abstract method.
+2. It can have any number of default and static methods.
+3. Methods matching public methods of Object, such as equals(), do not count as additional abstract methods for this rule.
+4. If we add another unrelated abstract method, the interface is no longer a functional interface.
+
+------------------------------------------------------------------------------------------------------------------
+
+12. Can We Define Default, Static, or Private Methods in a Functional Interface?
+
+1. Yes, a functional interface can contain default methods, static methods, and private methods.
+2. Default methods provide implementation that implementing classes can inherit.
+3. Static methods belong to the interface and are called using the interface name.
+4. Private methods help reuse implementation inside the interface and can be called by its default or static methods.
+
+------------------------------------------------------------------------------------------------------------------
+
+13. What Is a Lambda Expression, and Why Is It Used with Functional Interfaces?
+
+1. A lambda expression is a concise way to provide an implementation of a functional interface's single abstract method.
+2. It reduces boilerplate code compared with creating an anonymous inner class.
+3. Lambdas are commonly used with Streams, collection operations, and asynchronous programming.
+4. Example: `(a, b) -> a + b` implements a two-argument operation that returns their sum.
+
+------------------------------------------------------------------------------------------------------------------
+
+14. Write a Simple Example of a Lambda Expression.
+
+1. Define a functional interface with one abstract method.
+2. Assign a lambda expression to a variable of that interface type.
+3. Call the interface method to execute the lambda.
+4. Example:
+
+    @FunctionalInterface
+    interface Greeting {
+        void sayHello(String name);
+    }
+
+    Greeting greeting = name -> System.out.println("Hello " + name);
+    greeting.sayHello("Ravi");
+
+------------------------------------------------------------------------------------------------------------------
+
+15. Can We Pass a Lambda Expression as a Parameter to a Method?
+
+1. Yes, we can pass a lambda as a parameter when the method expects a functional interface.
+2. The compiler uses the target interface to determine the lambda's parameter and return types.
+3. This allows us to pass behavior into a method instead of hardcoding that behavior.
+4. Example:
+
+    static void calculate(int a, int b, Calculator calculator) {
+        System.out.println(calculator.add(a, b));
+    }
+
+    calculate(10, 20, (a, b) -> a + b);
+
+------------------------------------------------------------------------------------------------------------------
+
+16. What Is a Terminal Operation in Java Streams?
+
+1. A terminal operation ends a Stream pipeline and triggers processing of the stream elements.
+2. Examples include `collect()`, `forEach()`, `reduce()`, `count()`, `sum()` and `findFirst()`.
+3. A terminal operation may produce a result, a value, or a side effect.
+4. A stream cannot be reused after a terminal operation has consumed it.
+
+------------------------------------------------------------------------------------------------------------------
+
+17. What Happens If We Create a Stream Pipeline but Do Not Invoke a Terminal Operation?
+
+1. Intermediate operations such as `filter()` and `map()` are lazy.
+2. If no terminal operation is called, the pipeline is not executed.
+3. Therefore, intermediate-operation logic generally does not run and no final result is produced.
+4. Example:
+
+    List<String> names = List.of("Ravi", "Amit");
+
+    names.stream()
+         .filter(name -> {
+             System.out.println(name);
+             return name.startsWith("R");
+         });
+
+    // No output: there is no terminal operation.
+
+------------------------------------------------------------------------------------------------------------------
+
+18. What Is an Immutable Class? Write an Example.
+
+1. An immutable class is a class whose object state cannot be changed after construction.
+2. Make the class final, fields private and final, and provide no setters.
+3. Initialize all fields through the constructor and return defensive copies of mutable objects.
+4. Example:
+
+    final class Employee {
+        private final String name;
+
+        Employee(String name) {
+            this.name = name;
+        }
+
+        public String getName() {
+            return name;
+        }
+    }
+
+------------------------------------------------------------------------------------------------------------------
+
+19. How Can We Update Data in an Immutable Class?
+
+1. We cannot modify the existing object's state after it is created.
+2. To represent an update, create a new object containing the updated value.
+3. This makes the object's state predictable and reduces concurrency-related issues.
+4. Example:
+
+    Employee updated = new Employee("Ravi");
+    // Create another Employee object for a different name.
+
+------------------------------------------------------------------------------------------------------------------
+
+20. How Do You Handle Mutable Objects, Especially Lists, in an Immutable Class?
+
+1. Make a defensive copy of a mutable list in the constructor so external code cannot modify the internal list.
+2. Return an unmodifiable view or a defensive copy from the getter.
+3. Ensure the list elements are immutable too, or defensively copy them when necessary.
+4. Example:
+
+    final class Team {
+        private final List<String> members;
+
+        Team(List<String> members) {
+            this.members = List.copyOf(members);
+        }
+
+        public List<String> getMembers() {
+            return members;
+        }
+    }
+
+    // List.copyOf creates an unmodifiable list and rejects null elements.
+
+------------------------------------------------------------------------------------------------------------------
+
+21. Is String Immutable in Java? Why Is It Immutable, and What Are the Benefits?
+
+1. Yes, String is immutable. Once a String object is created, its character sequence cannot be changed.
+2. Operations such as `replace()` or `concat()` return a new String when a change is needed.
+3. Immutability supports safe sharing across threads, String pool reuse, and stable hash codes for HashMap keys.
+4. It also helps with security because a String value cannot be changed unexpectedly after validation, although sensitive data may be better handled using other representations.
+
+------------------------------------------------------------------------------------------------------------------
+
+22. What Is an Exception in Java?
+
+1. An exception is an event that interrupts the normal flow of program execution.
+2. Java represents exceptions using classes derived from Throwable.
+3. Checked exceptions must be caught or declared, while unchecked exceptions are RuntimeException subclasses and do not require that rule.
+4. We handle exceptions using `try`, `catch`, `finally`, `throw`, and `throws`, depending on the situation.
+
+------------------------------------------------------------------------------------------------------------------
+
+23. When Creating a Custom Exception, Should We Extend Exception or RuntimeException?
+
+1. Extend Exception when callers should be required to handle or declare the exception.
+2. Extend RuntimeException when the exception represents an unchecked failure and callers are not required to catch it.
+3. For example, a recoverable business operation failure may be represented as a checked exception if the caller is expected to recover from it.
+4. In Spring Boot applications, custom business exceptions often extend RuntimeException and are handled centrally using `@ControllerAdvice`.
+
+------------------------------------------------------------------------------------------------------------------
+
+24. What Happens When We Extend Exception Versus RuntimeException?
+
+1. Extending Exception directly creates a checked exception, except for its RuntimeException and Error subclasses.
+2. Extending RuntimeException creates an unchecked exception, so Java does not require callers to catch or declare it.
+3. Checked exceptions suit situations where callers are expected to handle a recoverable condition; unchecked exceptions are commonly used for programming errors or application-level failures.
+4. Both can be caught using try-catch, and both can carry a message and a cause.
+
+------------------------------------------------------------------------------------------------------------------
+
+25. What Is @ControllerAdvice, and How Do You Use It?
+
+1. `@ControllerAdvice` provides centralized handling for exceptions across Spring MVC controllers.
+2. We define methods annotated with `@ExceptionHandler` to handle specific exception types.
+3. We can return a consistent error response containing an error code, message, and timestamp.
+4. This avoids repeating try-catch blocks in every controller and keeps API error responses consistent.
+
+Example:
+
+    @RestControllerAdvice
+    class GlobalExceptionHandler {
+
+        @ExceptionHandler(RuntimeException.class)
+        ResponseEntity<String> handle(RuntimeException ex) {
+            return ResponseEntity
+                    .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ex.getMessage());
+        }
+    }
+
+------------------------------------------------------------------------------------------------------------------
+
+26. What Are the Advantages of Spring Boot?
+
+1. Auto-configuration reduces manual configuration.
+2. Starter dependencies simplify dependency management.
+3. Embedded servers such as Tomcat make applications easy to run without deploying a separate server.
+4. Actuator, externalized configuration, and testing support help with monitoring, configuration, and production readiness.
+
+------------------------------------------------------------------------------------------------------------------
+
+27. How Does Auto-Configuration Work in Spring Boot?
+
+1. `@SpringBootApplication` includes `@EnableAutoConfiguration`.
+2. Spring Boot discovers applicable auto-configuration classes based on the libraries and configuration present.
+3. Conditional annotations decide whether a configuration or bean should be applied.
+4. We can customize the behavior through application properties or by defining our own beans where the relevant auto-configuration allows it.
+
+------------------------------------------------------------------------------------------------------------------
+
+28. What Is a Spring Bean?
+
+1. A Spring bean is an object created, configured, and managed by the Spring IoC container.
+2. Beans can be registered using annotations such as `@Component`, `@Service`, `@Repository`, and `@Controller`.
+3. We can also define beans explicitly using `@Bean` methods inside a `@Configuration` class.
+4. Spring manages dependency injection and bean lifecycle callbacks according to the bean's configuration and scope.
+
+------------------------------------------------------------------------------------------------------------------
+
+29. What Are @Primary and @Qualifier? When Should You Use Each?
+
+1. `@Primary` marks a preferred bean when multiple beans of the same type are available for injection.
+2. `@Qualifier` identifies a specific bean to inject at a particular injection point.
+3. Use `@Primary` when one implementation should be the default across the application.
+4. Use `@Qualifier` when a particular component needs a specific implementation.
+
+Example:
+
+    @Service("emailService")
+    class EmailService implements NotificationService {
+    }
+
+    @Service("smsService")
+    class SmsService implements NotificationService {
+    }
+
+    @Autowired
+    @Qualifier("smsService")
+    private NotificationService notificationService;
+
+------------------------------------------------------------------------------------------------------------------
+
+30. What Are the Benefits of Starter Dependencies in Spring Boot?
+
+1. Starters group commonly used dependencies for a particular feature.
+2. For example, `spring-boot-starter-web` brings in the dependencies needed for a typical Spring MVC web application.
+3. They reduce the need to identify and configure every dependency individually.
+4. Spring Boot dependency management helps keep compatible dependency versions aligned.
+
+------------------------------------------------------------------------------------------------------------------
+
+31. What Is CompletableFuture in Java?
+
+1. CompletableFuture represents the result of an asynchronous computation that may complete in the future.
+2. It implements Future and CompletionStage, allowing us to compose dependent tasks.
+3. We can use methods such as `thenApply()`, `thenCompose()`, `thenCombine()`, and `exceptionally()`.
+4. Example:
+
+    CompletableFuture.supplyAsync(() -> "Hello")
+        .thenApply(result -> result + " Java")
+        .thenAccept(System.out::println);
+
+------------------------------------------------------------------------------------------------------------------
+
+32. Why Was CompletableFuture Introduced When Java Already Had Future?
+
+1. Future supports retrieving a result using `get()`, but it does not provide a rich API for composing asynchronous operations.
+2. Calling `get()` may block the current thread until the result is ready.
+3. CompletableFuture allows callback-based chaining, combining multiple tasks, and handling exceptions.
+4. This makes asynchronous workflows easier to express without manually coordinating every task.
+
+------------------------------------------------------------------------------------------------------------------
+
+33. What Are the Main Features and Advantages of CompletableFuture?
+
+1. It supports asynchronous execution using methods such as `supplyAsync()` and `runAsync()`.
+2. It supports chaining with `thenApply()` and `thenCompose()`, and combining tasks with `thenCombine()`.
+3. It provides exception-handling methods such as `exceptionally()`, `handle()`, and `whenComplete()`.
+4. We can also complete a future explicitly, but we should choose executors carefully for production workloads and avoid unnecessary blocking.
+
+------------------------------------------------------------------------------------------------------------------
+
+34. What Is a Many-to-Many Relationship? Explain Using a Cab Rental Scenario.
+
+1. A many-to-many relationship means one customer can rent multiple cabs over time, and one cab can be rented by multiple customers over time.
+2. For example, Customer A may rent Cab 101 today and Cab 205 next week.
+3. Cab 101 may be rented by Customer A today and Customer B on another date.
+4. We represent this relationship using a junction table, commonly called `Rental`, which connects customers and cabs and stores rental details.
+
+------------------------------------------------------------------------------------------------------------------
+
+35. How Would You Design Database Tables for Customers and Cabs?
+
+1. Create a `Customer` table with `customer_id` as the primary key and customer details.
+2. Create a `Cab` table with `cab_id` as the primary key and a unique `cab_number`.
+3. Create a `Rental` junction table with `rental_id`, `customer_id`, `cab_id`, `rental_start`, and `rental_end`.
+4. Add foreign keys from `Rental` to `Customer` and `Cab`. Store each rental as a separate row so the same customer and cab can have multiple rental records over time.
+
+Example schema:
+
+    CREATE TABLE Customer (
+        customer_id INT PRIMARY KEY,
+        customer_name VARCHAR(100) NOT NULL
+    );
+
+    CREATE TABLE Cab (
+        cab_id INT PRIMARY KEY,
+        cab_number VARCHAR(20) NOT NULL UNIQUE
+    );
+
+    CREATE TABLE Rental (
+        rental_id INT PRIMARY KEY,
+        customer_id INT NOT NULL,
+        cab_id INT NOT NULL,
+        rental_start TIMESTAMP NOT NULL,
+        rental_end TIMESTAMP,
+        FOREIGN KEY (customer_id) REFERENCES Customer(customer_id),
+        FOREIGN KEY (cab_id) REFERENCES Cab(cab_id)
+    );
+
+------------------------------------------------------------------------------------------------------------------
+
+36. Write an SQL Query to Retrieve All Customers Who Have Rented a Cab Using a Given Cab Number.
+
+1. Join `Customer` to `Rental` using `customer_id`.
+2. Join `Rental` to `Cab` using `cab_id`.
+3. Filter by the requested cab number using a parameter.
+4. Use `DISTINCT` to avoid returning the same customer multiple times if they rented that cab repeatedly.
+
+SQL:
+
+    SELECT DISTINCT c.customer_id, c.customer_name
+    FROM Customer c
+    JOIN Rental r ON r.customer_id = c.customer_id
+    JOIN Cab cb ON cb.cab_id = r.cab_id
+    WHERE cb.cab_number = :cabNumber;
+
+------------------------------------------------------------------------------------------------------------------
