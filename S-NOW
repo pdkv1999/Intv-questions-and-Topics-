@@ -632,9 +632,27 @@ return cache.get(userId);
 
 46. How do you merge two lists of strings, remove duplicates, and find the longest string?
 
-→ Combine the lists using Stream.concat().
-→ Use distinct() to remove duplicate strings.
-→ Use max(Comparator.comparingInt(String::length)) to find the longest string.
-→ If multiple strings have the same maximum length, define whether the first or all longest strings should be returned.
+1. I will use Java Streams to combine both lists, remove duplicates using distinct(), and find the longest string using max() with Comparator.comparingInt(String::length).
 
+2. Java 21 Code:
+
+   List<String> list1 = List.of("Java", "Spring", "React");
+   List<String> list2 = List.of("Java", "Microservices", "Angular");
+
+   List<String> result = Stream.concat(list1.stream(), list2.stream())
+       .distinct()
+       .toList();
+
+   String longest = result.stream()
+       .max(Comparator.comparingInt(String::length))
+       .orElse("");
+
+   System.out.println(result);
+   System.out.println(longest);
+
+3. Output:
+   Merged list: [Java, Spring, React, Microservices, Angular]
+   Longest string: Microservices
+
+4. Time Complexity: O(n + m), where n and m are the sizes of the two lists. Space Complexity: O(n + m) for the merged list.
 ------------------------------------------------------------------------------------------------------------------
