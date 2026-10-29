@@ -1,0 +1,84 @@
+Java & Spring Boot Interview Notes
+------------------------------------------------------------------------------------------------------------------
+
+## 1. Explain the project architecture, your roles and responsibilities, and the modules you worked on.
+
+→ My project is LabFlow, a healthcare application that integrates laboratory results from hospital systems and displays them to clinicians.
+
+→ The architecture uses React for the frontend, Spring Boot microservices for business logic, Kafka for asynchronous communication, and Oracle for persistent data storage.
+
+→ I worked on laboratory-result integration, validation, duplicate and out-of-order event handling, result versioning, database optimisation, and production support.
+
+→ I used the Transactional Outbox pattern for reliable event publishing and optimistic locking to prevent concurrent updates from overwriting each other.
+
+**Architecture flow:**
+
+React UI → Spring Boot REST APIs → Service Layer → Oracle Database
+
+Spring Boot Services ↔ Kafka → Downstream Consumers / Notification Services
+
+------------------------------------------------------------------------------------------------------------------
+
+## 2. What challenges did you face in your last project, and how did you resolve them?
+
+→ **Challenge 1 — Duplicate Kafka events:** The same event could be delivered more than once. I used idempotent processing and event identifiers to prevent duplicate business updates.
+
+→ **Challenge 2 — Out-of-order events:** Older laboratory results could arrive after newer results. I used result versioning and validation to prevent stale updates from replacing newer data.
+
+→ **Challenge 3 — Concurrent database updates:** Multiple requests could update the same result simultaneously. I used optimistic locking with a version field to detect conflicts.
+
+→ **Challenge 4 — Performance and production issues:** I worked on resolving N+1 queries, investigating Kafka consumer lag, and troubleshooting notification failures using logs and monitoring.
+
+------------------------------------------------------------------------------------------------------------------
+
+## 3. How did you use Keycloak, and how did you integrate it using SPI?
+
+→ Keycloak is an identity and access management solution used for authentication, authorisation, single sign-on, and token management.
+
+→ In a typical Spring Boot integration, Keycloak acts as the identity provider. The application validates JWT access tokens and checks roles or permissions before allowing access to protected APIs.
+
+→ SPI stands for Service Provider Interface. Keycloak provides SPIs to customise its behaviour, such as authentication flows, user federation, event listeners, and protocol behaviour.
+
+→ To implement an SPI, I would implement the relevant provider interface and factory, register the provider using the required service-loader configuration, package it as a JAR, deploy it to Keycloak, and configure or enable it as required by the Keycloak version.
+
+**Important:** Keep your answer aligned with your actual experience. If you integrated Spring Boot with Keycloak but did not develop a custom SPI, explain token validation and role-based security separately from SPI development.
+
+------------------------------------------------------------------------------------------------------------------
+
+## 4. What are the differences between Spring and Spring Boot?
+
+→ **Spring Framework:** Provides core features such as Dependency Injection, IoC, AOP, transaction management, and Spring MVC, but traditional applications may require more configuration.
+
+→ **Spring Boot:** Builds on Spring and simplifies application setup through auto-configuration, starter dependencies, and embedded servers.
+
+→ Spring Boot reduces boilerplate configuration and makes it easier to build standalone applications and microservices.
+
+→ It also provides production-oriented features through Spring Boot Actuator, including health checks and application metrics.
+
+------------------------------------------------------------------------------------------------------------------
+
+## 5. What is auto-configuration in Spring Boot, and how does it work?
+
+→ Auto-configuration automatically configures beans based on the libraries available, application properties, and beans already defined.
+
+→ For example, when the required web dependencies are available, Spring Boot can configure the web application infrastructure automatically.
+
+→ It uses conditional annotations such as `@ConditionalOnClass`, `@ConditionalOnMissingBean`, and `@ConditionalOnProperty`.
+
+→ If I define my own bean, a default configuration may back off when its conditions specify that no existing bean should be present.
+
+**Example:**
+
+```java
+@Configuration
+@ConditionalOnProperty(
+    name = "feature.email.enabled",
+    havingValue = "true"
+)
+class EmailConfiguration {
+
+    @Bean
+    EmailService emailService() {
+        return new EmailService();
+    }
+}
