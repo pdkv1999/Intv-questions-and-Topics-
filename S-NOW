@@ -1,1 +1,124 @@
+Java & Spring Boot Interview Notes
 
+1. Abstract Class vs Interface
+
+→ Abstract class is used when related classes share common state and behaviour.
+→ Interface is used when different classes must follow the same contract.
+→ A class can extend only one class but can implement multiple interfaces.
+→ Abstract classes can have constructors and instance variables. Interfaces can have abstract, default, static, and private methods.
+
+------------------------------------------------------------------------------------------------------------------
+
+2. Abstract Class Example
+
+abstract class Animal {
+
+    // Common behaviour shared by all animals
+    void eat() {
+        System.out.println("Animal is eating");
+    }
+
+    // Each animal must provide its own implementation
+    abstract void sound();
+}
+
+class Dog extends Animal {
+
+    @Override
+    void sound() {
+        System.out.println("Dog barks");
+    }
+}
+
+class Main {
+    public static void main(String[] args) {
+        Animal animal = new Dog();
+        animal.eat();
+        animal.sound();
+    }
+}
+
+Output:
+Animal is eating
+Dog barks
+
+→ Here, Animal provides common behaviour using eat().
+→ Dog implements the abstract sound() method.
+→ We cannot create an object directly using new Animal().
+
+------------------------------------------------------------------------------------------------------------------
+
+3. Interface Example
+
+interface Payment {
+    // Every payment implementation must provide this behaviour
+    void pay();
+}
+
+class CreditCardPayment implements Payment {
+
+    @Override
+    public void pay() {
+        System.out.println("Payment using credit card");
+    }
+}
+
+class UpiPayment implements Payment {
+
+    @Override
+    public void pay() {
+        System.out.println("Payment using UPI");
+    }
+}
+
+class Main {
+    public static void main(String[] args) {
+        Payment payment = new UpiPayment();
+        payment.pay();
+    }
+}
+
+Output:
+Payment using UPI
+
+→ Payment defines a contract.
+→ CreditCardPayment and UpiPayment implement that contract differently.
+→ We can add new payment types without changing code that depends on the Payment interface.
+
+------------------------------------------------------------------------------------------------------------------
+
+4. Real-Time Project Example
+
+→ Abstract class: Use BaseNotificationService if email, SMS, and push notifications share common fields or implementation.
+
+→ Interface: Use NotificationService to define sendNotification(), which email, SMS, and push services implement differently.
+
+Example:
+
+interface NotificationService {
+    void sendNotification(String message);
+}
+
+class EmailService implements NotificationService {
+    public void sendNotification(String message) {
+        System.out.println("Sending email: " + message);
+    }
+}
+
+class SmsService implements NotificationService {
+    public void sendNotification(String message) {
+        System.out.println("Sending SMS: " + message);
+    }
+}
+
+→ This design makes it easy to add a new notification type without changing the code that calls NotificationService.
+
+------------------------------------------------------------------------------------------------------------------
+
+5. Interview Answer
+
+→ Abstract class represents a common base with shared state or implementation.
+→ Interface defines a contract that implementing classes must follow.
+→ A class can extend one abstract or concrete class but implement multiple interfaces.
+→ I prefer interfaces for loose coupling and abstract classes when related classes need shared code.
+------------------------------------------------------------------------------------------------------------------
