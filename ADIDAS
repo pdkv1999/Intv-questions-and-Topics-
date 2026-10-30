@@ -1,0 +1,279 @@
+Java, Spring Boot, Microservices, Docker, Kafka, React & AI Interview Notes
+
+------------------------------------------------------------------------------------------------------------------
+
+1. Different HTTP Methods. Difference Between POST and PUT.
+
+1. GET – Retrieve data. POST – Create a resource or trigger processing. PUT – Create or completely replace a resource at a known URI. PATCH – Partially update a resource. DELETE – Delete a resource.
+2. POST is generally not idempotent, meaning repeated requests may create multiple resources.
+3. PUT is idempotent, meaning sending the same request multiple times should result in the same final state.
+4. Example: POST /employees creates an employee, whereas PUT /employees/101 updates or replaces employee 101.
+
+------------------------------------------------------------------------------------------------------------------
+
+2. How Do You Optimize Similar HTTP Calls at Scale?
+
+1. Use caching (Redis or Caffeine) to avoid repeated calls for the same data.
+2. Use batch APIs instead of making multiple individual HTTP requests.
+3. Use connection pooling, asynchronous processing, and parallel calls where appropriate.
+4. Apply rate limiting, timeouts, retries with backoff, and circuit breakers to protect downstream services.
+
+------------------------------------------------------------------------------------------------------------------
+
+3. How Will You Return Static Content in a Web Application?
+
+1. In Spring Boot, place static files inside `src/main/resources/static`.
+2. Spring Boot automatically serves these files through its static resource handling.
+3. Example: Place `logo.png` inside the static folder and access it using `/logo.png`.
+4. For large-scale applications, use a CDN or object storage to serve static assets efficiently.
+
+------------------------------------------------------------------------------------------------------------------
+
+4. Internal Working of ConcurrentHashMap.
+
+1. ConcurrentHashMap stores data using an internal hash table, similar to HashMap.
+2. In Java 8+, it uses CAS (Compare-And-Swap) for certain updates and synchronized locking at the individual bucket/bin level when needed.
+3. Multiple threads can read and update different buckets concurrently, reducing contention.
+4. It uses volatile reads and internal synchronization for visibility and thread safety. It does not allow null keys or null values.
+
+------------------------------------------------------------------------------------------------------------------
+
+5. Difference Between Hashtable and HashMap.
+
+1. HashMap is not synchronized, whereas Hashtable synchronizes its methods.
+2. HashMap allows one null key and multiple null values; Hashtable does not allow null keys or values.
+3. HashMap generally provides better performance in single-threaded use because it avoids synchronization overhead.
+4. For concurrent applications, prefer ConcurrentHashMap over Hashtable because it offers better concurrency.
+
+------------------------------------------------------------------------------------------------------------------
+
+6. Create a Controller Using a Shared HttpServletRequest for All Requests.
+
+1. Spring MVC controllers are singleton-scoped by default, so one controller instance is generally shared across requests.
+2. We should never store request-specific data in a normal controller instance variable.
+3. Instead, accept HttpServletRequest as a method parameter, so each invocation receives the current request.
+4. Example:
+
+    @RestController
+    class EmployeeController {
+
+        @GetMapping("/employee")
+        public String getEmployee(HttpServletRequest request) {
+            return request.getRequestURI();
+        }
+    }
+
+------------------------------------------------------------------------------------------------------------------
+
+7. What Happens If a Controller Stores HttpServletRequest in a Shared Instance Variable?
+
+1. Spring controllers are singleton beans by default, meaning multiple request threads can access the same controller instance.
+2. If we store HttpServletRequest in an instance variable, concurrent requests can overwrite that variable.
+3. One request may accidentally use another request's data, causing race conditions and incorrect responses.
+4. The safe approach is to pass HttpServletRequest as a method parameter or use request-scoped beans where appropriate.
+
+Example – Unsafe:
+
+    @RestController
+    class EmployeeController {
+
+        private HttpServletRequest request;
+
+        @GetMapping("/employee")
+        public String getEmployee(HttpServletRequest req) {
+            this.request = req;
+            return request.getRequestURI();
+        }
+    }
+
+Safe:
+
+    @GetMapping("/employee")
+    public String getEmployee(HttpServletRequest request) {
+        return request.getRequestURI();
+    }
+
+------------------------------------------------------------------------------------------------------------------
+
+8. What Is Bean Lifecycle? Explain Use Cases in Spring Boot.
+
+1. Spring creates the bean and injects its dependencies.
+2. It performs initialization callbacks after dependency injection is complete.
+3. The bean is available for application use after initialization.
+4. During application shutdown, Spring invokes destruction callbacks for managed singleton beans.
+
+Use cases:
+- Initialize a connection or resource after dependency injection.
+- Load configuration or prepare caches.
+- Close resources gracefully during shutdown.
+
+------------------------------------------------------------------------------------------------------------------
+
+9. Explain Spring Bean Lifecycle Callbacks. @PostConstruct, @PreDestroy and InitializingBean.
+
+1. `@PostConstruct` executes after dependency injection and is useful for initialization logic.
+2. `InitializingBean.afterPropertiesSet()` is another initialization callback, but it couples the class to Spring.
+3. `@PreDestroy` executes before a managed bean is destroyed and is useful for cleanup.
+4. Prefer `@PostConstruct` and `@PreDestroy` for application-level lifecycle logic because they keep the class less dependent on Spring.
+
+Example:
+
+    @Component
+    class CacheService {
+
+        @PostConstruct
+        public void initialize() {
+            System.out.println("Loading cache");
+        }
+
+        @PreDestroy
+        public void cleanup() {
+            System.out.println("Cleaning resources");
+        }
+    }
+
+------------------------------------------------------------------------------------------------------------------
+
+10. What Is Docker? What Are the Different Configurations Used?
+
+1. Docker is a containerization platform that packages an application with its dependencies so it can run consistently across environments.
+2. Dockerfile defines how to build an image, including the base image, application files, commands, and startup configuration.
+3. Docker Compose defines and runs multiple services using a YAML configuration file.
+4. Common configurations include ports, environment variables, volumes, networks, resource limits, health checks, and restart policies.
+
+Example Dockerfile:
+
+    FROM eclipse-temurin:21-jre
+    WORKDIR /app
+    COPY target/app.jar app.jar
+    EXPOSE 8080
+    ENTRYPOINT ["java", "-jar", "app.jar"]
+
+------------------------------------------------------------------------------------------------------------------
+
+11. What Are Docker Images, Containers, Volumes, Networks and Registries?
+
+1. Image – A read-only template containing the application and its dependencies.
+2. Container – A running instance of a Docker image.
+3. Volume – Persistent storage used to retain data even when containers are removed.
+4. Network – Allows containers to communicate with each other. Registry – Stores and distributes Docker images, for example Docker Hub.
+
+------------------------------------------------------------------------------------------------------------------
+
+12. Internals of Kafka. Difference Between Queue and Kafka.
+
+1. Kafka is a distributed event-streaming platform that stores messages in topics, which are divided into partitions.
+2. Producers publish messages, and consumers read messages using offsets. Kafka stores messages durably according to its retention configuration.
+3. In a traditional queue, a message is generally delivered to one competing consumer and removed or acknowledged after processing. Kafka allows multiple consumer groups to independently read the same event.
+4. Kafka provides partition-based scalability, replication, ordering within a partition, and replay using offsets.
+
+------------------------------------------------------------------------------------------------------------------
+
+13. How Would You Design a Kafka-Based Event-Driven System That Processes Millions of Events Reliably?
+
+1. Divide topics into multiple partitions and choose a suitable partition key to distribute workload while maintaining ordering for related events.
+2. Use consumer groups to scale processing horizontally and configure replication, acknowledgements, and suitable retention policies.
+3. Implement idempotent consumers, retries, dead-letter topics, and offset management to handle duplicate messages and failures safely.
+4. Monitor consumer lag, throughput, processing failures, and broker health. Use the Transactional Outbox pattern when database updates and event publishing must remain consistent.
+
+Project Example – LabFlow:
+
+- Kafka receives laboratory result events.
+- Consumers validate and process results.
+- Duplicate events are handled through idempotent processing.
+- Result versions help handle out-of-order events.
+- Transactional Outbox helps reliably publish database changes as events.
+
+------------------------------------------------------------------------------------------------------------------
+
+14. How Can We Optimize UI Performance? What Does React Bring to the Table? Can We Optimize Without React?
+
+1. Use lazy loading, pagination, caching, code splitting, image optimization, and debouncing to reduce unnecessary work.
+2. React provides component-based architecture, reusable UI, state management patterns, and efficient DOM updates through reconciliation.
+3. We can also optimize without React using JavaScript, browser DOM APIs, Web Components, and frameworks such as Angular or Vue.
+4. React makes large interactive applications easier to maintain, but performance depends on component design, rendering, network calls, and data handling.
+
+------------------------------------------------------------------------------------------------------------------
+
+15. What Is Next.js? Explain Its Features.
+
+1. Next.js is a React-based framework used to build full-stack web applications.
+2. It supports Server-Side Rendering (SSR), Static Site Generation (SSG), and Incremental Static Regeneration (ISR).
+3. It provides file-based routing, API routes, image optimization, and code splitting.
+4. It improves SEO and initial page loading by allowing pages to be rendered on the server or generated at build time.
+
+------------------------------------------------------------------------------------------------------------------
+
+16. How Are You Using AI in Your Project?
+
+1. AI can help users search and understand laboratory information using natural-language questions.
+2. We can use RAG to retrieve relevant information from approved medical documents and provide context to an LLM.
+3. Spring Boot can integrate with an LLM API and a vector database to retrieve relevant context and generate responses.
+4. For healthcare, responses must respect access controls, patient-data privacy, audit requirements, and clinical validation. AI output should not replace clinician decisions.
+
+Interview Note:
+Explain this as an AI integration approach unless you have actually implemented it in your LabFlow project.
+
+------------------------------------------------------------------------------------------------------------------
+
+17. How Can We Create an AI Agent?
+
+1. Define the agent's goal, such as answering questions about laboratory reports.
+2. Connect an LLM that understands user requests and decides which action or tool is needed.
+3. Provide tools such as database search, document retrieval, APIs, or calculators that the agent can invoke.
+4. Add memory where appropriate, permissions, validation, monitoring, and human approval for sensitive actions.
+
+Example Flow:
+
+    User Request
+         |
+         v
+        LLM
+         |
+         v
+    Decide Which Tool to Use
+         |
+         v
+    Execute Tool / API
+         |
+         v
+    Process Result
+         |
+         v
+    Return Final Answer
+
+------------------------------------------------------------------------------------------------------------------
+
+18. What Is RAG? Explain Its Use Cases.
+
+1. RAG stands for Retrieval-Augmented Generation. It combines information retrieval with an LLM to generate context-aware answers.
+2. First, documents are split into chunks and converted into embeddings, which are stored in a vector database.
+3. When a user asks a question, the system retrieves relevant chunks and sends them as context to the LLM.
+4. RAG is useful for company knowledge assistants, document search, customer support, and healthcare information retrieval.
+
+Example – Healthcare:
+
+    Medical Documents
+          |
+          v
+       Chunking
+          |
+          v
+       Embeddings
+          |
+          v
+      Vector Database
+          |
+          v
+      User Question
+          |
+          v
+    Retrieve Relevant Data
+          |
+          v
+        LLM
+          |
+          v
+      Final Answer
+
+------------------------------------------------------------------------------------------------------------------
