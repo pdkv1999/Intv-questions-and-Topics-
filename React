@@ -1,1 +1,568 @@
+REACT JS – TOP 50 MUST-KNOW INTERVIEW QUESTIONS
+Priority Interview Preparation
 
+============================================================
+SECTION 1: REACT FUNDAMENTALS
+============================================================
+
+1. What Is React?
+
+1. React is a JavaScript library used to build user interfaces.
+2. It follows a component-based architecture.
+3. It supports reusable components, state and props.
+4. It uses reconciliation to efficiently update the UI.
+
+------------------------------------------------------------
+
+2. What Are the Major Features of React?
+
+1. Component-based architecture – Reusable UI components.
+2. Virtual DOM – Helps React calculate necessary UI updates.
+3. One-way data flow – Data generally flows from parent to child.
+4. Hooks – Manage state and component-related logic.
+
+------------------------------------------------------------
+
+3. What Is JSX?
+
+1. JSX stands for JavaScript XML.
+2. It allows us to write HTML-like syntax inside JavaScript.
+3. JSX is transformed into JavaScript by the build process.
+4. Example:
+
+   const element = <h1>Hello React</h1>;
+
+------------------------------------------------------------
+
+4. What Is the Difference Between Component and Element?
+
+1. A component is a function or class that defines UI behaviour.
+2. An element is a lightweight description of what should appear on the screen.
+3. Components can receive props and manage state.
+4. Example: Employee is a component; <Employee /> is an element.
+
+------------------------------------------------------------
+
+5. How Do You Create Components in React?
+
+1. We can create components using functional components or class components.
+2. Functional components are JavaScript functions that return JSX.
+3. Class components extend React.Component and implement render().
+4. Modern React applications generally prefer functional components with Hooks.
+
+   function Employee() {
+       return <h1>Employee Details</h1>;
+   }
+
+------------------------------------------------------------
+
+6. What Is the Difference Between Functional and Class Components?
+
+1. Functional components are JavaScript functions; class components extend React.Component.
+2. Functional components use Hooks for state and side effects.
+3. Class components use lifecycle methods such as componentDidMount().
+4. Functional components are preferred for modern React development.
+
+------------------------------------------------------------
+
+7. What Is the Difference Between State and Props?
+
+1. Props are inputs passed from a parent component to a child.
+2. State is data managed inside a component.
+3. Props are read-only for the receiving component.
+4. State can be updated using a setter function, which schedules a re-render.
+
+------------------------------------------------------------
+
+8. What Is the Virtual DOM?
+
+1. Virtual DOM is an in-memory representation of the UI.
+2. React uses it to calculate the changes required in the actual DOM.
+3. When state or props change, React renders the next UI representation.
+4. Reconciliation determines the necessary updates before React commits them.
+
+------------------------------------------------------------
+
+9. What Is Reconciliation?
+
+1. Reconciliation is the process of comparing the previous and next React element trees.
+2. React uses this process to identify what has changed.
+3. It uses element types, positions and keys to match elements.
+4. React then commits the required changes to the actual DOM.
+
+------------------------------------------------------------
+
+10. What Is React Fiber?
+
+1. React Fiber is React's internal reconciliation architecture.
+2. It breaks rendering work into smaller units.
+3. It allows React to prioritise, pause and resume rendering work where appropriate.
+4. It supports concurrent rendering and improves application responsiveness.
+
+============================================================
+SECTION 2: STATE, PROPS AND COMPONENT COMMUNICATION
+============================================================
+
+11. What Is the useState Hook?
+
+1. useState is a React Hook used to manage state in functional components.
+2. It returns the current state and a setter function.
+3. Calling the setter schedules a re-render.
+4. Example:
+
+   const [count, setCount] = useState(0);
+
+   setCount(count + 1);
+
+------------------------------------------------------------
+
+12. What Is the Difference Between useState and useRef?
+
+1. useState stores values that affect the UI.
+2. Updating state schedules a re-render.
+3. useRef stores a mutable value that persists between renders.
+4. Updating ref.current does not trigger a re-render.
+
+------------------------------------------------------------
+
+13. What Is Lifting State Up?
+
+1. Lifting state up means moving shared state to the nearest common parent component.
+2. The parent manages the state and passes data through props.
+3. Child components communicate changes using callback functions.
+4. It helps multiple components share consistent data.
+
+------------------------------------------------------------
+
+14. What Is Prop Drilling?
+
+1. Prop drilling means passing data through multiple component levels.
+2. Intermediate components may receive props even when they do not use them.
+3. It makes large component trees harder to maintain.
+4. We can reduce it using Context API or state management libraries like Redux.
+
+------------------------------------------------------------
+
+15. What Is Context API?
+
+1. Context API allows us to share data across components without passing props at every level.
+2. We create a context using createContext().
+3. A Provider supplies the value, and components consume it using useContext().
+4. It is useful for authentication, theme and language information.
+
+------------------------------------------------------------
+
+16. What Is the useReducer Hook?
+
+1. useReducer manages component state using a reducer function.
+2. The reducer receives the current state and an action.
+3. It returns the next state.
+4. It is useful when state has multiple related updates or complex logic.
+
+   const reducer = (state, action) => {
+       switch (action.type) {
+           case "INCREMENT":
+               return { count: state.count + 1 };
+           default:
+               return state;
+       }
+   };
+
+   const [state, dispatch] = useReducer(reducer, { count: 0 });
+
+------------------------------------------------------------
+
+17. What Is the Difference Between useState and useReducer?
+
+1. useState is suitable for simple state management.
+2. useReducer is suitable for complex state transitions.
+3. useState directly updates state through its setter; useReducer dispatches actions.
+4. useReducer keeps related state update logic in one reducer function.
+
+------------------------------------------------------------
+
+18. What Are Controlled and Uncontrolled Components?
+
+1. Controlled components manage form values through React state.
+2. Uncontrolled components manage their values through the DOM.
+3. Controlled components use value and onChange.
+4. Uncontrolled components commonly use defaultValue and useRef.
+
+   // Controlled
+   const [name, setName] = useState("");
+
+   <input value={name}
+          onChange={e => setName(e.target.value)} />
+
+------------------------------------------------------------
+
+19. What Is the children Prop?
+
+1. children is a special prop used to pass content between a component's opening and closing tags.
+2. It helps create reusable wrapper and layout components.
+3. The child content can be text, JSX or other components.
+4. Example:
+
+   function Card({ children }) {
+       return <div className="card">{children}</div>;
+   }
+
+   <Card>
+       <h1>Employee Details</h1>
+   </Card>
+
+------------------------------------------------------------
+
+20. What Are Higher-Order Components (HOC)?
+
+1. A Higher-Order Component is a function that takes a component and returns an enhanced component.
+2. It helps reuse common component logic.
+3. Common use cases include authentication and permission checks.
+4. Hooks are now often preferred for sharing stateful logic.
+
+============================================================
+SECTION 3: HOOKS – VERY IMPORTANT
+============================================================
+
+21. What Is useEffect?
+
+1. useEffect is used to synchronise a component with external systems.
+2. It is commonly used for API calls, subscriptions and event listeners.
+3. The dependency array controls when the effect runs.
+4. It can return a cleanup function to remove subscriptions or listeners.
+
+   useEffect(() => {
+       console.log("Component mounted");
+
+       return () => {
+           console.log("Cleanup");
+       };
+   }, []);
+
+------------------------------------------------------------
+
+22. Explain the Dependency Array in useEffect.
+
+1. No dependency array: Effect runs after every committed render.
+2. Empty array []: Effect runs after the initial mount, with development Strict Mode checks to consider.
+3. [count]: Effect runs when count changes.
+4. Cleanup runs before the effect is set up again and when the component unmounts.
+
+------------------------------------------------------------
+
+23. What Is the Difference Between useEffect and useLayoutEffect?
+
+1. useEffect generally runs after the browser has painted the updated screen.
+2. useLayoutEffect runs after DOM mutations but before the browser paints.
+3. useLayoutEffect is useful for measuring DOM elements or synchronously adjusting layout.
+4. Prefer useEffect for normal side effects because useLayoutEffect can block painting.
+
+------------------------------------------------------------
+
+24. What Is useMemo?
+
+1. useMemo memoizes the result of a calculation.
+2. It recalculates the value when its dependencies change.
+3. It is useful for expensive calculations.
+4. It should be used only when memoization provides a real benefit.
+
+   const result = useMemo(() => {
+       return employees.filter(e => e.salary > 50000);
+   }, [employees]);
+
+------------------------------------------------------------
+
+25. What Is useCallback?
+
+1. useCallback memoizes a function reference between renders.
+2. It returns the same function while its dependencies remain unchanged.
+3. It is useful when passing callbacks to memoized child components.
+4. It helps avoid unnecessary renders caused by changing function references.
+
+   const handleClick = useCallback(() => {
+       console.log("Clicked");
+   }, []);
+
+------------------------------------------------------------
+
+26. Difference Between useMemo and useCallback?
+
+1. useMemo memoizes a calculated value.
+2. useCallback memoizes a function reference.
+3. useMemo is useful for expensive calculations.
+4. useCallback is useful when passing stable callbacks to child components.
+
+------------------------------------------------------------
+
+27. What Is useRef? Explain Its Use Cases.
+
+1. useRef stores a mutable value across renders.
+2. It can directly reference DOM elements.
+3. It can store timer IDs or previous values.
+4. Updating ref.current does not trigger a component re-render.
+
+   const inputRef = useRef(null);
+
+   const focusInput = () => {
+       inputRef.current.focus();
+   };
+
+------------------------------------------------------------
+
+28. What Are Custom Hooks?
+
+1. Custom Hooks are JavaScript functions whose names start with "use".
+2. They allow us to reuse stateful logic between components.
+3. They can use built-in Hooks and other custom Hooks.
+4. Example: useFetch(), useAuth(), useDebounce().
+
+------------------------------------------------------------
+
+29. What Are the Rules of Hooks?
+
+1. Call Hooks only at the top level of functional components or custom Hooks.
+2. Do not call Hooks inside loops, conditions or nested functions.
+3. Call Hooks in the same order on every render.
+4. Do not call Hooks directly inside regular JavaScript functions or class components.
+
+------------------------------------------------------------
+
+30. Is useState Synchronous or Asynchronous?
+
+1. Calling a state setter does not immediately change the state variable in the current render.
+2. React schedules the update and may batch multiple state updates.
+3. The next render receives the updated state.
+4. Use functional updates when the next value depends on the previous value.
+
+   setCount(prev => prev + 1);
+
+============================================================
+SECTION 4: PERFORMANCE AND RENDERING
+============================================================
+
+31. What Is React.memo?
+
+1. React.memo is used to memoize a functional component.
+2. It can skip re-rendering when its props are unchanged according to shallow comparison.
+3. It is useful for expensive components that receive stable props.
+4. It does not prevent re-renders caused by the component's own state or consumed context changes.
+
+------------------------------------------------------------
+
+32. How Do You Optimize React Application Performance?
+
+1. Use React.memo, useMemo and useCallback where they provide measurable benefits.
+2. Implement lazy loading and code splitting.
+3. Use pagination or virtualization for large lists.
+4. Avoid unnecessary state updates, expensive calculations and repeated API calls.
+
+------------------------------------------------------------
+
+33. What Is Code Splitting?
+
+1. Code splitting divides application JavaScript into smaller bundles.
+2. Instead of loading the entire application at once, we load code when required.
+3. React.lazy() and dynamic imports help implement code splitting.
+4. It reduces initial JavaScript loading and can improve page load performance.
+
+   const Dashboard = React.lazy(() => import("./Dashboard"));
+
+------------------------------------------------------------
+
+34. What Is Lazy Loading in React?
+
+1. Lazy loading means loading a component only when it is required.
+2. React.lazy() dynamically imports a component.
+3. Suspense displays fallback UI while the component is loading.
+4. It helps reduce the initial application bundle size.
+
+   <Suspense fallback={<p>Loading...</p>}>
+       <Dashboard />
+   </Suspense>
+
+------------------------------------------------------------
+
+35. What Is React StrictMode?
+
+1. StrictMode is a development-only tool that helps identify potential problems.
+2. It checks for unsafe patterns and other common mistakes.
+3. In development, React may intentionally re-render components and re-run effects to expose bugs.
+4. It does not add UI to the production application.
+
+------------------------------------------------------------
+
+36. Why Does React Render Twice in StrictMode?
+
+1. In development StrictMode, React performs additional checks to identify impure rendering logic.
+2. It may call component rendering logic more than once.
+3. Effects may also run an extra setup and cleanup cycle in development.
+4. This helps identify missing cleanup and side effects that are not safe to repeat. It is not the normal production behaviour.
+
+------------------------------------------------------------
+
+37. What Is the Key Prop? Why Should We Avoid Index as a Key?
+
+1. The key prop uniquely identifies list elements among their siblings.
+2. It helps React match elements during reconciliation.
+3. Using array indexes can cause incorrect component state when items are reordered or deleted.
+4. Prefer stable unique IDs from the data.
+
+------------------------------------------------------------
+
+38. What Is React Portal?
+
+1. A Portal allows us to render a component into a different DOM node.
+2. It is useful for modals, tooltips and popups.
+3. The component remains part of the React tree even though its DOM is rendered elsewhere.
+4. React events still propagate according to the React component tree.
+
+============================================================
+SECTION 5: ROUTING, API CALLS AND SERVER RENDERING
+============================================================
+
+39. What Is React Router?
+
+1. React Router is a library used for navigation in React applications.
+2. It allows us to create routes without reloading the entire page.
+3. BrowserRouter, Routes and Route are commonly used components.
+4. useNavigate() helps navigate programmatically.
+
+   <BrowserRouter>
+       <Routes>
+           <Route path="/" element={<Home />} />
+           <Route path="/users" element={<Users />} />
+       </Routes>
+   </BrowserRouter>
+
+------------------------------------------------------------
+
+40. How Do You Perform API Calls in React?
+
+1. We can use fetch() or Axios to call backend REST APIs.
+2. useEffect is commonly used to fetch data when a component mounts or dependencies change.
+3. We should handle loading, success and error states.
+4. We should also cancel or ignore outdated requests when necessary.
+
+   useEffect(() => {
+       fetch("/api/employees")
+           .then(response => response.json())
+           .then(data => setEmployees(data))
+           .catch(error => setError(error));
+   }, []);
+
+------------------------------------------------------------
+
+41. How Do You Handle API Errors in React?
+
+1. Use try-catch with async/await or catch() with Promises.
+2. Maintain error state and display a meaningful message.
+3. Handle HTTP status codes such as 400, 401, 403 and 500 appropriately.
+4. Use a common API service or Axios interceptor for shared error handling.
+
+------------------------------------------------------------
+
+42. What Is Server-Side Rendering (SSR)?
+
+1. SSR means rendering React UI on the server and sending the generated HTML to the browser.
+2. The browser initially receives HTML instead of waiting for the entire client-side render.
+3. React hydrates the HTML to make it interactive.
+4. SSR can improve initial content visibility and SEO.
+
+------------------------------------------------------------
+
+43. What Is ReactDOM?
+
+1. ReactDOM is the package that provides React's integration with the browser DOM.
+2. It provides APIs to render React applications into DOM containers.
+3. Modern applications commonly use createRoot() from react-dom/client.
+4. React itself provides the component and rendering model, while ReactDOM handles browser-specific integration.
+
+------------------------------------------------------------
+
+44. What Is the Difference Between Real DOM and Virtual DOM?
+
+1. Real DOM is the actual document structure maintained by the browser.
+2. Virtual DOM is React's in-memory representation of the UI.
+3. React compares the previous and next element trees during reconciliation.
+4. React commits necessary changes to the real DOM rather than replacing the entire DOM every time.
+
+============================================================
+SECTION 6: REDUX AND STATE MANAGEMENT
+============================================================
+
+45. What Is Redux?
+
+1. Redux is a state management library used to manage shared application state.
+2. It maintains a central store containing application state.
+3. Components dispatch actions, and reducers calculate the next state.
+4. Redux Toolkit is the recommended approach for writing Redux logic.
+
+------------------------------------------------------------
+
+46. What Are the Core Principles of Redux?
+
+1. Single source of truth – Application state is maintained in a store.
+2. State is read-only – Components dispatch actions instead of directly modifying the store.
+3. Changes are made using reducers – Reducers calculate the next state.
+4. Reducers should be predictable and free from side effects.
+
+------------------------------------------------------------
+
+47. Difference Between Redux and Context API?
+
+1. Context API is built into React and helps share data across components.
+2. Redux provides a dedicated state management architecture with actions, reducers and a store.
+3. Context is suitable for relatively simple shared data such as themes and authentication.
+4. Redux is useful for complex shared state, predictable updates, middleware and debugging.
+
+------------------------------------------------------------
+
+48. What Is Redux Thunk?
+
+1. Redux Thunk is middleware that allows action creators to return functions instead of only action objects.
+2. It is commonly used for asynchronous operations such as API calls.
+3. The function receives dispatch and getState.
+4. It allows us to dispatch success or failure actions after an API call.
+
+------------------------------------------------------------
+
+49. What Is Redux Saga?
+
+1. Redux Saga is middleware used to manage complex asynchronous operations.
+2. It uses generator functions to handle side effects.
+3. It provides effects such as call, put and takeEvery.
+4. It is useful for workflows involving retries, cancellation and multiple dependent API calls.
+
+------------------------------------------------------------
+
+50. What Is the Difference Between Redux Thunk and Redux Saga?
+
+1. Thunk uses functions and is simpler for common asynchronous API calls.
+2. Saga uses generator functions and provides more structured side-effect management.
+3. Thunk is easier to learn and suitable for straightforward workflows.
+4. Saga is useful for complex asynchronous workflows, cancellation and coordination.
+
+============================================================
+FINAL INTERVIEW REVISION CHECKLIST
+============================================================
+
+Before your interview, make sure you can explain these topics confidently:
+
+1. React fundamentals – Components, JSX, Virtual DOM, Reconciliation.
+2. State management – Props, State, Context API, useState, useReducer.
+3. Hooks – useEffect, useMemo, useCallback, useRef.
+4. Performance – React.memo, Lazy Loading, Code Splitting, Keys.
+5. API integration – Fetch, Axios, Error Handling, Loading States.
+6. Routing – React Router, Protected Routes, Navigation.
+7. State management libraries – Redux, Thunk, Saga.
+8. Modern React – StrictMode, Fiber, SSR, Suspense.
+
+============================================================
+
+MY SUGGESTION:
+
+For a Senior Full Stack interview, do not just memorise definitions. Be ready to explain:
+- Where you used the concept in a real application.
+- What problem it solves.
+- When you would use it.
+- What alternative approach is available.
