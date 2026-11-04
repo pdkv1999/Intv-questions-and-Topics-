@@ -1,0 +1,1242 @@
+JAVA, SPRING BOOT AND FULL-STACK INTERVIEW PREPARATION
+====================================================================
+
+SECTION 1: CORE JAVA AND CODING QUESTIONS
+====================================================================
+
+1. What is the output of the Integer comparison program?
+
+   Integer a = 128;
+   Integer b = 128;
+
+   System.out.println(a == b);
+   System.out.println(a.equals(b));
+
+   OUTPUT:
+   false
+   true
+
+   Explanation:
+   1. Integer caching normally applies to values from -128 to 127.
+   2. Since 128 is outside this range, separate Integer objects are created.
+   3. == compares object references, so the result is false.
+   4. equals() compares actual values, so the result is true.
+
+------------------------------------------------------------------------------------------------------------------
+
+2. What is the output of the DoubleCatch program?
+
+   OUTPUT:
+   Caught NPE
+   Finally executed
+
+   Explanation:
+   1. throw null internally results in a NullPointerException.
+   2. The first catch block catches NullPointerException.
+   3. The second catch block is skipped.
+   4. Finally executes regardless of whether an exception was caught.
+
+------------------------------------------------------------------------------------------------------------------
+
+3. Longest substring without repeating characters.
+
+   APPROACH: Sliding Window
+
+   Java 21 CODE:
+
+   import java.util.*;
+
+   public class Main {
+       public static int longestSubstring(String s) {
+           Map<Character, Integer> map = new HashMap<>();
+           int left = 0;
+           int max = 0;
+
+           for (int right = 0; right < s.length(); right++) {
+               char ch = s.charAt(right);
+
+               if (map.containsKey(ch) && map.get(ch) >= left) {
+                   left = map.get(ch) + 1;
+               }
+
+               map.put(ch, right);
+               max = Math.max(max, right - left + 1);
+           }
+
+           return max;
+       }
+
+       public static void main(String[] args) {
+           System.out.println(longestSubstring("abcabcbb")); // 3
+           System.out.println(longestSubstring("bbbbb"));   // 1
+           System.out.println(longestSubstring("pwwkew"));  // 3
+       }
+   }
+
+   EXPLANATION:
+   1. Maintain a sliding window containing unique characters.
+   2. Use a HashMap to store the latest index of each character.
+   3. If a duplicate appears inside the current window, move the left pointer.
+   4. Update the maximum window length at every iteration.
+
+   Time Complexity: O(n)
+   Space Complexity: O(min(n, character set size))
+
+------------------------------------------------------------------------------------------------------------------
+
+4. Filter strings starting with a digit.
+
+   INPUT:
+   ["rohit", "foo", "nemo", "target1", "12Target", "2robot"]
+
+   OUTPUT:
+   ["12Target", "2robot"]
+
+   JAVA 8 CODE:
+
+   List<String> result = names.stream()
+       .filter(s -> !s.isEmpty() && Character.isDigit(s.charAt(0)))
+       .collect(Collectors.toList());
+
+   EXPLANATION:
+   1. stream() processes the list using the Stream API.
+   2. filter() checks whether the first character is a digit.
+   3. Character.isDigit() checks whether the character is numeric.
+   4. collect() converts the filtered stream back into a List.
+
+------------------------------------------------------------------------------------------------------------------
+
+5. Group employees by salary in descending order.
+
+   JAVA 8 CODE:
+
+   Map<Double, List<Employee>> result = employees.stream()
+       .collect(Collectors.groupingBy(
+           Employee::getSalary,
+           () -> new TreeMap<>(Comparator.reverseOrder()),
+           Collectors.toList()
+       ));
+
+   EXPLANATION:
+   1. groupingBy() groups employees based on salary.
+   2. Employee::getSalary extracts the grouping key.
+   3. TreeMap with reverseOrder() sorts salary keys in descending order.
+   4. Collectors.toList() stores employees with the same salary in a list.
+
+   Time Complexity: Approximately O(n log k), where k is the number of
+   distinct salary values.
+
+------------------------------------------------------------------------------------------------------------------
+
+6. Find the second most repeated word in a list.
+
+   JAVA 8 CODE:
+
+   Map<String, Long> frequency = words.stream()
+       .collect(Collectors.groupingBy(
+           Function.identity(), Collectors.counting()
+       ));
+
+   List<Map.Entry<String, Long>> result = frequency.entrySet()
+       .stream()
+       .sorted(Map.Entry.<String, Long>comparingByValue().reversed())
+       .collect(Collectors.toList());
+
+   String second = result.size() > 1
+       ? result.get(1).getKey()
+       : null;
+
+   EXPLANATION:
+   1. groupingBy() groups identical words.
+   2. counting() calculates the frequency of each word.
+   3. We sort entries by frequency in descending order.
+   4. The second entry gives the second-highest frequency.
+
+   NOTE: If multiple words have the same frequency, define whether you
+   want the second distinct frequency or simply the second entry.
+   The above code returns the second entry.
+
+------------------------------------------------------------------------------------------------------------------
+
+7. Find maximum and minimum salary department-wise.
+
+   JAVA 8 CODE:
+
+   Map<String, DoubleSummaryStatistics> result =
+       employees.stream().collect(
+           Collectors.groupingBy(
+               Employee::getDepartment,
+               Collectors.summarizingDouble(Employee::getSalary)
+           )
+       );
+
+   result.forEach((department, stats) -> {
+       System.out.println(department);
+       System.out.println("Maximum: " + stats.getMax());
+       System.out.println("Minimum: " + stats.getMin());
+   });
+
+   EXPLANATION:
+   1. groupingBy() groups employees department-wise.
+   2. summarizingDouble() calculates count, sum, minimum, maximum and average.
+   3. getMax() returns the highest salary.
+   4. getMin() returns the lowest salary.
+
+------------------------------------------------------------------------------------------------------------------
+
+8. Find highest and lowest salary across all departments.
+
+   JAVA 8 CODE:
+
+   double maxSalary = employees.stream()
+       .mapToDouble(Employee::getSalary)
+       .max()
+       .orElse(0);
+
+   double minSalary = employees.stream()
+       .mapToDouble(Employee::getSalary)
+       .min()
+       .orElse(0);
+
+   EXPLANATION:
+   1. mapToDouble() extracts salary from each employee.
+   2. max() finds the highest salary.
+   3. min() finds the lowest salary.
+   4. orElse() handles an empty employee list.
+
+====================================================================
+SECTION 2: SPRING BOOT AND MICROSERVICES
+====================================================================
+
+9. How do you check the health of a Spring Boot application?
+
+   1. We use Spring Boot Actuator for application health monitoring.
+   2. The endpoint /actuator/health provides the application health status.
+   3. It can also check database, disk space and other configured dependencies.
+   4. Kubernetes can use liveness and readiness probes to manage application instances.
+
+   Example:
+   management.endpoints.web.exposure.include=health,info
+
+------------------------------------------------------------------------------------------------------------------
+
+10. Why do we secure a Spring Boot application?
+
+   1. To protect APIs and sensitive business data from unauthorised access.
+   2. Authentication verifies who the user is.
+   3. Authorisation checks what the user is allowed to access.
+   4. Spring Security provides authentication, authorisation, CSRF protection and security filters.
+
+------------------------------------------------------------------------------------------------------------------
+
+11. How do you configure Spring Security?
+
+   1. Add the Spring Security dependency.
+   2. Create a SecurityFilterChain bean to define security rules.
+   3. Configure authentication, authorisation and password encoding.
+   4. For production APIs, commonly use JWT or OAuth2-based authentication.
+
+   Example:
+
+   @Bean
+   SecurityFilterChain securityFilterChain(HttpSecurity http)
+           throws Exception {
+
+       return http
+           .csrf(csrf -> csrf.disable())
+           .authorizeHttpRequests(auth -> auth
+               .requestMatchers("/public/**").permitAll()
+               .anyRequest().authenticated()
+           )
+           .build();
+   }
+
+   NOTE: CSRF should not be disabled blindly. Its configuration depends
+   on whether the application uses browser sessions, cookies or stateless tokens.
+
+------------------------------------------------------------------------------------------------------------------
+
+12. After adding Spring Security, APIs return 401 or 403. How do you fix it?
+
+   1. 401 means the request is unauthenticated or credentials are invalid.
+   2. 403 means the user is authenticated but does not have sufficient permission,
+      or the request is blocked by another security rule.
+   3. Check SecurityFilterChain rules, JWT validation, roles, authorities and CSRF.
+   4. Check whether the required Authorization header and token are sent correctly.
+
+------------------------------------------------------------------------------------------------------------------
+
+13. How do microservices communicate in your architecture?
+
+   1. Microservices communicate synchronously using REST APIs when an immediate response is required.
+   2. We use Kafka for asynchronous event-based communication.
+   3. In LabFlow, Kafka supports the processing of laboratory result events.
+   4. The communication method depends on business requirements, latency and reliability.
+
+------------------------------------------------------------------------------------------------------------------
+
+14. Synchronous vs asynchronous communication?
+
+   1. Synchronous communication means the caller waits for the response.
+   2. Asynchronous communication means the sender does not wait for the consumer to finish processing.
+   3. REST APIs are commonly used for synchronous communication.
+   4. Kafka is commonly used for asynchronous event-driven communication.
+
+------------------------------------------------------------------------------------------------------------------
+
+15. Is Kafka for asynchronous communication and RestTemplate for synchronous?
+
+   1. Yes, Kafka is commonly used for asynchronous communication.
+   2. RestTemplate is a synchronous HTTP client.
+   3. WebClient can also be used for reactive and non-blocking HTTP communication.
+   4. Feign Client is another option for declarative synchronous service-to-service calls.
+
+------------------------------------------------------------------------------------------------------------------
+
+16. How does Kafka enable asynchronous communication?
+
+   1. The producer publishes an event to a Kafka topic.
+   2. Kafka stores the event in partitions.
+   3. The consumer reads and processes the event independently.
+   4. The producer does not need to wait for the consumer to complete processing.
+
+------------------------------------------------------------------------------------------------------------------
+
+17. What is Feign Client?
+
+   1. Feign Client is a declarative HTTP client used for service-to-service communication.
+   2. We define an interface and annotate it with @FeignClient.
+   3. Spring generates the implementation and handles HTTP communication.
+   4. It reduces boilerplate code compared with manually creating HTTP requests.
+
+   Example:
+
+   @FeignClient(name = "payment-service")
+   public interface PaymentClient {
+
+       @GetMapping("/payments/{id}")
+       Payment getPayment(@PathVariable Long id);
+   }
+
+------------------------------------------------------------------------------------------------------------------
+
+18. How do you handle failures between microservices?
+
+   1. Use connection and response timeouts to avoid waiting indefinitely.
+   2. Use retries for temporary failures, with controlled backoff.
+   3. Use Circuit Breaker to stop repeated calls to an unhealthy service.
+   4. Use fallbacks, logging, monitoring and dead-letter topics where appropriate.
+
+------------------------------------------------------------------------------------------------------------------
+
+19. What resilience patterns have you used?
+
+   1. Retry: Reattempt an operation when a temporary failure occurs.
+   2. Circuit Breaker: Stop calling a failing service temporarily.
+   3. Timeout: Stop waiting after a configured duration.
+   4. Fallback: Return an alternative response when the original operation fails.
+
+------------------------------------------------------------------------------------------------------------------
+
+20. How do you configure retry using Spring Retry or Resilience4j?
+
+   SPRING RETRY:
+
+   @Retryable(
+       retryFor = RuntimeException.class,
+       maxAttempts = 3,
+       backoff = @Backoff(delay = 1000)
+   )
+   public String callService() {
+       return externalService.call();
+   }
+
+   RESILIENCE4J:
+   1. Configure maximum attempts and wait duration.
+   2. Configure retryable exception types.
+   3. Use @Retry(name = "paymentService") on the method.
+   4. Configure a fallback method if required.
+
+   NOTE: Retry only operations that are safe to repeat. Use idempotency
+   for operations such as payments or order creation.
+
+------------------------------------------------------------------------------------------------------------------
+
+21. What is circular dependency in Spring?
+
+   1. Circular dependency happens when two or more beans depend on each other.
+   2. Example: ServiceA requires ServiceB, and ServiceB requires ServiceA.
+   3. Spring may fail to create these beans because their dependencies cannot be resolved.
+   4. Constructor-based circular dependencies normally result in a BeanCurrentlyInCreationException.
+
+------------------------------------------------------------------------------------------------------------------
+
+22. How do you resolve circular dependency between two services?
+
+   1. First, review the design and identify why the services depend on each other.
+   2. Extract common functionality into a third service.
+   3. Use events or interfaces to reduce direct dependencies where appropriate.
+   4. @Lazy can be a temporary workaround, but fixing the design is better.
+
+------------------------------------------------------------------------------------------------------------------
+
+23. What are different authentication mechanisms?
+
+   1. Basic Authentication: Username and password sent with each request, usually over HTTPS.
+   2. Session-based Authentication: Server maintains a session after successful login.
+   3. JWT-based Authentication: Client sends a signed token with each request.
+   4. OAuth2 / OpenID Connect: Common standards for delegated authorisation and user authentication.
+
+------------------------------------------------------------------------------------------------------------------
+
+24. Explain JWT structure.
+
+   1. Header: Contains token type and signing algorithm.
+   2. Payload: Contains claims such as subject, roles and expiration time.
+   3. Signature: Verifies token integrity and authenticity.
+   4. JWT is encoded using Base64URL; its payload is not encrypted by default.
+
+   Format:
+   Header.Payload.Signature
+
+   IMPORTANT:
+   Never store passwords or sensitive confidential data in a normal JWT payload.
+
+====================================================================
+SECTION 3: ANGULAR AND REACT
+====================================================================
+
+25. Constructor vs ngOnInit vs ngAfterViewInit?
+
+   1. Constructor is a TypeScript class feature, mainly used for dependency injection
+      and basic initialisation.
+   2. ngOnInit executes once after Angular initialises component input properties.
+   3. ngAfterViewInit executes after the component's view and child views are initialised.
+   4. Use ngAfterViewInit when you need to access view children or view-related elements.
+
+------------------------------------------------------------------------------------------------------------------
+
+26. Default vs OnPush change detection?
+
+   1. Default strategy checks the component during normal Angular change-detection cycles.
+   2. OnPush reduces unnecessary checks and improves performance.
+   3. OnPush checks are triggered by relevant input changes, events in the component
+      and mechanisms such as markForCheck().
+   4. OnPush works especially well with immutable data and observable-based patterns.
+
+------------------------------------------------------------------------------------------------------------------
+
+27. When would you use Default change detection?
+
+   1. When developing a simple application where performance is not a major concern.
+   2. When the component has frequent internal mutations.
+   3. When the application relies heavily on the default change-detection behaviour.
+   4. For larger applications, I would evaluate OnPush to reduce unnecessary checks.
+
+------------------------------------------------------------------------------------------------------------------
+
+28. What causes memory leaks in Angular?
+
+   1. Subscriptions that are not properly unsubscribed.
+   2. Event listeners and timers that remain active after component destruction.
+   3. References to components or objects that are no longer required.
+   4. Prevent them using async pipe, takeUntilDestroyed(), cleanup functions and
+      proper lifecycle management.
+
+------------------------------------------------------------------------------------------------------------------
+
+29. How does Angular implement lazy loading?
+
+   1. Lazy loading loads a feature only when the user navigates to its route.
+   2. It reduces the initial JavaScript bundle size.
+   3. Modern Angular supports lazy loading with loadChildren and loadComponent.
+   4. The build system creates separate chunks that can be loaded when required.
+
+   Example:
+
+   {
+       path: 'admin',
+       loadChildren: () =>
+           import('./admin/admin.routes').then(m => m.ADMIN_ROUTES)
+   }
+
+------------------------------------------------------------------------------------------------------------------
+
+30. A button click fires multiple times. How do you debug and fix it?
+
+   1. Check whether multiple event handlers or duplicate subscriptions exist.
+   2. Check whether the component is rendered multiple times or the event is registered repeatedly.
+   3. Disable the button while an operation is in progress.
+   4. Use RxJS operators such as exhaustMap() to ignore repeated submissions while
+      a request is active.
+
+------------------------------------------------------------------------------------------------------------------
+
+31. What is the difference between useEffect and useLayoutEffect?
+
+   1. useEffect runs after React commits changes and generally after the browser paints.
+   2. useLayoutEffect runs synchronously after DOM updates but before the browser paints.
+   3. useLayoutEffect is useful for measuring DOM elements and preventing visible layout flicker.
+   4. Prefer useEffect for normal API calls, subscriptions and side effects.
+
+------------------------------------------------------------------------------------------------------------------
+
+32. What happens if there is a CORS issue in React?
+
+   1. CORS is a browser security mechanism that controls cross-origin requests.
+   2. React sends the request, but the browser blocks access to the response if the server
+      does not provide the required CORS headers.
+   3. Configure allowed origins, methods and headers on the backend or API Gateway.
+   4. Do not depend on disabling browser security; fix the server-side CORS configuration.
+
+------------------------------------------------------------------------------------------------------------------
+
+33. How do we call Kafka directly from React?
+
+   1. Normally, React should not connect directly to Kafka brokers.
+   2. React communicates with backend APIs, and backend services publish or consume Kafka events.
+   3. For real-time updates, backend services can expose WebSocket or Server-Sent Events.
+   4. This keeps Kafka credentials and infrastructure protected on the server side.
+
+====================================================================
+SECTION 4: DATABASE AND TRANSACTION MANAGEMENT
+====================================================================
+
+34. What happens if @Transactional is not working and partial commits occur?
+
+   1. First, check whether the method is invoked through the Spring proxy.
+   2. Check whether the method uses self-invocation, which bypasses proxy-based transaction handling.
+   3. By default, Spring rolls back for RuntimeException and Error, not every checked exception.
+   4. Verify datasource configuration, transaction manager and rollback rules.
+
+------------------------------------------------------------------------------------------------------------------
+
+35. What if propagation and isolation are default but @Transactional still fails?
+
+   1. REQUIRED is the default propagation behaviour.
+   2. DEFAULT isolation uses the database's configured default isolation level.
+   3. Check whether the method is public and called through the Spring-managed proxy.
+   4. Check exception handling, rollback rules, transaction manager and whether operations
+      use the same transactional datasource.
+
+------------------------------------------------------------------------------------------------------------------
+
+36. How do you configure multiple datasources in Spring Boot?
+
+   1. Define separate datasource configurations with different property prefixes.
+   2. Create separate DataSource beans.
+   3. Configure separate EntityManagerFactory and transaction manager beans when using JPA.
+   4. Use @Primary for the default datasource and @Qualifier to inject a specific datasource.
+
+------------------------------------------------------------------------------------------------------------------
+
+37. How do you route data dynamically into different databases?
+
+   1. Identify the target database using a tenant ID or routing key.
+   2. Use AbstractRoutingDataSource to select the appropriate datasource.
+   3. Store the routing key in a controlled context, commonly using ThreadLocal.
+   4. Clear the context after processing to avoid data leaking between requests.
+
+   IMPORTANT:
+   With asynchronous execution, thread pools and reactive applications, routing context
+   must be propagated safely. ThreadLocal alone is not sufficient for every scenario.
+
+------------------------------------------------------------------------------------------------------------------
+
+38. What happens if an application needs two databases but only one datasource is configured?
+
+   1. Spring Boot configures the datasource that is available in its configuration.
+   2. If the application tries to access another database without a configured datasource,
+      that database connection cannot be established automatically.
+   3. The application may fail during startup if the missing datasource is required while
+      creating beans, or fail at runtime when the connection is requested.
+   4. We need separate datasource configurations or an appropriate routing mechanism.
+
+------------------------------------------------------------------------------------------------------------------
+
+39. What is XA Transaction?
+
+   1. XA is a standard that allows distributed transaction coordination across multiple
+      transactional resources.
+   2. It commonly uses a two-phase commit protocol.
+   3. In phase one, resources prepare; in phase two, the coordinator commits or rolls back.
+   4. It provides strong consistency but adds coordination overhead and can affect availability.
+
+------------------------------------------------------------------------------------------------------------------
+
+40. What is Narayana?
+
+   1. Narayana is a transaction manager supporting JTA and distributed transactions.
+   2. It coordinates transactions across multiple XA resources.
+   3. It manages prepare, commit and rollback operations.
+   4. In Spring Boot, it can be integrated to manage JTA transactions when the application
+      and resource drivers support XA.
+
+------------------------------------------------------------------------------------------------------------------
+
+41. What is SAGA Choreography?
+
+   1. Saga is a pattern used to manage distributed business transactions across microservices.
+   2. In choreography, each service publishes events and other services react to them.
+   3. If a step fails, compensating transactions undo the previous business operations.
+   4. It avoids a central coordinator but can become difficult to understand as workflows grow.
+
+------------------------------------------------------------------------------------------------------------------
+
+42. What is CQRS?
+
+   1. CQRS stands for Command Query Responsibility Segregation.
+   2. It separates operations that modify data from operations that read data.
+   3. Commands update the write model, while queries access the read model.
+   4. It is useful when read and write workloads have different scalability or data-model needs.
+
+------------------------------------------------------------------------------------------------------------------
+
+43. How do you delete duplicate entries in SQL?
+
+   Example using ROW_NUMBER():
+
+   DELETE FROM employee
+   WHERE id IN (
+       SELECT id
+       FROM (
+           SELECT id,
+                  ROW_NUMBER() OVER (
+                      PARTITION BY name, salary
+                      ORDER BY id
+                  ) AS rn
+           FROM employee
+       )
+       WHERE rn > 1
+   );
+
+   EXPLANATION:
+   1. PARTITION BY groups rows having the same name and salary.
+   2. ROW_NUMBER assigns a sequence within each group.
+   3. The first record is retained.
+   4. Records with row number greater than one are deleted.
+
+   NOTE: This is Oracle-style SQL. Always validate duplicates and take a backup
+   before executing a delete in production.
+
+====================================================================
+SECTION 5: KUBERNETES, CLOUD AND INFRASTRUCTURE
+====================================================================
+
+44. How do you dynamically create virtual machines for different users?
+
+   1. A user requests a VM through a backend API.
+   2. The backend validates the request, user permissions and resource quota.
+   3. An infrastructure automation platform or cloud API provisions the VM.
+   4. Store VM details and status, then expose access information securely.
+
+   Examples of infrastructure tools include Terraform and cloud provider APIs.
+
+------------------------------------------------------------------------------------------------------------------
+
+45. How is autoscaling implemented for virtual machines or applications?
+
+   1. VM autoscaling uses metrics such as CPU, memory or request load.
+   2. A scaling policy increases or decreases the number of instances.
+   3. Application autoscaling can also use request rate or queue depth.
+   4. Health checks and load balancing distribute traffic across healthy instances.
+
+------------------------------------------------------------------------------------------------------------------
+
+46. How does Kubernetes scale applications?
+
+   1. Kubernetes runs applications inside Pods.
+   2. Horizontal Pod Autoscaler increases or decreases Pod replicas based on metrics.
+   3. Cluster Autoscaler can add or remove worker nodes when cluster capacity changes.
+   4. Services and Ingress distribute traffic to the available application Pods.
+
+------------------------------------------------------------------------------------------------------------------
+
+47. Can databases be scaled in Kubernetes?
+
+   1. Yes, databases can run in Kubernetes using StatefulSets and persistent storage.
+   2. Persistent Volumes maintain data even when Pods restart.
+   3. Databases can be scaled using replication, read replicas and database clustering.
+   4. However, stateful databases require careful backup, recovery, storage and failover planning.
+
+------------------------------------------------------------------------------------------------------------------
+
+48. What are Persistent Volumes in Kubernetes?
+
+   1. A Persistent Volume represents storage available to a Kubernetes cluster.
+   2. A PersistentVolumeClaim is a request by an application for that storage.
+   3. The Pod mounts the claimed volume to store data beyond the Pod lifecycle.
+   4. They are important for databases and applications that need persistent files.
+
+------------------------------------------------------------------------------------------------------------------
+
+49. How does Tomcat handle multiple HTTP requests?
+
+   1. Spring Boot commonly uses embedded Tomcat to handle incoming HTTP requests.
+   2. Tomcat accepts connections and assigns request processing to available worker threads.
+   3. Each request is processed by a thread from the configured thread pool.
+   4. If all worker threads are busy, additional requests wait in the connection or request queue,
+      subject to server configuration and limits.
+
+------------------------------------------------------------------------------------------------------------------
+
+50. What is a Tomcat thread pool?
+
+   1. It is a pool of reusable worker threads managed by Tomcat.
+   2. It avoids creating a new thread for every incoming request.
+   3. maxThreads controls the maximum number of request-processing threads for a connector.
+   4. Thread pool sizing should consider CPU, blocking operations, database connection pool
+      and expected traffic.
+
+====================================================================
+SECTION 6: DESIGN PATTERNS AND JAVA 8
+====================================================================
+
+51. What is Prototype Design Pattern?
+
+   1. Prototype is a creational design pattern that creates new objects by copying existing ones.
+   2. It is useful when object creation is expensive.
+   3. It can reduce the cost of repeatedly constructing complex objects.
+   4. Java cloning or custom copy methods can be used, with care around deep and shallow copying.
+
+------------------------------------------------------------------------------------------------------------------
+
+52. What is Adapter Design Pattern?
+
+   1. Adapter converts one interface into another interface expected by the client.
+   2. It helps two incompatible systems communicate.
+   3. Example: Adapting a third-party payment API to our application's PaymentService interface.
+   4. It reduces changes to existing business logic when integrating external systems.
+
+------------------------------------------------------------------------------------------------------------------
+
+53. What is Factory Design Pattern?
+
+   1. Factory is a creational design pattern used to create objects without exposing
+      the object creation logic to the client.
+   2. The client requests an object through a factory method.
+   3. The factory decides which implementation to create.
+   4. It is useful when object creation depends on input or business conditions.
+
+------------------------------------------------------------------------------------------------------------------
+
+54. What is Supplier Functional Interface?
+
+   1. Supplier is a functional interface that does not accept any input.
+   2. It returns a value using the get() method.
+   3. It is useful for lazy object creation and supplying default values.
+   4. Example: Supplier<List<String>> supplier = ArrayList::new;
+
+   Practical example:
+
+   Supplier<Double> randomValue = Math::random;
+   System.out.println(randomValue.get());
+
+------------------------------------------------------------------------------------------------------------------
+
+55. What is Micro Frontend architecture?
+
+   1. Micro Frontend breaks a large frontend application into smaller independent applications.
+   2. Each team can own and develop a separate business module.
+   3. Example: Dashboard, Payments and User Management can be independently developed.
+   4. It improves team independence but introduces integration, routing, shared dependency
+      and deployment complexity.
+
+------------------------------------------------------------------------------------------------------------------
+
+56. What is Outbox Design Pattern?
+
+   1. Outbox is used to reliably publish events when a database transaction succeeds.
+   2. The business data and event record are saved in the same database transaction.
+   3. A separate publisher reads pending Outbox records and publishes them to Kafka.
+   4. It prevents the common inconsistency where database updates succeed but event publishing fails.
+
+====================================================================
+SECTION 7: KAFKA, SYSTEM DESIGN AND OBSERVABILITY
+====================================================================
+
+57. What are Kafka use cases and trade-offs?
+
+   1. Kafka is useful for event-driven architecture, log aggregation, data pipelines and
+      asynchronous communication.
+   2. It provides partitioning, consumer groups, retention and high-throughput processing.
+   3. Trade-offs include operational complexity, eventual consistency and duplicate processing.
+   4. It is not always suitable for simple request-response operations that need an immediate result.
+
+------------------------------------------------------------------------------------------------------------------
+
+58. How do you monitor and trace microservices?
+
+   1. Centralised logging tools such as Splunk help search and analyse application logs.
+   2. Metrics help monitor CPU, memory, API latency, error rates and Kafka consumer lag.
+   3. Distributed tracing helps follow a request across multiple services.
+   4. Tools such as Dynatrace, OpenTelemetry and Jaeger can support observability.
+
+------------------------------------------------------------------------------------------------------------------
+
+59. What is the difference between Trace ID, Correlation ID and Span ID?
+
+   1. Trace ID identifies the complete distributed request across multiple services.
+   2. Span ID identifies one individual operation within that distributed trace.
+   3. Correlation ID is an identifier used to connect related logs and business operations.
+   4. A correlation ID can be propagated across services, while Trace ID and Span ID
+      follow distributed tracing conventions.
+
+------------------------------------------------------------------------------------------------------------------
+
+60. How are microservice logs indexed?
+
+   1. Applications generate structured logs, preferably in JSON format.
+   2. Logs are collected by an agent or forwarding mechanism.
+   3. The central logging platform parses fields and indexes them for searching.
+   4. We can search using service name, timestamp, trace ID, correlation ID and log level.
+
+------------------------------------------------------------------------------------------------------------------
+
+61. How do you implement caching?
+
+   1. Identify frequently accessed data that does not change frequently.
+   2. Use an appropriate cache such as Caffeine for local caching or Redis for distributed caching.
+   3. Define expiration, eviction and cache invalidation strategies.
+   4. Monitor cache hit ratio, memory usage and stale-data behaviour.
+
+------------------------------------------------------------------------------------------------------------------
+
+62. Where would you use RabbitMQ?
+
+   1. RabbitMQ is a message broker used for asynchronous communication.
+   2. It is useful for task queues, background jobs and message routing.
+   3. It supports exchanges, queues, bindings and acknowledgements.
+   4. Kafka is often preferred for high-throughput event streaming and replayable event logs,
+      while RabbitMQ is commonly used for broker-managed task messaging.
+
+------------------------------------------------------------------------------------------------------------------
+
+63. How do you migrate from a monolith to microservices?
+
+   1. First, understand the existing monolith and identify business boundaries.
+   2. Identify independent modules that can be separated using domain boundaries.
+   3. Extract services incrementally using an approach such as the Strangler pattern.
+   4. Introduce API contracts, event communication, monitoring and automated deployment.
+
+------------------------------------------------------------------------------------------------------------------
+
+64. What is API Versioning?
+
+   1. API versioning allows us to introduce changes without breaking existing consumers.
+   2. Common approaches include URL versioning, header versioning and query parameter versioning.
+   3. Example: /api/v1/customers and /api/v2/customers.
+   4. We should maintain backward compatibility and communicate deprecation timelines.
+
+------------------------------------------------------------------------------------------------------------------
+
+65. What is EC2 and how do you secure it?
+
+   1. Amazon EC2 provides virtual servers in AWS.
+   2. Security Groups control inbound and outbound network traffic.
+   3. Use IAM roles, secure SSH access, encryption and regular patching.
+   4. Avoid exposing unnecessary ports and monitor instances using appropriate tools.
+
+====================================================================
+SECTION 8: SPRING BOOT ANNOTATIONS AND INTERNALS
+====================================================================
+
+66. Explain commonly used Spring Boot annotations.
+
+   1. @SpringBootApplication: Main application annotation combining configuration,
+      component scanning and auto-configuration.
+   2. @RestController: Defines a REST controller that returns response data.
+   3. @Service and @Repository: Identify service and persistence-layer components.
+   4. @Autowired, @Qualifier and @Primary: Help inject the required Spring beans.
+
+------------------------------------------------------------------------------------------------------------------
+
+67. What is @EnableAutoConfiguration?
+
+   1. It enables Spring Boot's automatic configuration mechanism.
+   2. Spring Boot checks the classpath, existing beans and configuration properties.
+   3. It configures suitable beans based on the application's environment.
+   4. It reduces manual configuration, and we can override defaults when needed.
+
+------------------------------------------------------------------------------------------------------------------
+
+68. @Configuration vs @EnableAutoConfiguration?
+
+   1. @Configuration marks a class as a source of Spring bean definitions.
+   2. @EnableAutoConfiguration enables Spring Boot's conditional automatic configuration.
+   3. @Configuration is commonly used to define custom beans.
+   4. @SpringBootApplication combines @Configuration, @ComponentScan and
+      @EnableAutoConfiguration.
+
+------------------------------------------------------------------------------------------------------------------
+
+69. What is ApplicationContext?
+
+   1. ApplicationContext is the Spring IoC container.
+   2. It creates, configures and manages Spring beans.
+   3. It supports dependency injection, events, resource loading and bean lifecycle management.
+   4. We generally let Spring manage objects instead of manually creating service dependencies.
+
+------------------------------------------------------------------------------------------------------------------
+
+70. What are the types of autowiring?
+
+   1. Constructor injection: Dependencies are provided through the constructor.
+   2. Setter injection: Dependencies are provided through setter methods.
+   3. Field injection: Dependencies are injected directly into fields.
+   4. Constructor injection is generally preferred because it supports immutability
+      and makes mandatory dependencies clear.
+
+------------------------------------------------------------------------------------------------------------------
+
+71. Explain @Transactional internally.
+
+   1. Spring uses proxy-based AOP to intercept calls to transactional methods.
+   2. The transaction manager starts or joins a transaction.
+   3. The method executes within the transaction boundary.
+   4. Spring commits on successful completion or rolls back based on configured rollback rules.
+
+------------------------------------------------------------------------------------------------------------------
+
+72. How do you resolve deadlock?
+
+   1. Deadlock happens when threads wait indefinitely for locks held by each other.
+   2. Acquire locks in a consistent order.
+   3. Keep critical sections short and avoid unnecessary nested locking.
+   4. Use timeouts, lock monitoring and appropriate concurrency utilities.
+
+====================================================================
+
+
+PROJECT AND TECHNICAL INTERVIEW
+================================================================
+
+1. What is the current architecture of the last project you worked on?
+
+   1. My last project was LabFlow, a healthcare application used to integrate laboratory results from hospital systems and display them to clinicians.
+   2. We followed a microservices-based architecture using Java 17, Spring Boot, REST APIs, Kafka, Oracle and React.
+   3. Backend services handled lab result integration, validation, processing and persistence. Kafka supported asynchronous communication between services.
+   4. React provided the user interface to view lab results, patient history, trends and critical-result alerts.
+
+------------------------------------------------------------------------------------------------------------------
+
+2. What happens if an index exists on Employee ID but we search using Employee Name?
+
+   1. The database generally cannot use the Employee ID index to directly search by Employee Name.
+   2. It may perform a full table scan if there is no suitable index on the Name column.
+   3. We can create an index on Employee Name if that column is frequently used in search conditions.
+   4. We should verify the actual execution plan because the optimizer may choose a different access path based on table size and statistics.
+
+------------------------------------------------------------------------------------------------------------------
+
+3. How did you deploy applications to Production? Explain your branching strategy.
+
+   1. We follow a controlled Git-based release process, with feature branches created from the development branch.
+   2. Developers raise pull requests, and changes go through code reviews and automated build and test checks.
+   3. Once changes are validated in QA/UAT, the approved release is merged into the production release branch.
+   4. The CI/CD pipeline deploys the approved build to production, followed by smoke testing and monitoring.
+
+   Note: Explain the exact branch names and pipeline tools used in your actual project.
+
+------------------------------------------------------------------------------------------------------------------
+
+4. Have you heard of EXPLAIN PLAN in databases?
+
+   1. EXPLAIN PLAN shows how the database intends to execute a SQL query.
+   2. It helps identify full table scans, index scans, joins and sorting operations.
+   3. We use it to understand why a query is slow and identify possible indexing or query improvements.
+   4. In Oracle, DBMS_XPLAN.DISPLAY can be used to display the execution plan.
+
+------------------------------------------------------------------------------------------------------------------
+
+5. Have you used Kafka?
+
+   1. Yes, I have worked with Apache Kafka for asynchronous communication between backend services.
+   2. In LabFlow, Kafka was used to process laboratory result events coming from integrated systems.
+   3. We handled duplicate and out-of-order events and maintained consistency using proper validation and result versioning.
+   4. We also considered consumer lag, retries and failure handling to make event processing reliable.
+
+------------------------------------------------------------------------------------------------------------------
+
+6. How did you monitor applications using Splunk?
+
+   1. Splunk is used for centralised log management and troubleshooting.
+   2. We can search application logs using correlation IDs, timestamps, service names and error messages.
+   3. We can create dashboards and alerts for exceptions, API failures and application issues.
+   4. During production issues, logs help us identify the failing service and trace the root cause.
+
+   Note: Describe your actual Splunk dashboards and alerts if you configured them.
+
+------------------------------------------------------------------------------------------------------------------
+
+7. Have you used React?
+
+   1. Yes, I have worked with React for developing frontend applications.
+   2. I have worked with functional components, props, state and React Hooks.
+   3. We used React to display laboratory results, patient history, trends and critical alerts.
+   4. I also worked on integrating React components with Spring Boot REST APIs.
+
+------------------------------------------------------------------------------------------------------------------
+
+8. Tell me about your project.
+
+   1. My project was LabFlow, a healthcare application focused on laboratory result integration and ICU monitoring.
+   2. It collects lab results from different hospital systems, validates and processes them, and makes them available to clinicians.
+   3. The backend uses Java, Spring Boot, Kafka and Oracle, while React is used for the frontend.
+   4. My responsibilities included backend development, Kafka event processing, database optimisation, testing and production support.
+
+------------------------------------------------------------------------------------------------------------------
+
+9. Tell me about one design decision you regret.
+
+   1. In one area, handling database updates and event publishing as separate operations could create a consistency risk.
+   2. If the database transaction succeeded but Kafka publishing failed, downstream services might not receive the event.
+   3. I would prefer the Transactional Outbox pattern to store the business update and event in the same database transaction.
+   4. A separate publisher can then publish pending events to Kafka, improving reliability.
+
+------------------------------------------------------------------------------------------------------------------
+
+10. Tell me about one technical decision you are proud of.
+
+   1. I am particularly proud of using the Transactional Outbox pattern for reliable event publishing.
+   2. In a distributed system, updating the database and publishing to Kafka are two separate operations.
+   3. The Outbox pattern helps avoid inconsistency by saving the business data and event record in one transaction.
+   4. It improves reliability and makes event publishing recoverable when Kafka is temporarily unavailable.
+
+------------------------------------------------------------------------------------------------------------------
+
+11. How have you used Kafka in your project?
+
+   1. We used Kafka to exchange laboratory result events between backend services asynchronously.
+   2. Producers published events, and consumer services processed them independently.
+   3. We handled duplicate events through idempotent processing and out-of-order events using result versioning.
+   4. We monitored consumer lag and handled failures using retries and appropriate error-handling mechanisms.
+
+------------------------------------------------------------------------------------------------------------------
+
+12. How do you make a team independent so that work continues when you are on vacation?
+
+   1. I make sure important knowledge is documented, including architecture, deployment steps and troubleshooting procedures.
+   2. I distribute module ownership instead of keeping all critical knowledge with one person.
+   3. I encourage knowledge-sharing sessions and code reviews so multiple people understand important areas.
+   4. Before taking leave, I provide a clear handover covering pending tasks, risks and important contacts.
+
+------------------------------------------------------------------------------------------------------------------
+
+13. Have you worked with separate distributed teams?
+
+   1. Yes, I have experience working with distributed teams across different locations.
+   2. We coordinate through Agile ceremonies, meetings, documentation and collaboration tools.
+   3. We maintain clear ownership of tasks and communicate blockers early.
+   4. Regular updates help avoid dependency-related delays.
+
+------------------------------------------------------------------------------------------------------------------
+
+14. How do you manage coordination between separate teams?
+
+   1. First, I establish clear responsibilities and ownership for each team.
+   2. I define API contracts, data formats and dependencies before implementation starts.
+   3. I maintain regular communication through stand-ups, refinement meetings and dependency tracking.
+   4. If a blocker affects delivery, I escalate it early and work with the concerned teams on a solution.
+
+------------------------------------------------------------------------------------------------------------------
+
+15. How have you worked in Agile?
+
+   1. We follow Agile Scrum with sprint planning, daily stand-ups, sprint reviews and retrospectives.
+   2. Requirements are maintained as user stories with acceptance criteria.
+   3. We estimate tasks, track progress and communicate blockers during the sprint.
+   4. At the end of each sprint, we demonstrate completed functionality and discuss improvements.
+
+------------------------------------------------------------------------------------------------------------------
+
+16. What is asynchronous communication, and how have you used it?
+
+   1. Asynchronous communication means the sender does not need to wait for the receiver to complete processing.
+   2. In our project, we used Kafka to exchange laboratory result events between services.
+   3. Producers publish events to Kafka, and consumers process them independently.
+   4. It reduces direct service dependency and improves scalability and resilience.
+
+------------------------------------------------------------------------------------------------------------------
+
+17. How do you mentor team members working with a new technology?
+
+   1. First, I understand their existing knowledge and identify the areas where they need support.
+   2. I explain the fundamentals and provide small practical tasks to help them learn.
+   3. I conduct code reviews and pair-programming sessions to guide them.
+   4. Gradually, I give them ownership of a module so they become confident and independent.
+
+------------------------------------------------------------------------------------------------------------------
+
+18. Have you designed systems or components in your previous projects?
+
+   1. Yes, I have been involved in designing backend components and service-level solutions.
+   2. I consider functional requirements, API contracts, database design and service dependencies.
+   3. I also consider reliability, scalability, error handling, security and performance.
+   4. For example, I worked with the Transactional Outbox approach for reliable database and Kafka event publishing.
+
+------------------------------------------------------------------------------------------------------------------
+
+19. How do you coordinate with onshore and offshore teams with limited overlapping hours?
+
+   1. I plan important discussions during the available overlapping hours.
+   2. I maintain clear documentation of requirements, decisions, blockers and action items.
+   3. I use asynchronous communication for regular updates instead of depending on meetings.
+   4. I ensure proper handovers so work can continue across time zones.
+
+------------------------------------------------------------------------------------------------------------------
+
+20. What is your experience with Spring Batch?
+
+   1. Spring Batch is a framework used to process large volumes of data in batches.
+   2. It provides concepts like Job, Step, ItemReader, ItemProcessor and ItemWriter.
+   3. It supports chunk processing, retry, skip, restart and transaction management.
+   4. I understand its architecture and can explain how I would use it for bulk data processing, but I would not claim production hands-on experience unless I have used it.
+
+------------------------------------------------------------------------------------------------------------------
+
+21. What frontend technologies have you worked with?
+
+   1. I have worked with React and JavaScript for frontend development.
+   2. I have experience with functional components, Hooks, props, state and component-based design.
+   3. I have integrated frontend components with Spring Boot REST APIs.
+   4. I have worked on displaying data, handling user interactions and managing API responses.
+
+------------------------------------------------------------------------------------------------------------------
+
+22. Can you share your experience with cloud migration projects?
+
+   1. Cloud migration involves moving applications, databases and infrastructure from on-premises environments to cloud platforms.
+   2. I understand the key areas, including containerisation, configuration management, networking, security and CI/CD.
+   3. I would first assess application dependencies, database connectivity, external integrations and deployment requirements.
+   4. I would not claim direct cloud migration ownership unless I have actually worked on such a migration.
+
+------------------------------------------------------------------------------------------------------------------
+
+23. What is your experience with Kafka or other message-oriented middleware?
+
+   1. I have worked with Apache Kafka for event-driven communication between backend services.
+   2. Kafka uses topics and partitions to store events, while consumer groups distribute processing.
+   3. I have worked on handling duplicate and out-of-order events in business processing.
+   4. I also understand delivery guarantees, retries, consumer offsets and dead-letter topics.
+
+------------------------------------------------------------------------------------------------------------------
+
+24. Have you worked with DB2?
+
+   1. DB2 is a relational database management system developed by IBM.
+   2. It supports SQL, transactions, indexing, stored procedures and query optimisation.
+   3. I am comfortable with relational database concepts, SQL queries, joins and indexing.
+   4. If I have not used DB2 in production, I would clearly say that my hands-on database experience is with Oracle.
+
+------------------------------------------------------------------------------------------------------------------
+
+25. What is Dynatrace?
+
+   1. Dynatrace is an application performance monitoring and observability platform.
+   2. It monitors application performance, infrastructure, services and user experience.
+   3. It helps identify slow APIs, high CPU or memory usage and service dependencies.
+   4. It provides distributed tracing and AI-assisted root-cause analysis.
+
+------------------------------------------------------------------------------------------------------------------
+
+26. What is your experience with Splunk?
+
+   1. Splunk is a platform used to collect, search, analyse and visualise machine-generated data.
+   2. It is commonly used for centralised application log monitoring.
+   3. We can search logs, create dashboards and configure alerts for production issues.
+   4. It helps developers investigate exceptions, trace requests and identify root causes.
+
+------------------------------------------------------------------------------------------------------------------
+
+27. Once you understand the requirements, how do you design a solution?
+
+   1. First, I clarify functional and non-functional requirements, including performance, security and scalability.
+   2. Then I identify services, API contracts, database entities and communication patterns.
+   3. I prepare the high-level design and detailed component-level design, including failure handling.
+   4. Finally, I review the design with the team, identify risks and break the solution into development tasks.
+
+================================================================
+MANAGERIAL ROUND
+================================================================
+
+28. How do you mentor junior and senior developers?
+
+   1. For junior developers, I focus on fundamentals, coding standards and step-by-step guidance.
+   2. For senior developers, I discuss architecture, design decisions, performance and ownership.
+   3. I encourage code reviews and knowledge-sharing sessions across the team.
+   4. My goal is to help everyone become confident and independently responsible.
+
+------------------------------------------------------------------------------------------------------------------
+
+29. Have you delegated responsibilities to senior developers?
+
+   1. Yes, I believe responsibilities should be distributed based on experience and strengths.
+   2. I assign module ownership to senior developers and define clear expectations.
+   3. I allow them to make technical decisions while remaining available for important discussions.
+   4. I review progress through checkpoints rather than continuously monitoring their work.
+
+------------------------------------------------------------------------------------------------------------------
+
+30. How have you helped team members develop their skills?
+
+   1. I identify skill gaps based on project requirements and individual interests.
+   2. I encourage practical learning through small development tasks and proof of concepts.
+   3. I organise knowledge-sharing sessions on topics such as Java, Spring Boot and Kafka.
+   4. I also encourage developers to explain their solutions during code reviews.
+
+------------------------------------------------------------------------------------------------------------------
+
+31. What do you focus on in the first 100 days of joining a project?
+
+   1. First 30 days: Understand the business domain, architecture, team structure and development process.
+   2. Next 30 days: Set up the environment, understand the codebase and start contributing to smaller tasks.
+   3. Next 40 days: Take ownership of modules, resolve issues and contribute to design discussions.
+   4. By 100 days, my goal is to become productive, understand key dependencies and build trust with the team.
+
+------------------------------------------------------------------------------------------------------------------
+
+32. Have you been involved in migrating from an old technology stack to a new one?
+
+   1. I first understand the limitations of the existing system and the reason for migration.
+   2. I assess application dependencies, database compatibility, integrations and business risks.
+   3. I prefer incremental migration where possible, with proper testing and rollback planning.
+   4. I would be transparent about the specific migrations I have personally handled and distinguish them from my design knowledge.
+
+------------------------------------------------------------------------------------------------------------------
+
+33. How do you understand and gather business requirements?
+
+   1. I start by discussing the requirement with business analysts, product owners and stakeholders.
+   2. I ask questions to understand the business problem and expected outcome.
+   3. I convert requirements into user stories with clear acceptance criteria.
+   4. Before development, I validate the understanding with stakeholders and identify dependencies and edge cases.
+
+------------------------------------------------------------------------------------------------------------------
+
+34. Have you presented your project to non-technical stakeholders?
+
+   1. Yes, when explaining a project to non-technical stakeholders, I focus on business value rather than implementation details.
+   2. I explain the problem, the solution and how it improves the business process.
+   3. I use simple diagrams or demonstrations to explain the application flow.
+   4. I also discuss progress, risks and expected timelines in simple language.
+
+------------------------------------------------------------------------------------------------------------------
+
+35. How do you collaborate with cross-functional teams?
+
+   1. I work closely with business analysts, QA, DevOps, frontend and backend teams.
+   2. I ensure requirements and API contracts are clearly communicated.
+   3. I involve the right teams early when there are dependencies or technical blockers.
+   4. I focus on shared delivery goals rather than individual team boundaries.
+
+------------------------------------------------------------------------------------------------------------------
+
+36. How do you handle situations where releases are delayed?
+
+   1. First, I identify the exact reason for the delay, such as technical issues, dependencies or testing failures.
+   2. I assess the impact on the release scope and communicate the situation to stakeholders early.
+   3. I work with the team to prioritise critical fixes and identify what can safely move to a later release.
+   4. I never compromise important quality checks just to meet a release date; I agree on a realistic revised plan.
+
+================================================================
