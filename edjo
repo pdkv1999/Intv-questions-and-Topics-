@@ -1,0 +1,746 @@
+API DESIGN AND MICROSERVICES – INTERVIEW PREPARATION
+====================================================================
+
+SECTION 1: PROJECT AND API LIFECYCLE
+====================================================================
+
+1. Explain your project architecture and responsibilities.
+
+   1. My project was LabFlow, a healthcare application used to integrate laboratory results from hospital systems.
+   2. We followed a microservices-based architecture using Java 17, Spring Boot, Kafka, Oracle and React.
+   3. Backend services handled lab result integration, validation, event processing and database operations.
+   4. My responsibilities included backend development, Kafka integration, database optimisation, API development,
+      testing and production support.
+
+------------------------------------------------------------------------------------------------------------------
+
+2. What is the API lifecycle?
+
+   1. API Planning: Understand business requirements, consumers and use cases.
+   2. API Design and Development: Define endpoints, HTTP methods, request/response structures and implement APIs.
+   3. Testing and Publishing: Perform functional, security and performance testing, then publish documentation.
+   4. Monitoring and Retirement: Monitor usage, maintain versions, communicate deprecation and eventually retire APIs.
+
+------------------------------------------------------------------------------------------------------------------
+
+3. What are the good API design steps?
+
+   1. Understand business requirements and identify the resources.
+   2. Design RESTful endpoints using nouns, appropriate HTTP methods and standard status codes.
+   3. Define request/response formats, validation, pagination, filtering and error structures.
+   4. Consider security, backward compatibility, performance, documentation and monitoring.
+
+------------------------------------------------------------------------------------------------------------------
+
+4. What points do you consider while writing an API endpoint?
+
+   1. Use meaningful resource names and follow consistent URL naming conventions.
+   2. Select the correct HTTP method, status code and request validation rules.
+   3. Consider authentication, authorisation, pagination, filtering and error handling.
+   4. Ensure backward compatibility, logging, monitoring and proper API documentation.
+
+------------------------------------------------------------------------------------------------------------------
+
+5. Why do we use nouns instead of verbs in REST API endpoints?
+
+   1. REST APIs represent resources, so endpoints should identify the resource.
+   2. HTTP methods already describe the operation to perform.
+   3. For example, GET /books retrieves books and POST /books creates a book.
+   4. This makes APIs consistent, readable and easier to maintain.
+
+   Avoid:
+   /getBooks
+   /createBook
+
+   Prefer:
+   GET  /books
+   POST /books
+
+------------------------------------------------------------------------------------------------------------------
+
+6. Design APIs for a Library Management System.
+
+   1. GET /api/v1/books – Retrieve all books.
+   2. GET /api/v1/books/{id} – Retrieve a particular book.
+   3. POST /api/v1/books – Add a new book.
+   4. PUT /api/v1/books/{id} – Update a book.
+
+   Additional endpoints:
+
+   GET    /api/v1/books?category=Java
+   GET    /api/v1/books?author=Robert
+   GET    /api/v1/books?page=0&size=10
+   DELETE /api/v1/books/{id}
+
+------------------------------------------------------------------------------------------------------------------
+
+7. How do you filter books based on categories?
+
+   1. Use query parameters to support filtering.
+   2. Example: GET /api/v1/books?category=Java.
+   3. Backend reads the category parameter and applies the database filter.
+   4. For multiple filters, support parameters such as category, author, title and availability.
+
+   Example:
+   GET /api/v1/books?category=Java&available=true&page=0&size=10
+
+------------------------------------------------------------------------------------------------------------------
+
+8. What URL will you give the frontend team after creating an API?
+
+   1. First, I share the API base URL for the target environment.
+   2. Example: https://api.company.com/api/v1/books.
+   3. I share the HTTP method, headers, authentication requirements, request body and response structure.
+   4. I also provide the OpenAPI/Swagger documentation so frontend developers can integrate independently.
+
+------------------------------------------------------------------------------------------------------------------
+
+9. What is an API contract?
+
+   1. An API contract defines how the frontend and backend communicate.
+   2. It specifies endpoint URLs, HTTP methods, request parameters and response structures.
+   3. It also defines status codes, validation rules, authentication and error responses.
+   4. Both teams should agree on the contract before implementation to avoid integration issues.
+
+------------------------------------------------------------------------------------------------------------------
+
+10. How do frontend and backend teams communicate about API contracts?
+
+   1. First, we discuss the business requirement and define the API contract.
+   2. We agree on request fields, response fields, data types and error structures.
+   3. We document the contract using OpenAPI and share sample requests and responses.
+   4. Both teams can develop independently using agreed contracts and mock responses.
+
+------------------------------------------------------------------------------------------------------------------
+
+11. What is Code First vs Design First API development?
+
+   1. Code First means developers implement the API and generate documentation from the code.
+   2. Design First means the API contract is created before implementation.
+   3. Design First improves communication between frontend, backend and integration teams.
+   4. For APIs consumed by multiple teams, I prefer Design First because it establishes an agreed contract early.
+
+------------------------------------------------------------------------------------------------------------------
+
+12. What is OpenAPI Specification?
+
+   1. OpenAPI is a standard specification used to describe REST APIs.
+   2. It defines endpoints, HTTP methods, parameters, request bodies and responses.
+   3. It supports authentication schemes, schemas, examples and reusable components.
+   4. Tools like Swagger UI can generate interactive API documentation from it.
+
+------------------------------------------------------------------------------------------------------------------
+
+13. Explain the main components of OpenAPI.
+
+   1. openapi and info – Specification version and API information.
+   2. servers and paths – API base URLs and available endpoints.
+   3. components and schemas – Reusable request, response and security definitions.
+   4. security, parameters and responses – Authentication requirements, input parameters and response details.
+
+------------------------------------------------------------------------------------------------------------------
+
+14. What is RAML?
+
+   1. RAML stands for RESTful API Modeling Language.
+   2. It is used to design and document REST APIs.
+   3. It supports resources, methods, request/response types and reusable definitions.
+   4. It is commonly associated with the MuleSoft API ecosystem.
+
+------------------------------------------------------------------------------------------------------------------
+
+15. OpenAPI vs RAML?
+
+   1. Both are used to describe and document REST APIs.
+   2. OpenAPI is widely supported across API tools and platforms.
+   3. RAML is strongly associated with MuleSoft and API-led connectivity.
+   4. The choice depends on the organisation's API management platform and tooling.
+
+------------------------------------------------------------------------------------------------------------------
+
+16. What is an API Developer Portal?
+
+   1. A Developer Portal is a central place where API consumers discover and understand APIs.
+   2. It provides API documentation, examples, authentication instructions and usage guidelines.
+   3. Developers can often register applications and obtain API credentials.
+   4. Platforms such as MuleSoft Anypoint Platform provide API management and developer portal capabilities.
+
+------------------------------------------------------------------------------------------------------------------
+
+17. What is API versioning?
+
+   1. API versioning allows us to introduce changes without breaking existing consumers.
+   2. We can use URL versioning, such as /api/v1/books and /api/v2/books.
+   3. We should maintain backward compatibility wherever possible.
+   4. For breaking changes, introduce a new version and communicate the deprecation timeline.
+
+------------------------------------------------------------------------------------------------------------------
+
+18. How do you decide when an API should be retired?
+
+   1. Check API usage, business relevance and consumer dependencies.
+   2. Confirm whether consumers have migrated to a newer version.
+   3. Communicate the deprecation date and provide migration guidance.
+   4. Monitor remaining usage and retire the API only after agreed timelines and approvals.
+
+====================================================================
+SECTION 2: HTTP METHODS AND STATUS CODES
+====================================================================
+
+19. What are the main HTTP methods?
+
+   1. GET – Retrieve a resource.
+   2. POST – Create a resource or trigger an operation.
+   3. PUT – Replace a resource; PATCH – partially update a resource.
+   4. DELETE – Delete a resource.
+
+------------------------------------------------------------------------------------------------------------------
+
+20. What status codes do you return for GET and POST?
+
+   1. GET successful: 200 OK.
+   2. POST successful creation: 201 Created.
+   3. POST successful processing without a response body: 204 No Content can be used where appropriate.
+   4. Invalid input: 400 Bad Request.
+
+------------------------------------------------------------------------------------------------------------------
+
+21. What are the important HTTP error status codes?
+
+   1. 400 – Bad Request: Invalid request data.
+   2. 401 – Unauthorized: Authentication is missing or invalid.
+   3. 403 – Forbidden: User does not have permission.
+   4. 404 – Not Found: Resource does not exist.
+   5. 409 – Conflict: Resource state conflict.
+   6. 429 – Too Many Requests: Rate limit exceeded.
+   7. 500 – Internal Server Error.
+   8. 503 – Service Unavailable.
+
+------------------------------------------------------------------------------------------------------------------
+
+22. PUT vs PATCH?
+
+   1. PUT generally replaces the complete resource representation.
+   2. PATCH updates selected fields of an existing resource.
+   3. PUT is expected to be idempotent.
+   4. PATCH can also be designed to be idempotent, depending on the patch operation.
+
+====================================================================
+SECTION 3: API SECURITY AND OAUTH2
+====================================================================
+
+23. What is the difference between Authentication and Authorisation?
+
+   1. Authentication verifies who the user is.
+   2. Authorisation determines what the authenticated user can access.
+   3. Example: Login verifies the user; checking whether the user can delete a book is authorisation.
+   4. Authentication happens before access is granted, and authorisation controls the permitted actions.
+
+------------------------------------------------------------------------------------------------------------------
+
+24. How does OAuth2 work?
+
+   1. OAuth2 is an authorisation framework that allows an application to access protected resources.
+   2. The client obtains an access token from an Authorisation Server.
+   3. The client sends the token to the Resource Server using the Authorization header.
+   4. The Resource Server validates the token and checks its permissions before returning data.
+
+------------------------------------------------------------------------------------------------------------------
+
+25. What is the difference between JWT and OAuth2?
+
+   1. JWT is a token format used to represent claims securely through a digital signature.
+   2. OAuth2 is an authorisation framework that defines how clients obtain and use access tokens.
+   3. An OAuth2 access token may be a JWT or an opaque token.
+   4. They are not alternatives; OAuth2 can use JWT as its access-token format.
+
+------------------------------------------------------------------------------------------------------------------
+
+26. What is an IDP?
+
+   1. IDP stands for Identity Provider.
+   2. It manages user identities and authenticates users.
+   3. Examples include Keycloak, Okta, Microsoft Entra ID and Auth0.
+   4. Applications can integrate with an IDP using OAuth2 and OpenID Connect.
+
+------------------------------------------------------------------------------------------------------------------
+
+27. How do you implement authentication using an IDP?
+
+   1. Register the application with the Identity Provider.
+   2. Configure the client ID, redirect URL and supported authentication flow.
+   3. The user authenticates with the IDP and receives tokens.
+   4. The application sends the access token to backend APIs, which validate it and enforce permissions.
+
+------------------------------------------------------------------------------------------------------------------
+
+28. What are OAuth2 grant types?
+
+   1. Authorisation Code: Used for user-facing applications, normally with PKCE.
+   2. Client Credentials: Used for machine-to-machine communication.
+   3. Device Authorisation Grant: Used for devices with limited input capabilities.
+   4. Refresh Token: Used to obtain new access tokens when supported by the flow.
+
+   NOTE: Password Grant is deprecated and should not be used in new applications.
+
+------------------------------------------------------------------------------------------------------------------
+
+29. What is the difference between access token and refresh token?
+
+   1. Access token is sent to APIs to access protected resources.
+   2. Refresh token is used to obtain a new access token.
+   3. Access tokens are generally short-lived.
+   4. Refresh tokens need stronger protection and should never be sent to normal resource APIs.
+
+------------------------------------------------------------------------------------------------------------------
+
+30. Explain JWT structure.
+
+   1. Header contains the token type and signing algorithm.
+   2. Payload contains claims such as subject, roles and expiration.
+   3. Signature verifies token integrity and authenticity.
+   4. JWT format is Header.Payload.Signature, and its payload is not encrypted by default.
+
+------------------------------------------------------------------------------------------------------------------
+
+31. How is a JWT validated when an API is called?
+
+   1. The client sends the token in the Authorization: Bearer header.
+   2. The backend verifies the signature using the configured public key or secret.
+   3. It validates expiration, issuer, audience and other required claims.
+   4. It extracts authorities and checks whether the user is allowed to access the endpoint.
+
+------------------------------------------------------------------------------------------------------------------
+
+32. Do you handle authentication separately in every microservice?
+
+   1. The API Gateway can validate incoming access tokens before forwarding requests.
+   2. Backend services should also enforce authorisation for their own protected resources.
+   3. In higher-security environments, services validate tokens or trusted identity information independently.
+   4. For service-to-service communication, we can use OAuth2 Client Credentials or workload identity.
+
+------------------------------------------------------------------------------------------------------------------
+
+33. How does API Gateway authentication work?
+
+   1. The client sends a request with an access token to the API Gateway.
+   2. The gateway validates the token or delegates validation to an identity service.
+   3. It checks required permissions and routes the request to the backend service.
+   4. Backend services still enforce resource-level authorisation instead of blindly trusting the gateway.
+
+------------------------------------------------------------------------------------------------------------------
+
+34. Which API Gateway have you used?
+
+   1. An API Gateway provides a single entry point for client requests.
+   2. It handles routing, authentication, rate limiting and request filtering.
+   3. Spring Cloud Gateway is one option in the Spring ecosystem; other options include Kong and MuleSoft.
+   4. I would clearly state the gateway actually used in my project rather than claiming a platform I have not worked with.
+
+------------------------------------------------------------------------------------------------------------------
+
+35. What is the difference between symmetric and asymmetric encryption?
+
+   1. Symmetric encryption uses the same secret key for encryption and decryption.
+   2. Asymmetric cryptography uses a public key and a private key.
+   3. Symmetric algorithms such as AES are efficient for bulk data encryption.
+   4. Asymmetric algorithms such as RSA or elliptic-curve cryptography are used for key exchange,
+      signatures and identity verification.
+
+------------------------------------------------------------------------------------------------------------------
+
+36. What is the difference between encryption and hashing?
+
+   1. Encryption converts data into unreadable form and can be reversed using the correct key.
+   2. Hashing produces a fixed-length digest and is designed to be one-way.
+   3. Encryption is used to protect confidential data.
+   4. Passwords should be stored using adaptive password hashing such as Argon2id or bcrypt,
+      not reversible encryption or plain SHA-256.
+
+------------------------------------------------------------------------------------------------------------------
+
+37. What is a keystore and truststore?
+
+   1. A keystore stores an application's private key and its certificate.
+   2. A truststore stores certificates or certificate authorities that the application trusts.
+   3. In HTTPS, a client truststore helps validate the server certificate.
+   4. In mutual TLS, the client may also present its own certificate from its keystore.
+
+------------------------------------------------------------------------------------------------------------------
+
+38. How do you validate certificates?
+
+   1. Check whether the certificate is signed by a trusted certificate authority.
+   2. Validate the certificate validity period.
+   3. Verify hostname matching and certificate chain.
+   4. Where required, check certificate revocation and enforce secure TLS configuration.
+
+------------------------------------------------------------------------------------------------------------------
+
+39. What is service-to-service security?
+
+   1. Services should authenticate each other rather than blindly trusting network access.
+   2. OAuth2 Client Credentials can be used for machine-to-machine authentication.
+   3. Mutual TLS provides certificate-based identity verification between services.
+   4. Apply least-privilege permissions, secret management and secure communication.
+
+------------------------------------------------------------------------------------------------------------------
+
+40. What are common OWASP API security vulnerabilities?
+
+   1. Broken Object Level Authorisation – users accessing another user's resources.
+   2. Broken Authentication – weak or incorrect authentication mechanisms.
+   3. Broken Function Level Authorisation – users accessing restricted operations.
+   4. Unrestricted Resource Consumption – APIs being abused through excessive requests.
+
+   Prevention:
+   Validate permissions for every resource, secure tokens, apply rate limiting,
+   validate input and monitor suspicious API activity.
+
+====================================================================
+SECTION 4: API PERFORMANCE AND DATABASE
+====================================================================
+
+41. How do you reduce API latency?
+
+   1. Identify slow database queries and optimise them using execution plans and indexing.
+   2. Use caching for frequently accessed data.
+   3. Avoid unnecessary service-to-service calls and reduce payload size.
+   4. Use connection pooling, efficient thread management and asynchronous processing where appropriate.
+
+------------------------------------------------------------------------------------------------------------------
+
+42. What is latency and throughput?
+
+   1. Latency is the time taken to complete a request.
+   2. Throughput is the number of requests processed in a given time.
+   3. Low latency means faster responses, while high throughput means handling more requests.
+   4. We improve both through caching, database optimisation, load balancing and efficient resource utilisation.
+
+------------------------------------------------------------------------------------------------------------------
+
+43. How do you optimise a database query?
+
+   1. Analyse the execution plan using EXPLAIN PLAN or DBMS_XPLAN.
+   2. Add appropriate indexes based on query patterns.
+   3. Avoid unnecessary columns, joins and repeated database calls.
+   4. Use pagination, batching and query optimisation where required.
+
+------------------------------------------------------------------------------------------------------------------
+
+44. How do you make a database scalable and highly available?
+
+   1. Use read replicas to distribute read workloads.
+   2. Use partitioning or sharding when data volume requires it.
+   3. Configure replication, automated backups and failover.
+   4. Monitor database connections, query latency, storage and replication lag.
+
+------------------------------------------------------------------------------------------------------------------
+
+45. What is the difference between UNION and JOIN?
+
+   1. UNION combines rows from multiple SELECT queries.
+   2. JOIN combines columns from related tables.
+   3. UNION removes duplicates by default, while UNION ALL retains them.
+   4. JOIN uses matching conditions to combine related records.
+
+------------------------------------------------------------------------------------------------------------------
+
+46. Primary Key vs Foreign Key?
+
+   1. Primary Key uniquely identifies a record in a table.
+   2. Foreign Key references a key in another table.
+   3. A table has one primary-key constraint, which can contain multiple columns.
+   4. Foreign keys maintain referential integrity between related tables.
+
+------------------------------------------------------------------------------------------------------------------
+
+47. Inner Join vs Outer Join?
+
+   1. INNER JOIN returns matching records from both tables.
+   2. LEFT JOIN returns all records from the left table and matching records from the right.
+   3. RIGHT JOIN returns all records from the right table and matching records from the left.
+   4. FULL OUTER JOIN returns matching and non-matching records from both tables.
+
+------------------------------------------------------------------------------------------------------------------
+
+48. Materialized View vs Normal View?
+
+   1. A normal view stores a SQL query definition, not a separate copy of its result data.
+   2. A materialized view physically stores the query result.
+   3. Normal views generally show current underlying data when queried.
+   4. Materialized views require refresh and are useful for expensive reporting queries.
+
+====================================================================
+SECTION 5: CI/CD, GIT AND DEPLOYMENT
+====================================================================
+
+49. Explain your CI/CD pipeline.
+
+   1. Developers push code to Git and create pull requests.
+   2. CI pipeline builds the application and runs unit tests and quality checks.
+   3. The application is packaged into a Docker image and pushed to a container registry.
+   4. CD deploys the approved image to the target environment, followed by smoke tests and monitoring.
+
+------------------------------------------------------------------------------------------------------------------
+
+50. What branching strategy have you used?
+
+   1. Feature branches are created for individual development tasks.
+   2. Developers raise pull requests for code review and automated checks.
+   3. Approved changes are merged into the release or integration branch.
+   4. Production releases are tagged, and hotfixes are handled through a controlled process.
+
+------------------------------------------------------------------------------------------------------------------
+
+51. What is a hotfix?
+
+   1. A hotfix is an urgent code change required to resolve a production issue.
+   2. It is created from the production release or corresponding stable branch.
+   3. The fix is tested and deployed through an expedited but controlled pipeline.
+   4. The change is merged back into active development branches to prevent regression.
+
+------------------------------------------------------------------------------------------------------------------
+
+52. What are major, minor and patch versions?
+
+   1. Major version: Introduces incompatible or breaking changes.
+   2. Minor version: Adds functionality in a backward-compatible manner.
+   3. Patch version: Contains backward-compatible bug fixes.
+   4. Example: 2.4.1 means major 2, minor 4 and patch 1.
+
+------------------------------------------------------------------------------------------------------------------
+
+53. How do you maintain backward compatibility?
+
+   1. Avoid removing or renaming existing fields and endpoints unexpectedly.
+   2. Add optional fields instead of changing existing required fields.
+   3. Maintain existing response structures and behaviour.
+   4. Introduce a new API version for breaking changes and provide a migration period.
+
+====================================================================
+SECTION 6: JAVA, SPRING AND DESIGN
+====================================================================
+
+54. Method Overloading vs Overriding?
+
+   1. Overloading means same method name with different parameter lists.
+   2. Overriding means a child class provides its own implementation of a parent method.
+   3. Overloading is resolved at compile time.
+   4. Overriding uses runtime polymorphism.
+
+------------------------------------------------------------------------------------------------------------------
+
+55. Can we overload the main method?
+
+   1. Yes, Java allows multiple main methods with different parameters.
+   2. The JVM starts execution using public static void main(String[] args).
+   3. Other overloaded main methods are not called automatically.
+   4. We need to call them explicitly from the standard main method.
+
+------------------------------------------------------------------------------------------------------------------
+
+56. What is a Lambda Expression?
+
+   1. A lambda expression is a concise way to implement a functional interface.
+   2. It reduces boilerplate code compared with anonymous inner classes.
+   3. It is commonly used with Streams and collection operations.
+   4. Example: list.forEach(value -> System.out.println(value));
+
+------------------------------------------------------------------------------------------------------------------
+
+57. What is Reflection in Java?
+
+   1. Reflection allows us to inspect classes, methods, fields and constructors at runtime.
+   2. It can be used to create objects and invoke methods dynamically.
+   3. Frameworks such as Spring and Hibernate use reflection internally.
+   4. Excessive reflection can affect performance and reduce type safety.
+
+------------------------------------------------------------------------------------------------------------------
+
+58. What is IoC and Dependency Injection?
+
+   1. IoC means Inversion of Control, where Spring manages object creation and lifecycle.
+   2. Dependency Injection means providing required dependencies to an object.
+   3. Spring ApplicationContext manages beans and injects dependencies.
+   4. Constructor injection is generally preferred because dependencies are explicit and testable.
+
+------------------------------------------------------------------------------------------------------------------
+
+59. What are Spring Bean Scopes?
+
+   1. Singleton: One bean instance per Spring IoC container.
+   2. Prototype: A new instance is created whenever the bean is requested from the container.
+   3. Request: One bean instance per HTTP request.
+   4. Session: One bean instance per HTTP session.
+
+------------------------------------------------------------------------------------------------------------------
+
+60. Have you used scopes apart from Singleton?
+
+   1. Singleton is the default scope for Spring beans.
+   2. Request scope is useful when data should be maintained for a single HTTP request.
+   3. Prototype is useful when a new bean instance is required for each container lookup.
+   4. We can configure scope using @Scope("prototype") or @RequestScope.
+
+------------------------------------------------------------------------------------------------------------------
+
+61. What is Spring Cloud Gateway?
+
+   1. It is an API Gateway built for Spring-based microservices architecture.
+   2. It routes requests to the appropriate backend service.
+   3. It supports filters for authentication, logging, rate limiting and request modification.
+   4. It provides a central place for cross-cutting API concerns.
+
+------------------------------------------------------------------------------------------------------------------
+
+62. What design patterns have you used?
+
+   1. Strategy Pattern: Select different business algorithms at runtime.
+   2. Factory Pattern: Centralise object creation logic.
+   3. Builder Pattern: Construct complex objects step by step.
+   4. Outbox Pattern: Reliably publish database events to Kafka.
+
+====================================================================
+SECTION 7: CONCURRENCY AND SYSTEM DESIGN
+====================================================================
+
+63. Design a BankAccount class with deposit and withdraw methods.
+
+   JAVA CODE:
+
+   public class BankAccount {
+
+       private BigDecimal balance = BigDecimal.ZERO;
+
+       public synchronized void deposit(BigDecimal amount) {
+           validateAmount(amount);
+           balance = balance.add(amount);
+       }
+
+       public synchronized void withdraw(BigDecimal amount) {
+           validateAmount(amount);
+
+           if (balance.compareTo(amount) < 0) {
+               throw new IllegalArgumentException("Insufficient balance");
+           }
+
+           balance = balance.subtract(amount);
+       }
+
+       public synchronized BigDecimal getBalance() {
+           return balance;
+       }
+
+       private void validateAmount(BigDecimal amount) {
+           if (amount == null || amount.compareTo(BigDecimal.ZERO) <= 0) {
+               throw new IllegalArgumentException("Invalid amount");
+           }
+       }
+   }
+
+   EXPLANATION:
+   1. BigDecimal is used for financial calculations instead of double.
+   2. Deposit and withdraw validate that the amount is positive.
+   3. synchronized ensures only one thread executes a synchronized method
+      on the same account object at a time.
+   4. The balance is private, and callers cannot modify it directly.
+
+   IMPORTANT:
+   For a real banking system, in-memory synchronization is not enough.
+   Use database transactions, row-level locking or optimistic locking to protect
+   balance updates across multiple application instances.
+
+------------------------------------------------------------------------------------------------------------------
+
+64. How do you prevent two users from withdrawing simultaneously?
+
+   1. Use database transactions to make balance updates atomic.
+   2. Use optimistic locking with a version column to detect concurrent updates.
+   3. Alternatively, use SELECT FOR UPDATE to lock the account row during withdrawal.
+   4. Validate sufficient balance inside the transaction before updating it.
+
+------------------------------------------------------------------------------------------------------------------
+
+65. What is a Load Balancer?
+
+   1. A load balancer distributes incoming traffic across multiple application instances.
+   2. It prevents a single server from handling all requests.
+   3. It supports health checks and routes traffic to healthy instances.
+   4. It improves scalability and availability.
+
+------------------------------------------------------------------------------------------------------------------
+
+66. API Gateway vs Load Balancer?
+
+   1. Load Balancer mainly distributes traffic across multiple servers or instances.
+   2. API Gateway manages API-level routing and cross-cutting concerns.
+   3. API Gateway can handle authentication, rate limiting and request transformation.
+   4. Both can work together: the gateway routes API requests, while a load balancer
+      distributes traffic to backend instances.
+
+------------------------------------------------------------------------------------------------------------------
+
+67. High Availability vs Fault Tolerance?
+
+   1. High Availability focuses on keeping a system operational with minimal downtime.
+   2. Fault Tolerance focuses on continuing operation even when components fail.
+   3. High availability may involve failover and recovery.
+   4. Fault-tolerant systems are designed to tolerate failures with little or no interruption.
+
+====================================================================
+SECTION 8: MANAGERIAL AND PRACTICAL QUESTIONS
+====================================================================
+
+68. Explain one complex problem you solved.
+
+   1. In LabFlow, one challenge was maintaining data consistency while processing laboratory
+      result events asynchronously.
+   2. Duplicate and out-of-order Kafka events could affect the correctness of result data.
+   3. We handled duplicates through idempotent processing and used result versioning
+      to manage event ordering.
+   4. We also used the Transactional Outbox pattern and optimistic locking to improve
+      consistency between database updates and event publishing.
+
+------------------------------------------------------------------------------------------------------------------
+
+69. How do you review a junior developer's code?
+
+   1. First, I check whether the implementation satisfies the business requirement.
+   2. Then I review readability, naming, SOLID principles and code reuse.
+   3. I verify exception handling, security, performance and test coverage.
+   4. I explain improvements clearly and help the developer understand the reason behind them.
+
+------------------------------------------------------------------------------------------------------------------
+
+70. How do you coordinate with cross-functional teams?
+
+   1. I communicate requirements and API contracts clearly with frontend and backend teams.
+   2. I coordinate with QA for test scenarios and defect resolution.
+   3. I work with DevOps for deployment and production-related activities.
+   4. I track dependencies, communicate blockers early and keep stakeholders updated.
+
+------------------------------------------------------------------------------------------------------------------
+
+71. What is your AI experience? What is an AI Agent?
+
+   1. An AI Agent is a system that uses an AI model to understand a task and decide the next action.
+   2. It can use tools such as APIs, databases or search systems to complete tasks.
+   3. An agent generally follows a cycle of understanding, planning, tool execution and evaluating results.
+   4. I understand the architecture and integration approach; I would distinguish this knowledge
+      from hands-on production agent implementation.
+
+   Example:
+   A support agent can receive a question, search knowledge-base documents,
+   retrieve relevant information and prepare a response.
+
+------------------------------------------------------------------------------------------------------------------
+
+72. What is API security testing?
+
+   1. Validate authentication and authorisation for every protected endpoint.
+   2. Test invalid inputs, SQL injection, access-control issues and token manipulation.
+   3. Check rate limiting, sensitive data exposure and security headers.
+   4. Use automated security scans and tools such as OWASP ZAP as part of testing.
+
+====================================================================
