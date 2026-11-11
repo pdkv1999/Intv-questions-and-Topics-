@@ -1,0 +1,1743 @@
+# JAVA FULL STACK – PROJECT INTERVIEW QUESTIONS
+
+--------------------------------------------------
+1. What are the key features of Java 8, 11 and 17 that you have used in your project?
+
+   1. Java 8: I used Lambda expressions, Stream API, Functional Interfaces, Optional and CompletableFuture.
+   2. Java 11: Features include String methods like isBlank(), strip(), lines(), Files.readString() and the standard HTTP Client.
+   3. Java 17: Features include Records, Sealed Classes, Pattern Matching for instanceof and Text Blocks.
+   4. In my project, I mainly used Java 8 features for collection processing, Streams and Optional. I am familiar with Java 11 and 17 features and use them where applicable.
+
+--------------------------------------------------
+2. What is the difference between map() and flatMap() in Java Streams?
+
+   1. map() transforms each element into another element.
+   2. flatMap() transforms each element into a Stream and flattens all resulting streams into one stream.
+   3. map() is useful for one-to-one transformations, whereas flatMap() is useful for one-to-many transformations.
+   4. Example: employees.stream().map(Employee::getName) returns names, while orders.stream().flatMap(o -> o.getItems().stream()) returns all order items in one stream.
+
+--------------------------------------------------
+3. How does HashMap work internally, and how is it different from ConcurrentHashMap?
+
+   1. HashMap stores data as key-value pairs using an array of buckets. It calculates the hash of the key to identify the bucket.
+   2. If multiple keys fall into the same bucket, collisions are handled using a linked list. In Java 8, heavily populated buckets can become balanced trees.
+   3. HashMap is not thread-safe, whereas ConcurrentHashMap supports concurrent access using finer-grained synchronization and CAS operations.
+   4. ConcurrentHashMap does not allow null keys or values, while HashMap allows one null key and multiple null values.
+
+--------------------------------------------------
+4. What is a Functional Interface, and how have you used Lambda expressions?
+
+   1. A Functional Interface contains exactly one abstract method.
+   2. Lambda expressions provide a short way to implement functional interfaces without creating separate implementation classes.
+   3. I use them with Streams for filtering, mapping, sorting and processing collections.
+   4. Example: employees.stream().filter(e -> e.getSalary() > 50000).toList();
+
+--------------------------------------------------
+5. What is CompletableFuture, and how do you use it for asynchronous processing?
+
+   1. CompletableFuture is used to execute tasks asynchronously without blocking the calling thread.
+   2. supplyAsync() executes a task and returns a result, while runAsync() executes a task without returning a result.
+   3. thenApply() transforms the result, thenCompose() chains dependent asynchronous tasks, and thenCombine() combines independent results.
+   4. Example: CompletableFuture.supplyAsync(() -> fetchCustomer()).thenApply(customer -> customer.getName());
+
+--------------------------------------------------
+6. What is Spring Boot Auto-Configuration, and how does it work internally?
+
+   1. Auto-configuration automatically configures Spring beans based on the dependencies available in the classpath and existing application configuration.
+   2. @SpringBootApplication includes @EnableAutoConfiguration.
+   3. Spring Boot uses auto-configuration classes with conditions such as @ConditionalOnClass, @ConditionalOnMissingBean and @ConditionalOnProperty.
+   4. For example, when Spring MVC dependencies are available, Spring Boot can configure DispatcherServlet and related web infrastructure automatically.
+
+--------------------------------------------------
+7. Difference between @Component, @Service, @Repository and @RestController?
+
+   1. @Component is a general-purpose Spring bean annotation.
+   2. @Service represents business logic or service-layer components.
+   3. @Repository represents the data-access layer and supports persistence exception translation.
+   4. @RestController is used for REST APIs. It combines @Controller and @ResponseBody.
+
+--------------------------------------------------
+8. Difference between @Primary and @Qualifier?
+
+   1. Both are used when multiple beans of the same type are available.
+   2. @Primary marks one bean as the default choice for dependency injection.
+   3. @Qualifier explicitly identifies which bean should be injected.
+   4. If both are used and the qualifier matches a bean, the qualified bean is selected.
+
+--------------------------------------------------
+9. Explain Spring Bean Scopes and Bean Lifecycle.
+
+   1. Singleton: One bean instance per Spring IoC container. This is the default scope.
+   2. Prototype: A new bean instance is created whenever requested from the container.
+   3. Web scopes include Request, Session and Application.
+   4. Lifecycle: Spring creates the bean, injects dependencies, runs initialization callbacks such as @PostConstruct, and eventually invokes destruction callbacks such as @PreDestroy for managed beans.
+
+--------------------------------------------------
+10. How do you implement global exception handling using @ControllerAdvice and @ExceptionHandler?
+
+   1. @ControllerAdvice provides centralized exception handling across controllers.
+   2. @ExceptionHandler identifies which exception a particular handler method should handle.
+   3. I create a common error response containing status, message, timestamp and request path.
+   4. This avoids duplicate try-catch blocks and maintains consistent API error responses.
+
+   Example:
+
+   @RestControllerAdvice
+   public class GlobalExceptionHandler {
+
+       @ExceptionHandler(ResourceNotFoundException.class)
+       public ResponseEntity<String> handleNotFound(
+               ResourceNotFoundException ex) {
+
+           return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                   .body(ex.getMessage());
+       }
+   }
+
+--------------------------------------------------
+11. Explain @Transactional, propagation and isolation levels.
+
+   1. @Transactional manages database transactions and ensures operations are committed or rolled back together.
+   2. Propagation defines how a method participates in an existing transaction. Common options are REQUIRED, REQUIRES_NEW and SUPPORTS.
+   3. Isolation controls how concurrent transactions interact. Common levels are READ_UNCOMMITTED, READ_COMMITTED, REPEATABLE_READ and SERIALIZABLE.
+   4. I use transactions to maintain consistency when multiple database operations must succeed or fail together.
+
+--------------------------------------------------
+12. What happens when an exception occurs inside a @Transactional method?
+
+   1. By default, Spring rolls back the transaction for RuntimeException and Error.
+   2. Checked exceptions do not trigger rollback by default.
+   3. We can configure rollbackFor = Exception.class to roll back for checked exceptions as well.
+   4. The transaction interceptor manages commit or rollback when the proxied method completes.
+
+--------------------------------------------------
+13. Explain your project's microservices architecture and your responsibilities.
+
+   1. I worked on LabFlow, a healthcare application that integrates laboratory results from hospital systems.
+   2. We used Java, Spring Boot, Kafka, Oracle and React.
+   3. Backend services handled data validation, result processing, persistence and asynchronous communication through Kafka.
+   4. My responsibilities included REST API development, Kafka event handling, database optimisation, Transactional Outbox implementation, optimistic locking and production issue resolution.
+
+--------------------------------------------------
+14. How do microservices communicate synchronously and asynchronously?
+
+   1. Synchronous communication uses REST APIs or HTTP clients, where the caller waits for the response.
+   2. Asynchronous communication uses messaging platforms like Kafka, where the producer does not wait for consumer processing.
+   3. REST is suitable when an immediate response is required.
+   4. Kafka is suitable for event-driven communication, decoupling services and handling high-volume asynchronous processing.
+
+--------------------------------------------------
+15. Difference between RestTemplate, WebClient and Feign Client?
+
+   1. RestTemplate is a synchronous HTTP client traditionally used in Spring applications.
+   2. WebClient is a non-blocking, reactive HTTP client provided by Spring WebFlux.
+   3. Feign Client is a declarative HTTP client where we define an interface and Spring creates the implementation.
+   4. I would choose based on the requirement: RestTemplate for existing synchronous applications, WebClient for non-blocking communication and Feign for simple declarative service-to-service calls.
+
+--------------------------------------------------
+16. What is an API Gateway, and how does it work?
+
+   1. API Gateway acts as a single entry point for client requests to backend microservices.
+   2. It routes requests to the appropriate service.
+   3. It can handle authentication, rate limiting, logging, request filtering and load balancing integration.
+   4. It reduces the need for clients to know individual microservice endpoints.
+
+--------------------------------------------------
+17. How do you handle microservice failures using Circuit Breaker, Retry and Fallback?
+
+   1. Circuit Breaker temporarily stops requests to a failing service to prevent cascading failures.
+   2. Retry attempts the request again for temporary failures, preferably with exponential backoff.
+   3. Fallback provides an alternative response when the original service is unavailable.
+   4. I would use Resilience4j to implement these patterns with proper timeouts, retry limits and monitoring.
+
+--------------------------------------------------
+18. What is the Outbox Pattern, and how does it ensure reliable event publishing?
+
+   1. The Outbox Pattern solves the dual-write problem between a database and a message broker.
+   2. We save business data and the event record in the same database transaction.
+   3. A separate publisher reads pending outbox records and publishes them to Kafka.
+   4. After successful publishing, the event is marked as processed. Consumers should still be idempotent because duplicate delivery is possible.
+
+--------------------------------------------------
+19. What is the Saga Pattern, and how do you manage distributed transactions?
+
+   1. Saga manages distributed transactions across multiple microservices using local transactions.
+   2. Each service completes its local transaction and triggers the next step through an event or command.
+   3. If a step fails, compensating transactions are executed to reverse previous business operations where possible.
+   4. Saga can be implemented using choreography, where services react to events, or orchestration, where a central coordinator controls the workflow.
+
+--------------------------------------------------
+20. How do you implement centralized logging and distributed tracing?
+
+   1. Each service should generate structured logs with timestamp, log level, service name and correlation ID.
+   2. Centralized logging tools like Splunk or ELK help search logs across multiple services.
+   3. Distributed tracing using OpenTelemetry and tools like Jaeger or Zipkin helps track requests across services.
+   4. I use correlation IDs to connect logs and identify where a request failed or became slow.
+
+--------------------------------------------------
+21. Explain how you design and develop a REST API from requirements to production.
+
+   1. First, I understand the business requirement, API consumers, request fields, response structure and validation rules.
+   2. I design REST endpoints, HTTP methods, status codes, error responses and API contracts.
+   3. I implement the controller, service and repository layers with validation, exception handling, security and unit tests.
+   4. Finally, I perform integration testing, code review, CI/CD deployment and production monitoring.
+
+--------------------------------------------------
+22. Difference between GET, POST, PUT, PATCH and DELETE?
+
+   1. GET retrieves a resource and should not modify server state.
+   2. POST creates a resource or triggers an operation. It is not inherently idempotent.
+   3. PUT creates or replaces the target resource and is idempotent. PATCH partially updates a resource and is not inherently idempotent.
+   4. DELETE removes a resource and is defined as idempotent, even if repeated requests return different status codes.
+
+--------------------------------------------------
+23. What is Idempotency, and how do you prevent duplicate API requests?
+
+   1. Idempotency means executing the same request multiple times produces the same intended final result.
+   2. I use an idempotency key generated by the client for important operations like payments and bookings.
+   3. The server stores the key and processing result in the database with a unique constraint.
+   4. If the same request arrives again, the server returns the previously stored result instead of processing it again.
+
+--------------------------------------------------
+24. How do you implement JWT authentication and authorization in Spring Boot?
+
+   1. The user authenticates with the authentication service and receives a signed JWT.
+   2. The client sends the token in the Authorization header using the Bearer scheme.
+   3. A Spring Security filter validates the token signature, expiry and required claims.
+   4. Spring Security uses the user's roles or authorities to decide whether the requested API is accessible.
+
+--------------------------------------------------
+25. How do you handle API timeouts, HTTP errors and retries when calling external services?
+
+   1. Configure connection and response timeouts to prevent requests from waiting indefinitely.
+   2. Handle HTTP errors based on their status codes, such as 400, 401, 404, 429 and 5xx.
+   3. Retry only transient failures using limited retries and exponential backoff.
+   4. Use Circuit Breaker, logging and fallback mechanisms where appropriate. Avoid blindly retrying non-idempotent operations.
+
+--------------------------------------------------
+26. How do you improve REST API performance and handle high traffic?
+
+   1. Optimise database queries, add suitable indexes and eliminate N+1 queries.
+   2. Use caching for frequently accessed data and pagination for large responses.
+   3. Use connection pooling, asynchronous processing and horizontal scaling where appropriate.
+   4. Monitor API latency, throughput, error rates, JVM memory and database performance to identify bottlenecks.
+
+--------------------------------------------------
+27. Difference between JPA and Hibernate? Explain Lazy and Eager loading.
+
+   1. JPA is a Java specification that defines ORM standards, whereas Hibernate is an implementation of JPA.
+   2. Lazy loading fetches related data only when it is accessed.
+   3. Eager loading fetches related data immediately along with the parent entity.
+   4. I generally prefer LAZY loading for collections and fetch related data explicitly using EntityGraph or JOIN FETCH when required.
+
+--------------------------------------------------
+28. What is the N+1 query problem, and how do you resolve it?
+
+   1. N+1 happens when one query fetches parent records and additional queries are executed for each parent's related data.
+   2. For example, fetching 100 orders and accessing items for every order can result in 101 queries.
+   3. I resolve it using JOIN FETCH, @EntityGraph, batch fetching or DTO projections.
+   4. I verify the improvement using SQL logs and query analysis rather than blindly fetching every relationship eagerly.
+
+--------------------------------------------------
+29. How do you optimise slow SQL queries using indexing and query analysis?
+
+   1. First, I identify the slow query using application logs, database monitoring or query execution statistics.
+   2. I analyse the execution plan using EXPLAIN PLAN and DBMS_XPLAN in Oracle.
+   3. I check full table scans, joins, filtering conditions, indexes and estimated versus actual row counts.
+   4. I add suitable indexes, rewrite inefficient queries and validate the improvement. I also consider the additional storage and write overhead of indexes.
+
+--------------------------------------------------
+30. Difference between Optimistic Locking and Pessimistic Locking?
+
+   1. Optimistic locking assumes conflicts are rare and uses a version column with @Version.
+   2. If another transaction updates the same record, the version mismatch causes an optimistic locking exception.
+   3. Pessimistic locking locks the database record while a transaction is working with it.
+   4. I prefer optimistic locking for frequently read and less frequently updated data. Pessimistic locking is useful when conflicts are frequent and concurrent updates must be strictly controlled.
+
+--------------------------------------------------
+31. How does Kafka work with topics, partitions, producers and consumer groups?
+
+   1. A topic is a logical channel where messages are stored.
+   2. A topic is divided into partitions, which allow parallel processing and scalability.
+   3. Producers publish messages to topics, and consumers read messages from partitions.
+   4. Consumers in the same consumer group share partitions, and Kafka manages partition assignment among them.
+
+--------------------------------------------------
+32. How do you prevent duplicate message processing in Kafka consumers?
+
+   1. Kafka can deliver messages again if a consumer processes a message but fails before committing its offset.
+   2. I use a unique event ID and maintain a processed-event record to identify duplicate messages.
+   3. I perform the business database update and processed-event record insertion in the same database transaction.
+   4. I commit the Kafka offset only after successful processing, with suitable retry and dead-letter handling.
+
+--------------------------------------------------
+33. A Spring Boot REST API takes 10 seconds to respond. How would you investigate and resolve it?
+
+   1. First, I check application logs, API metrics and distributed traces to identify where the time is being spent.
+   2. I check database query execution time, N+1 queries, connection pool exhaustion and slow external service calls.
+   3. I analyse JVM CPU, memory, garbage collection, thread dumps and network latency if required.
+   4. After identifying the root cause, I optimise the query or code, configure suitable timeouts or caching, and validate the fix through performance testing.
+
+--------------------------------------------------
+34. A payment is successful, but booking fails in another microservice. How would you handle it?
+
+   1. I would treat this as a distributed transaction problem and use the Saga pattern.
+   2. If booking creation fails permanently, I would trigger a compensating transaction to refund the successful payment.
+   3. I would maintain transaction status and unique IDs so retries do not create duplicate payments or refunds.
+   4. I would use reliable event publishing through the Outbox Pattern and provide reconciliation for cases where compensation also fails.
+
+--------------------------------------------------
+35. Explain a critical production issue you resolved, including debugging, root cause, fix, testing and deployment.
+
+   1. In LabFlow, I worked on production troubleshooting involving Kafka consumer lag and notification failures.
+   2. I checked monitoring dashboards, consumer lag, application logs and correlation IDs to identify where processing was delayed or failing.
+   3. After identifying the issue, I worked on the relevant processing or notification logic and validated the fix with automated tests and integration testing.
+   4. We deployed the fix through the release process and monitored consumer lag, notification processing and application health after deployment.
+
+
+
+
+# JAVA, SPRING BOOT, KAFKA, REACT & AI – INTERVIEW ANSWERS
+
+1. What is the difference between Inheritance and Composition?
+
+   1. Inheritance represents an IS-A relationship, whereas composition represents a HAS-A relationship.
+   2. Inheritance uses the extends keyword to reuse parent class functionality.
+   3. Composition uses objects of other classes to achieve functionality.
+   4. Composition is generally preferred because it provides loose coupling and more flexibility.
+
+   Example:
+   - Inheritance: Car extends Vehicle.
+   - Composition: Car has an Engine.
+
+--------------------------------------------------
+
+2. What is the difference between Association and Aggregation?
+
+   1. Association represents a relationship between two independent objects.
+   2. Aggregation is a specialised form of association representing a HAS-A relationship.
+   3. In aggregation, the child object can exist independently of the parent.
+   4. Example: A Teacher and Student have an association. A Department has Professors, but Professors can exist independently of the Department.
+
+--------------------------------------------------
+
+3. Why do we need Interfaces?
+
+   1. Interfaces provide abstraction by defining a contract that implementing classes must follow.
+   2. They support loose coupling because implementations can be changed without changing the calling code.
+   3. They support multiple inheritance of type in Java.
+   4. Example: PaymentService can have CreditCardPayment and UpiPayment implementations.
+
+--------------------------------------------------
+
+4. Do interfaces have the diamond problem? If not, why?
+
+   1. Java allows a class to implement multiple interfaces, but it does not allow multiple inheritance of classes.
+   2. If two interfaces have the same abstract method, the implementing class provides one implementation.
+   3. If two interfaces have the same default method, the implementing class must explicitly resolve the conflict.
+   4. So Java avoids ambiguity by forcing the class to resolve conflicting default methods.
+
+--------------------------------------------------
+
+5. How do you call a default method in an interface?
+
+   1. A default method is an interface method with an implementation.
+   2. We can call it using an implementing class object.
+   3. Inside the implementing class, we can call it using InterfaceName.super.methodName().
+   4. Example:
+
+   interface A {
+       default void display() {
+           System.out.println("A display");
+       }
+   }
+
+   class Test implements A {
+       void show() {
+           A.super.display();
+       }
+   }
+
+--------------------------------------------------
+
+6. If two interfaces have the same default method, how do you resolve it?
+
+   1. Java does not automatically choose one interface implementation.
+   2. The implementing class must override that method.
+   3. We can call a specific interface implementation using InterfaceName.super.methodName().
+   4. Example:
+
+   interface A {
+       default void show() {
+           System.out.println("A");
+       }
+   }
+
+   interface B {
+       default void show() {
+           System.out.println("B");
+       }
+   }
+
+   class Test implements A, B {
+       public void show() {
+           A.super.show();
+           B.super.show();
+       }
+   }
+
+--------------------------------------------------
+
+7. Can static methods be overridden?
+
+   1. No, static methods cannot be overridden because they belong to the class, not the object.
+   2. If a child class defines a static method with the same signature, it is called method hiding.
+   3. The method is selected based on the reference or class type at compile time.
+   4. This is different from instance methods, which support runtime polymorphism.
+
+--------------------------------------------------
+
+8. What happens if we try to override a static method?
+
+   1. Java allows the child class to define a static method with the same signature.
+   2. It hides the parent class method instead of overriding it.
+   3. Calling the method using the parent reference invokes the parent static method.
+   4. Calling it using the child class invokes the child static method.
+
+--------------------------------------------------
+
+9. What are Generics in Java?
+
+   1. Generics allow us to write classes, interfaces and methods that work with different data types.
+   2. They provide compile-time type safety.
+   3. They reduce explicit type casting.
+   4. Example: List<String> ensures that the list stores only String values.
+
+--------------------------------------------------
+
+10. Why don't we use Object instead of Generics?
+
+   1. Object can store any type, but it does not provide compile-time type safety.
+   2. We need explicit type casting when retrieving values.
+   3. Incorrect types can cause ClassCastException at runtime.
+   4. Generics catch type-related errors during compilation and make the code cleaner.
+
+--------------------------------------------------
+
+11. What are Functional Interfaces?
+
+   1. A Functional Interface contains exactly one abstract method.
+   2. It can contain default and static methods as well.
+   3. We can use lambda expressions to provide its implementation.
+   4. Example: Runnable, Comparator and Predicate.
+
+--------------------------------------------------
+
+12. What are the predefined Functional Interfaces in Java?
+
+   1. Predicate<T> – accepts input and returns boolean using test().
+   2. Function<T, R> – accepts input and returns output using apply().
+   3. Consumer<T> – accepts input and returns nothing using accept().
+   4. Supplier<T> – takes no input and returns a value using get().
+
+--------------------------------------------------
+
+13. How do we create a Functional Interface?
+
+   1. Create an interface with exactly one abstract method.
+   2. Use @FunctionalInterface to ensure the compiler checks the contract.
+   3. Implement it using a lambda expression.
+   4. Example:
+
+   @FunctionalInterface
+   interface Calculator {
+       int add(int a, int b);
+   }
+
+   Calculator calculator = (a, b) -> a + b;
+
+   System.out.println(calculator.add(10, 20));
+
+--------------------------------------------------
+
+14. What is the difference between Dependency Injection and Inversion of Control?
+
+   1. Inversion of Control is a principle where the framework manages object creation and dependencies instead of the application managing everything.
+   2. Dependency Injection is a technique used to achieve IoC by providing dependencies to an object.
+   3. In Spring Boot, the IoC container creates and manages beans.
+   4. Constructor injection is generally preferred because it makes dependencies explicit and supports easier testing.
+
+--------------------------------------------------
+
+15. What is the difference between BeanFactory and ApplicationContext?
+
+   1. Both are Spring IoC containers responsible for creating and managing beans.
+   2. BeanFactory provides basic dependency injection and bean lifecycle management.
+   3. ApplicationContext provides additional features like event publishing, internationalisation and easier integration with Spring features.
+   4. In Spring Boot applications, ApplicationContext is commonly used.
+
+--------------------------------------------------
+
+16. Check whether this MetricsTracker code is thread-safe. Are there any flaws?
+
+   Code:
+
+   public class MetricsTracker {
+       private final ConcurrentHashMap<String, LongAdder> pageViews =
+           new ConcurrentHashMap<>();
+
+       public void incrementView(String pageId) {
+           pageViews.putIfAbsent(pageId, new LongAdder());
+           pageViews.get(pageId).increment();
+       }
+   }
+
+   1. ConcurrentHashMap makes map operations thread-safe, and LongAdder supports efficient concurrent increments.
+   2. The current implementation is generally safe for concurrent increments, assuming pageId is valid and entries are not concurrently removed or replaced.
+   3. However, putIfAbsent followed by get performs two map operations. We can simplify it using computeIfAbsent().
+   4. LongAdder.sum() is not an atomic snapshot while updates are happening, so it is suitable for metrics rather than strict financial or transactional counts.
+
+   Improved code:
+
+   public void incrementView(String pageId) {
+       pageViews.computeIfAbsent(pageId, key -> new LongAdder())
+                .increment();
+   }
+
+--------------------------------------------------
+
+17. How do you handle timeouts and partial failures in microservices architecture?
+
+   1. I configure connection and read timeouts for service-to-service communication.
+   2. I use Circuit Breaker to prevent repeated calls to an unhealthy service.
+   3. I use controlled retries with exponential backoff for transient failures and avoid retrying non-idempotent operations blindly.
+   4. For partial failures, I use fallbacks where appropriate, monitoring, correlation IDs and asynchronous messaging where suitable.
+
+--------------------------------------------------
+
+18. Why can orderRepository.findAll() cause database performance issues with 10,000 orders?
+
+   Entity:
+
+   @Entity
+   public class Order {
+       @Id
+       Long id;
+
+       @OneToMany(fetch = FetchType.LAZY)
+       List<OrderItem> items;
+   }
+
+   1. findAll() loads all 10,000 Order entities into memory, which can consume significant heap space.
+   2. If the application accesses items for every order, Hibernate may execute one additional query per order, causing the N+1 problem.
+   3. This can result in thousands of database queries and increased database load.
+   4. I would use pagination, DTO projections, JOIN FETCH, EntityGraph or batch fetching depending on the use case.
+
+   Important: LAZY loading alone does not trigger 10,000 queries. The N+1 issue occurs when the lazy collection is accessed for each order.
+
+--------------------------------------------------
+
+19. Explain design pattern types and give examples from each category.
+
+   1. Creational Patterns – deal with object creation.
+      Examples: Singleton, Factory, Abstract Factory, Builder and Prototype.
+
+   2. Structural Patterns – deal with class and object composition.
+      Examples: Adapter, Decorator, Proxy, Facade and Composite.
+
+   3. Behavioural Patterns – deal with communication and responsibility between objects.
+      Examples: Strategy, Observer, Chain of Responsibility, Command and Template Method.
+
+   4. I use design patterns to improve code reusability, maintainability, flexibility and loose coupling.
+
+--------------------------------------------------
+
+20. Explain Decorator Pattern. How do you implement it?
+
+   1. Decorator is a structural design pattern.
+   2. It adds additional functionality to an existing object without modifying its original class.
+   3. The decorator implements the same interface and wraps the original object.
+   4. Example: Adding milk or sugar to a basic coffee dynamically.
+
+   Code:
+
+   interface Coffee {
+       String getDescription();
+       double getCost();
+   }
+
+   class BasicCoffee implements Coffee {
+       public String getDescription() {
+           return "Coffee";
+       }
+
+       public double getCost() {
+           return 50;
+       }
+   }
+
+   class MilkDecorator implements Coffee {
+       private final Coffee coffee;
+
+       MilkDecorator(Coffee coffee) {
+           this.coffee = coffee;
+       }
+
+       public String getDescription() {
+           return coffee.getDescription() + " + Milk";
+       }
+
+       public double getCost() {
+           return coffee.getCost() + 10;
+       }
+   }
+
+   // Usage
+   Coffee coffee = new MilkDecorator(new BasicCoffee());
+
+   System.out.println(coffee.getDescription());
+   System.out.println(coffee.getCost());
+
+--------------------------------------------------
+
+21. Observer Design Pattern belongs to which category?
+
+   1. Observer is a Behavioural design pattern.
+   2. It defines a one-to-many relationship between objects.
+   3. When the subject changes its state, all registered observers are notified.
+   4. Example: When an order status changes, notification, email and tracking services can receive the update.
+
+--------------------------------------------------
+
+22. Explain Kafka code for publishing and consuming messages.
+
+   1. Kafka Producer publishes messages to a topic.
+   2. Kafka Consumer subscribes to the topic and processes messages.
+   3. We use a key to control partitioning and maintain ordering for messages with the same key.
+   4. In Spring Boot, KafkaTemplate is used for publishing and @KafkaListener is used for consuming.
+
+   Producer:
+
+   @Service
+   public class OrderProducer {
+
+       private final KafkaTemplate<String, OrderEvent> kafkaTemplate;
+
+       public OrderProducer(KafkaTemplate<String, OrderEvent> kafkaTemplate) {
+           this.kafkaTemplate = kafkaTemplate;
+       }
+
+       public void publish(OrderEvent event) {
+           kafkaTemplate.send("order-topic", event.getOrderId(), event);
+       }
+   }
+
+   Consumer:
+
+   @Component
+   public class OrderConsumer {
+
+       @KafkaListener(topics = "order-topic", groupId = "order-group")
+       public void consume(OrderEvent event) {
+           System.out.println("Received order: " + event.getOrderId());
+       }
+   }
+
+--------------------------------------------------
+
+23. Is this @Transactional implementation safe?
+
+   @Transactional
+   public void createOrder(Order order) {
+       orderRepository.save(order);
+       kafkaTemplate.send("order-topic", new OrderEvent(order.getId()));
+   }
+
+   1. The database operation and Kafka publishing are two separate operations.
+   2. If the database transaction rolls back after the Kafka message is published, consumers may receive an event for an order that does not exist.
+   3. If the database commits but Kafka publishing fails, the order is saved but the event is missing.
+   4. I would use the Transactional Outbox pattern to save the order and event in the same database transaction, then publish the event asynchronously.
+
+--------------------------------------------------
+
+24. What are Pure Functions in React?
+
+   1. A pure function always returns the same output for the same input.
+   2. It does not modify external variables or cause side effects.
+   3. React components should be pure during rendering so that rendering remains predictable.
+   4. Example:
+
+   function calculateTotal(price, quantity) {
+       return price * quantity;
+   }
+
+   This function returns the same result for the same inputs and does not modify external state.
+
+--------------------------------------------------
+
+25. Do you have experience developing applications using coding tools like GitHub Copilot?
+
+   1. I use AI coding assistants to understand existing code and improve development productivity.
+   2. I use them for code suggestions, debugging, refactoring and generating unit-test scenarios.
+   3. I review the generated code for correctness, performance and security before accepting it.
+   4. I treat these tools as development assistants, not as replacements for engineering decisions.
+
+--------------------------------------------------
+
+26. Have you created custom agents using skills, or are you using default AI features?
+
+   1. My current experience is primarily with AI-assisted development features and predefined capabilities.
+   2. A custom agent can be configured with a specific role, instructions, tools and access to relevant knowledge.
+   3. Skills can provide reusable instructions and workflows for specific tasks.
+   4. I understand how to design a custom agent, but I would not claim production experience building one unless I have actually implemented it.
+
+--------------------------------------------------
+
+27. How does an AI agent communicate?
+
+   1. The user provides a request to the agent through a chat interface or application.
+   2. The agent sends the request and relevant context to the LLM.
+   3. The LLM can decide whether to respond directly or invoke an available tool through a defined interface.
+   4. The tool returns the result, which is passed back to the LLM to generate the final response.
+
+--------------------------------------------------
+
+28. What are the key components required to create an AI agent?
+
+   1. LLM – acts as the reasoning engine and understands user instructions.
+   2. Instructions and Context – define the agent's role, objectives, rules and knowledge.
+   3. Tools – allow the agent to interact with external systems, APIs, databases or code repositories.
+   4. Memory, Orchestration and Guardrails – maintain relevant context, manage execution steps and control permissions.
+
+--------------------------------------------------
+
+29. How would you use an AI agent to fix a normal development bug?
+
+   1. First, I connect the agent to the relevant Git repository and provide the bug description, error logs and reproduction steps.
+   2. The agent analyses the code, identifies the affected classes and traces the execution flow.
+   3. It suggests a root cause, proposes a code fix and can generate unit tests to cover the issue.
+   4. I review the changes, run tests and validate the fix before raising a PR. The agent should not directly merge or deploy code without approval.
+
+   Example workflow:
+
+   Developer reports bug
+          |
+          v
+   AI Agent receives context
+          |
+          v
+   Analyses repository and logs
+          |
+          v
+   Identifies possible root cause
+          |
+          v
+   Suggests code fix and tests
+          |
+          v
+   Developer reviews and validates
+          |
+          v
+   Pull Request
+
+--------------------------------------------------
+
+30. How would you connect an AI agent to a project or code repository?
+
+   1. First, provide repository access through an approved GitHub integration, IDE extension or development platform.
+   2. Configure the agent with read access to source code, relevant documentation and issue details.
+   3. Give it specific tools such as code search, file reading, test execution and controlled code editing.
+   4. Apply access controls so it can only perform permitted actions. Code changes should go through developer review and the normal CI/CD process.
+
+--------------------------------------------------
+
+31. What is the difference between an AI assistant and an AI agent?
+
+   1. An AI assistant mainly responds to user questions and provides suggestions.
+   2. An AI agent can plan and execute multiple steps to achieve a defined goal.
+   3. An agent can use tools such as APIs, Git repositories, databases and testing systems.
+   4. For example, an assistant can suggest how to fix a bug, whereas an agent can inspect the repository, propose a change and run tests with appropriate permissions.
+
+--------------------------------------------------
+
+32. What is MCP and how is it useful for AI agents?
+
+   1. MCP stands for Model Context Protocol.
+   2. It provides a standard way for AI applications to connect with external tools and data sources.
+   3. An MCP server can expose tools such as GitHub operations, database queries or file access.
+   4. The agent can discover and invoke these tools through the MCP client, subject to permissions and approval rules.
+
+--------------------------------------------------
+
+33. How do you ensure an AI agent does not make incorrect code changes?
+
+   1. Provide clear instructions, relevant code context and defined boundaries.
+   2. Give minimum required permissions, preferably read-only access initially.
+   3. Ask the agent to generate tests and validate its changes before creating a PR.
+   4. Keep mandatory human review, security checks and CI/CD validations before merging or deploying.
+
+
+
+
+
+# CLAU-APPD PROJECT – INTERVIEW PREPARATION
+
+1. Could you walk me through your project and its overall architecture?
+
+   1. I worked on LabFlow, a healthcare application used to integrate laboratory results from hospital systems and display them to clinicians.
+   2. We used Java, Spring Boot, Kafka, Oracle and React in our architecture.
+   3. Backend services handle data integration, validation, result processing and persistence. Kafka is used for asynchronous communication between services.
+   4. We used the Transactional Outbox pattern for reliable event publishing and optimistic locking to maintain data consistency. React provides the UI for laboratory results, patient history and critical alerts.
+
+--------------------------------------------------
+
+2. How many microservices have you managed or worked with in your previous roles?
+
+   1. I have worked with multiple microservices as part of the LabFlow application.
+   2. My work involved backend service development, REST API integration, Kafka-based communication and database interactions.
+   3. I also worked on handling duplicate events, maintaining data consistency and troubleshooting communication issues.
+   4. I would distinguish between services I directly developed and services I integrated with rather than quoting an inaccurate number.
+
+--------------------------------------------------
+
+3. How do you handle distributed transactions across a microservices architecture?
+
+   1. I prefer the Saga pattern for managing transactions across multiple microservices.
+   2. Each service performs its own local database transaction and publishes an event to trigger the next step.
+   3. If a step fails, we execute a compensating transaction to reverse the earlier business operation where possible.
+   4. In LabFlow, we used the Transactional Outbox pattern to ensure database updates and event publishing remain consistent.
+
+--------------------------------------------------
+
+4. How do you integrate AI into your daily development workflow?
+
+   1. I use AI assistants to understand existing code, generate implementation ideas and improve development productivity.
+   2. I use them to identify potential bugs, understand exceptions and suggest possible solutions.
+   3. I also use AI to generate unit-test scenarios, review code and prepare technical documentation.
+   4. I always review and test AI-generated code before using it because the final responsibility for code quality and security remains with the developer.
+
+--------------------------------------------------
+
+5. Walk me through your process for making configuration changes in Kubernetes.
+
+   1. First, I identify the required configuration change, such as environment variables, ConfigMaps, Secrets or resource limits.
+   2. I update the Kubernetes YAML or Helm values in the appropriate Git branch.
+   3. I raise a PR, get the changes reviewed and deploy them through the CI/CD pipeline to the required environment.
+   4. After deployment, I verify the pod status, application logs, events and health checks. If something fails, I roll back to the previous stable configuration.
+
+--------------------------------------------------
+
+6. How do you typically handle and resolve conflicts in Git?
+
+   1. First, I fetch the latest changes from the target branch and identify the conflicting files.
+   2. I understand both changes and resolve the conflict carefully without removing required functionality.
+   3. I run the relevant unit tests and verify the changes locally.
+   4. Finally, I commit the resolved changes and push them for PR validation.
+
+--------------------------------------------------
+
+7. SYSTEM DESIGN – ACTIVE LICENSE MANAGEMENT SYSTEM
+
+Requirements:
+- Customers can be individuals or organisations.
+- Customers can own multiple application licenses.
+- License types: Perpetual, Subscription, Floating and Trial.
+- System must validate whether a user can access an application.
+- Floating licenses must enforce a maximum concurrent-seat limit.
+
+A. High-level architecture
+
+   1. I would design this using separate Customer, License, Entitlement and License Usage services.
+   2. The License Management service manages license creation, assignment, activation and expiry.
+   3. The License Validation service checks whether a user can access a particular application.
+   4. The License Usage service handles floating-seat checkout, heartbeat and release operations.
+
+   Architecture flow:
+
+   Customer → License Management → License Database
+                         |
+                         v
+                  License Validation
+                         |
+                         v
+                  License Usage
+                         |
+                         v
+                  Application Access
+
+B. Core domain model
+
+   1. Customer
+      - customerId
+      - customerType (INDIVIDUAL / ORGANIZATION)
+      - name
+
+   2. Application
+      - applicationId
+      - applicationName
+
+   3. License
+      - licenseId
+      - customerId
+      - applicationId
+      - licenseType (PERPETUAL / SUBSCRIPTION / FLOATING / TRIAL)
+      - status
+      - startDate
+      - endDate
+      - seatLimit
+
+   4. LicenseAssignment
+      - assignmentId
+      - licenseId
+      - userId
+      - activationDate
+      - expiryDate
+
+   5. LicenseCheckout
+      - checkoutId
+      - licenseId
+      - userId
+      - checkoutTime
+      - lastHeartbeat
+      - releaseTime
+      - status
+
+C. How will you support different license types?
+
+   1. Perpetual:
+      - Once activated, the license does not expire.
+      - Validate ownership, application and license status.
+
+   2. Subscription:
+      - Validate that the current date is between startDate and endDate.
+      - Reject access if the subscription has expired.
+
+   3. Floating:
+      - Maintain a shared seat pool for the license.
+      - Allow checkout only when active seats are less than the configured seat limit.
+      - Release the seat when the user exits the application.
+
+   4. Trial:
+      - On first activation, store the activation date.
+      - Calculate expiry as activation date plus the configured trial duration.
+      - Bind the trial to a single user and application.
+
+D. How will you implement the checkout API?
+
+   POST /api/licenses/checkout
+
+   Request:
+   {
+      "userId": "U101",
+      "applicationId": "APP101"
+   }
+
+   Response:
+   {
+      "licenseId": "L101",
+      "status": "CHECKED_OUT",
+      "message": "License acquired successfully"
+   }
+
+   1. Identify the customer and find an active license for the requested application.
+   2. Validate the license type, date range, user assignment and entitlement.
+   3. For floating licenses, atomically reserve a seat only if the active checkout count is below the seat limit.
+   4. Return access permission or reject the request with an appropriate error.
+
+E. How will you prevent floating-license overbooking?
+
+   1. I would use a database transaction with row-level locking or an atomic conditional update.
+   2. For example, update the active seat count only when it is less than the configured seat limit.
+   3. This ensures two concurrent requests cannot acquire the same last available seat.
+   4. I would also use a unique checkout ID and idempotency key to prevent duplicate checkout requests.
+
+F. What happens if a user crashes without releasing a floating license?
+
+   1. I would implement a heartbeat mechanism from the client application.
+   2. Each checkout stores the last heartbeat timestamp.
+   3. If no heartbeat is received within the configured timeout, the checkout is marked expired and the seat is released.
+   4. A background cleanup job can periodically identify and release stale checkouts.
+
+G. What happens when a license expires while a user is using the application?
+
+   1. The system should validate the license during checkout and periodically during the active session.
+   2. If the license expires, further access should be denied according to the business policy.
+   3. For floating licenses, the seat should also be released.
+   4. The application should receive a clear license-expired response.
+
+H. How will you ensure high availability and performance?
+
+   1. Keep the license validation API stateless so multiple instances can run behind a load balancer.
+   2. Use database indexes on customerId, applicationId, licenseId and userId.
+   3. Cache relatively stable license metadata, but always enforce floating-seat limits using an atomic, strongly consistent operation.
+   4. Monitor checkout failures, active seats, expired licenses, API latency and service health.
+
+I. Important design patterns
+
+   1. Strategy Pattern – separate validation logic for Perpetual, Subscription, Floating and Trial licenses.
+   2. Factory Pattern – create the appropriate license strategy based on license type.
+   3. Repository Pattern – isolate database operations from business logic.
+   4. Saga Pattern – manage workflows that span multiple services when distributed transactions are required.
+
+J. Interview-ready closing statement
+
+   "I would keep license validation separate from license management. The validation service checks the user's entitlement, while the usage service manages active sessions and floating seats. The most important part is enforcing concurrency at the database level so that two users cannot acquire the same available seat. I would also use heartbeat and timeout mechanisms to recover seats from inactive sessions."
+
+
+
+
+
+
+JAVA FULL-STACK – PROJECT, ARCHITECTURE, AI AND TECHNICAL INTERVIEW
+====================================================================
+
+1. Introduce yourself: Years of experience, tech stack and versions used.
+
+   1. I am a Java Full Stack Developer with [X] years of experience in application development.
+   2. My primary skills are Core Java, Java 17, Spring Boot, Microservices, REST APIs, Hibernate and JPA.
+   3. I have worked with Apache Kafka, Oracle, SQL, React, JavaScript, Docker and CI/CD.
+   4. I also have knowledge of Java 21 features, Kubernetes, cloud concepts and modern AI integration approaches.
+
+   NOTE: Replace [X] with your actual experience. Mention Java 21 as hands-on only if you have used it in a project.
+
+------------------------------------------------------------------------------------------------------------------
+
+2. Describe a project you have worked on in the last six months.
+
+   1. My project is LabFlow, a healthcare application used to integrate laboratory results from hospital systems.
+   2. It processes lab results and makes them available to clinicians for patient monitoring and critical-result identification.
+   3. We use Java 17, Spring Boot, Kafka, Oracle and React.
+   4. My responsibilities include backend development, Kafka integration, database optimisation, API development,
+      testing and production support.
+
+------------------------------------------------------------------------------------------------------------------
+
+3. Explain your project architecture and communication between microservices.
+
+   1. We follow a microservices-based architecture where different services handle specific business responsibilities.
+   2. Spring Boot services expose REST APIs for synchronous communication.
+   3. Kafka is used for asynchronous communication, especially for processing laboratory result events.
+   4. Oracle maintains business data, while React communicates with backend APIs to display laboratory results.
+
+   Architecture flow:
+
+   Hospital Systems
+          |
+   Backend Integration API
+          |
+   Validation and Processing
+          |
+   Oracle Database
+          |
+   Transactional Outbox
+          |
+   Kafka
+          |
+   Downstream Services
+          |
+   React Application
+
+------------------------------------------------------------------------------------------------------------------
+
+4. Explain the Outbox Pattern used in your project.
+
+   1. The Outbox Pattern helps maintain consistency between database updates and Kafka event publishing.
+   2. When a business operation happens, we save the business data and an event record in the same database transaction.
+   3. A separate publisher reads pending Outbox records and publishes them to Kafka.
+   4. After successful publishing, the event is marked as processed, and failures can be retried.
+
+   FOLLOW-UP: What problem does it solve?
+
+   - Without Outbox, the database transaction may succeed while Kafka publishing fails.
+   - This creates inconsistency between the database and downstream services.
+   - Outbox ensures that the event is durably recorded along with the business update.
+
+------------------------------------------------------------------------------------------------------------------
+
+5. How do you handle duplicate Kafka messages and ensure idempotency?
+
+   1. Kafka generally provides at-least-once processing, so duplicate messages are possible.
+   2. We assign a unique event ID to every business event.
+   3. Before processing, we check whether the event has already been processed, using an event ID or an
+      idempotency record with a database uniqueness constraint.
+   4. We update business data and record event processing status within the same database transaction.
+
+   FOLLOW-UP: What if the consumer crashes after database commit but before offset commit?
+
+   - Kafka may deliver the same message again.
+   - The idempotency check identifies the already-processed event.
+   - The consumer avoids repeating the business operation.
+
+------------------------------------------------------------------------------------------------------------------
+
+6. Explain @Primary and @Qualifier.
+
+   1. Both annotations are used when multiple Spring beans implement the same interface.
+   2. @Primary marks one bean as the default choice for dependency injection.
+   3. @Qualifier explicitly identifies which bean should be injected.
+   4. @Qualifier takes precedence when selecting a specific bean.
+
+   Example:
+
+   @Service("cardPayment")
+   class CardPaymentService implements PaymentService {}
+
+   @Service("upiPayment")
+   class UpiPaymentService implements PaymentService {}
+
+   @Autowired
+   @Qualifier("upiPayment")
+   private PaymentService paymentService;
+
+------------------------------------------------------------------------------------------------------------------
+
+7. How do transactions work in Spring Boot?
+
+   1. We use @Transactional to manage database transactions.
+   2. Spring uses proxy-based AOP to intercept method calls and start or join a transaction.
+   3. If the method completes successfully, Spring commits the transaction.
+   4. By default, RuntimeException and Error trigger rollback, while checked exceptions do not.
+
+   FOLLOW-UP: Why might @Transactional not work?
+
+   - Self-invocation can bypass the Spring proxy.
+   - The method may not be called through a Spring-managed bean.
+   - The wrong transaction manager may be configured.
+   - Exception handling or rollback rules may prevent the expected rollback.
+
+------------------------------------------------------------------------------------------------------------------
+
+8. Explain different transaction propagation types.
+
+   1. REQUIRED: Uses an existing transaction or creates a new one. This is the default.
+   2. REQUIRES_NEW: Suspends the existing transaction and starts a new transaction.
+   3. SUPPORTS: Uses an existing transaction if available; otherwise executes without one.
+   4. MANDATORY: Requires an existing transaction; otherwise throws an exception.
+   5. NOT_SUPPORTED: Suspends an existing transaction and executes without a transaction.
+   6. NEVER: Throws an exception if an existing transaction is present.
+   7. NESTED: Executes within a nested transaction or savepoint if supported by the transaction manager.
+
+------------------------------------------------------------------------------------------------------------------
+
+9. How have you used AI in your development work over the last six months?
+
+   1. I use AI-assisted development tools to understand unfamiliar code and explore implementation approaches.
+   2. I use them to generate test-case ideas, identify possible edge cases and improve documentation.
+   3. I also use AI assistance for debugging, code explanation and refactoring suggestions.
+   4. I always review generated code, validate its correctness and follow project security standards.
+
+   NOTE: Mention only the tools and activities you have actually used. Do not claim production AI integration
+   if you have only used AI as a development assistant.
+
+------------------------------------------------------------------------------------------------------------------
+
+10. Do you have experience building AI skills and agents?
+
+   1. An AI Agent is an application that uses an AI model to understand a task and decide what action to take.
+   2. It can use external tools such as REST APIs, databases and search services.
+   3. An agent generally follows a cycle of understanding the request, selecting a tool, executing it and evaluating the result.
+   4. I understand the architecture and integration approach, but I would distinguish this from hands-on production
+      agent development if I have not implemented one.
+
+   FOLLOW-UP: How would you build an AI Agent?
+
+   - Select an LLM.
+   - Define instructions and the agent's responsibility.
+   - Connect approved tools or APIs.
+   - Add validation, access control, monitoring and human approval for sensitive actions.
+
+------------------------------------------------------------------------------------------------------------------
+
+11. What are RAG and MCP?
+
+   RAG – Retrieval-Augmented Generation:
+
+   1. RAG combines information retrieval with an LLM.
+   2. Documents are converted into embeddings and stored in a vector database.
+   3. When a user asks a question, relevant documents are retrieved and passed to the LLM.
+   4. This helps generate answers based on specific organisational information.
+
+   MCP – Model Context Protocol:
+
+   1. MCP is a standard protocol that allows AI applications to connect with external tools and data sources.
+   2. An MCP server exposes capabilities such as tools, resources and prompts.
+   3. An AI application can discover and invoke these capabilities through an MCP client.
+   4. It simplifies integration between AI applications and external systems.
+
+   SIMPLE DIFFERENCE:
+   RAG helps an AI model access relevant knowledge.
+   MCP helps an AI application connect to external tools and systems.
+
+------------------------------------------------------------------------------------------------------------------
+
+12. How do you debug and fix API failures in production?
+
+   1. First, check the API response, HTTP status code, application logs and correlation ID.
+   2. Use Splunk or the available monitoring platform to identify the failing service and exception.
+   3. Check database queries, Kafka consumer lag, external service dependencies and application metrics.
+   4. Fix the root cause, test the solution, deploy through CI/CD and monitor the application after deployment.
+
+------------------------------------------------------------------------------------------------------------------
+
+13. Have you used tools to track vulnerabilities in the codebase?
+
+   1. Vulnerability scanning helps identify security issues in source code and dependencies.
+   2. Static Application Security Testing tools analyse source code for potential vulnerabilities.
+   3. Software Composition Analysis tools identify vulnerable third-party libraries.
+   4. Examples include SonarQube, Checkmarx, Snyk and OWASP Dependency-Check.
+
+   NOTE: Clearly distinguish tools you personally used from tools you only understand.
+
+------------------------------------------------------------------------------------------------------------------
+
+14. What tools have you used, such as SonarQube or Checkmarx?
+
+   1. SonarQube is used for static code analysis and identifying bugs, code smells and security hotspots.
+   2. Checkmarx is used for static application security testing.
+   3. Snyk and OWASP Dependency-Check help identify vulnerable third-party dependencies.
+   4. These tools can be integrated into CI/CD pipelines to detect issues before deployment.
+
+------------------------------------------------------------------------------------------------------------------
+
+15. How do you fix identified vulnerabilities?
+
+   1. First, understand the vulnerability, its severity and its impact.
+   2. For dependency vulnerabilities, upgrade to a secure compatible version or apply the recommended patch.
+   3. For source-code vulnerabilities, fix issues such as injection, improper authorisation and sensitive-data exposure.
+   4. Run the security scan and regression tests again to verify the fix.
+
+------------------------------------------------------------------------------------------------------------------
+
+16. Do you use tools to write scalable code following SOLID, DRY and KISS?
+
+   1. I use IDE inspections, SonarQube and AI-assisted development tools to identify possible code improvements.
+   2. I follow SOLID principles to maintain clear responsibilities and reduce tight coupling.
+   3. I follow DRY by avoiding unnecessary code duplication and KISS by keeping implementations simple.
+   4. Code reviews and unit tests help ensure that the design is maintainable and scalable.
+
+------------------------------------------------------------------------------------------------------------------
+
+17. What is React Router and why is it used?
+
+   1. React Router is a library used to manage navigation in React applications.
+   2. It allows users to navigate between pages without refreshing the complete browser page.
+   3. It supports dynamic routes, nested routes, URL parameters and protected routes.
+   4. We use components such as BrowserRouter, Routes, Route, Link and hooks such as useNavigate.
+
+------------------------------------------------------------------------------------------------------------------
+
+18. How do you integrate frontend and backend code into a single project?
+
+   1. First, maintain frontend and backend as separate modules or folders within a single repository.
+   2. Build the React application using npm and generate production static files.
+   3. Configure Spring Boot to serve those static files, or deploy the frontend separately behind a reverse proxy.
+   4. Configure API routing, environment-specific settings, CORS where required and a common CI/CD pipeline.
+
+   Example project structure:
+
+   application/
+       backend/
+           src/
+           pom.xml
+       frontend/
+           src/
+           package.json
+       README.md
+
+   FOLLOW-UP: How does React communicate with Spring Boot?
+
+   - React calls Spring Boot REST APIs using fetch or Axios.
+   - Spring Boot returns JSON responses.
+   - React updates the UI based on the API response.
+   - In production, both can be served under the same domain using a reverse proxy or Spring Boot static resources.
+
+====================================================================
+
+
+
+JAVA, SPRING BOOT AND KAFKA – INTERVIEW QUESTIONS
+====================================================================
+
+SECTION 1: JAVA CODING – SECOND HIGHEST SALARY
+====================================================================
+
+1. Find the second-highest salary from an Employee list with O(n) time complexity.
+
+   APPROACH: Single Pass – No Sorting
+
+   JAVA 8 CODE:
+
+   public static double secondHighestSalary(List<Employee> employees) {
+
+       double highest = Double.NEGATIVE_INFINITY;
+       double secondHighest = Double.NEGATIVE_INFINITY;
+
+       for (Employee emp : employees) {
+           double salary = emp.getSalary();
+
+           if (salary > highest) {
+               secondHighest = highest;
+               highest = salary;
+           } else if (salary > secondHighest && salary < highest) {
+               secondHighest = salary;
+           }
+       }
+
+       if (secondHighest == Double.NEGATIVE_INFINITY) {
+           throw new IllegalArgumentException("Second highest salary not found");
+       }
+
+       return secondHighest;
+   }
+
+   EXPLANATION:
+   1. Maintain two variables: highest and secondHighest.
+   2. If the current salary is greater than highest, move highest into secondHighest.
+   3. Otherwise, if it is between highest and secondHighest, update secondHighest.
+   4. Return secondHighest after completing one iteration over the list.
+
+   Time Complexity: O(n)
+   Space Complexity: O(1)
+
+------------------------------------------------------------------------------------------------------------------
+
+2. What if two employees have the same highest salary?
+
+   1. Usually, second-highest salary means the second DISTINCT salary.
+   2. Example: 90000, 90000, 70000, 50000.
+   3. The second-highest distinct salary is 70000.
+   4. The above code handles duplicate highest salaries correctly.
+
+------------------------------------------------------------------------------------------------------------------
+
+3. What if the interviewer asks for the second employee with the highest salary?
+
+   1. This is different from finding the second-highest distinct salary.
+   2. If two employees have the same highest salary, both should be considered.
+   3. We need to sort or maintain employee records based on the required tie-breaking rule.
+   4. We should clarify whether they want the second distinct salary or the second employee.
+
+------------------------------------------------------------------------------------------------------------------
+
+4. Can we find the second-highest salary using Java Streams?
+
+   JAVA 8 CODE:
+
+   Optional<Double> result = employees.stream()
+       .map(Employee::getSalary)
+       .distinct()
+       .sorted(Comparator.reverseOrder())
+       .skip(1)
+       .findFirst();
+
+   EXPLANATION:
+   1. map() extracts salary from each employee.
+   2. distinct() removes duplicate salaries.
+   3. sorted() sorts salaries in descending order.
+   4. skip(1) skips the highest salary and findFirst() returns the second.
+
+   Time Complexity: O(n log n) due to sorting.
+   Space Complexity: O(n) in general.
+
+------------------------------------------------------------------------------------------------------------------
+
+5. Why is the single-pass approach better than sorting?
+
+   1. Sorting requires O(n log n) time.
+   2. Single-pass approach requires only O(n) time.
+   3. Sorting also requires additional memory depending on the implementation.
+   4. If we only need the second-highest salary, scanning once is more efficient.
+
+------------------------------------------------------------------------------------------------------------------
+
+6. What if the employee list is empty or contains only one distinct salary?
+
+   1. An empty list has no highest salary.
+   2. A list with only one distinct salary has no second-highest distinct salary.
+   3. We should return OptionalDouble or throw a meaningful exception.
+   4. We should avoid returning an incorrect default value like zero.
+
+====================================================================
+SECTION 2: KAFKA ARCHITECTURE
+====================================================================
+
+7. Explain Kafka architecture.
+
+   1. Producer: Publishes messages to Kafka topics.
+   2. Broker: Kafka server that stores and manages messages.
+   3. Topic and Partition: A topic is divided into partitions for scalability and parallel processing.
+   4. Consumer: Reads messages from partitions and processes them.
+
+   Other important components:
+   - Consumer Group: Distributes partitions among consumers.
+   - Offset: Tracks the position of a consumer in a partition.
+   - Replication: Maintains copies of partitions for fault tolerance.
+   - Controller: Manages broker metadata and cluster coordination.
+
+   <LearningViz type_id="BIG_O_TIME_COMPLEXITY"/>
+
+------------------------------------------------------------------------------------------------------------------
+
+8. How does Kafka handle multiple consumers?
+
+   1. Consumers can be grouped using a common consumer group ID.
+   2. Kafka assigns partitions among consumers in the group.
+   3. Each partition is assigned to only one consumer within a consumer group at a time.
+   4. Multiple consumer groups can independently read the same topic.
+
+------------------------------------------------------------------------------------------------------------------
+
+9. What happens if a Kafka consumer fails?
+
+   1. Kafka detects the consumer failure through its group coordination mechanism.
+   2. A rebalance happens and partitions are assigned to remaining consumers.
+   3. The new consumer continues from the committed offset.
+   4. Idempotent processing helps prevent duplicate business updates during reprocessing.
+
+------------------------------------------------------------------------------------------------------------------
+
+10. How does Kafka guarantee message delivery?
+
+   1. At-most-once: A message may be lost but is not processed again.
+   2. At-least-once: Messages are delivered one or more times, so duplicates are possible.
+   3. Exactly-once: Kafka supports transactional processing for specific Kafka read-process-write workflows.
+   4. For external databases, we still need idempotency or coordination to avoid duplicate business effects.
+
+------------------------------------------------------------------------------------------------------------------
+
+11. What is a Kafka partition?
+
+   1. A partition is an ordered, append-only sequence of records within a topic.
+   2. Partitions allow Kafka to distribute data across brokers.
+   3. They enable parallel consumption by multiple consumers.
+   4. Ordering is guaranteed within a partition, not across the entire topic.
+
+------------------------------------------------------------------------------------------------------------------
+
+12. What is a Kafka consumer offset?
+
+   1. Offset represents the position of a record within a partition.
+   2. Consumers use offsets to track their reading progress.
+   3. Committing an offset records how far the consumer has processed.
+   4. Incorrect offset management can cause message loss or duplicate processing.
+
+------------------------------------------------------------------------------------------------------------------
+
+13. Why do we use Kafka instead of REST APIs?
+
+   1. Kafka supports asynchronous event-based communication.
+   2. Producers and consumers do not need to be available at exactly the same time.
+   3. It supports high-throughput event processing and message replay.
+   4. REST is better when an immediate request-response interaction is required.
+
+====================================================================
+SECTION 3: HIBERNATE – N+1 PROBLEM
+====================================================================
+
+14. What is the N+1 problem?
+
+   1. N+1 happens when one query fetches parent records and additional queries fetch related records individually.
+   2. Example: One query fetches 100 employees, followed by 100 queries to fetch their departments.
+   3. This creates unnecessary database round trips and increases latency.
+   4. It commonly happens with lazy-loaded relationships in Hibernate.
+
+   Example:
+
+   List<Employee> employees = employeeRepository.findAll();
+
+   for (Employee employee : employees) {
+       System.out.println(employee.getDepartment().getName());
+   }
+
+   Possible SQL:
+   1 query to fetch employees + N queries to fetch departments.
+
+------------------------------------------------------------------------------------------------------------------
+
+15. How do you resolve the N+1 problem?
+
+   1. Use JOIN FETCH in JPQL to fetch related entities together.
+   2. Use @EntityGraph to specify relationships that should be fetched.
+   3. Use batch fetching with @BatchSize or hibernate.default_batch_fetch_size.
+   4. Use DTO projections when only selected columns are required.
+
+------------------------------------------------------------------------------------------------------------------
+
+16. What is the difference between JOIN FETCH and EntityGraph?
+
+   1. JOIN FETCH explicitly defines the association to fetch in the JPQL query.
+   2. EntityGraph defines the required fetching strategy separately from the query.
+   3. EntityGraph can be reused across repository methods.
+   4. Both can help solve N+1, depending on the query and relationship.
+
+------------------------------------------------------------------------------------------------------------------
+
+17. What is lazy loading vs eager loading?
+
+   1. Lazy loading fetches related data only when it is accessed.
+   2. Eager loading fetches related data immediately with the parent entity.
+   3. Lazy loading can cause N+1 queries if relationships are accessed repeatedly.
+   4. Eager loading can fetch unnecessary data, so choose fetching based on the use case.
+
+====================================================================
+SECTION 4: CI/CD WORKFLOW
+====================================================================
+
+18. Explain the CI/CD workflow.
+
+   1. Developer commits code and raises a pull request in Git.
+   2. CI pipeline builds the application and runs unit tests, static analysis and quality checks.
+   3. A Docker image is created and pushed to a container registry.
+   4. CD pipeline deploys the image to the target environment and performs smoke tests.
+
+------------------------------------------------------------------------------------------------------------------
+
+19. What happens during the build stage?
+
+   1. Dependencies are downloaded using Maven or Gradle.
+   2. Source code is compiled.
+   3. Unit tests and code quality checks are executed.
+   4. An executable JAR or WAR file is generated.
+
+------------------------------------------------------------------------------------------------------------------
+
+20. How do you deploy to production?
+
+   1. Code is merged into the approved release branch after code review.
+   2. CI pipeline builds and validates the release artifact.
+   3. The approved artifact is deployed to production using the CD pipeline.
+   4. We perform smoke testing and monitor logs, metrics and application health.
+
+------------------------------------------------------------------------------------------------------------------
+
+21. What is rollback in CI/CD?
+
+   1. Rollback means returning to the previous stable application version.
+   2. It is required when a new deployment introduces critical issues.
+   3. We can redeploy the previous Docker image or use deployment rollback features.
+   4. Database changes need backward-compatible migration and rollback planning.
+
+====================================================================
+SECTION 5: SPRING CONTEXT AND DEPENDENCY INJECTION
+====================================================================
+
+22. What is Spring ApplicationContext?
+
+   1. ApplicationContext is the Spring IoC container.
+   2. It creates and manages Spring beans.
+   3. It injects dependencies and manages bean lifecycle.
+   4. It also supports events, internationalisation and resource loading.
+
+------------------------------------------------------------------------------------------------------------------
+
+23. What is Dependency Injection?
+
+   1. Dependency Injection means providing an object's required dependencies from outside.
+   2. Spring manages object creation and injects the required dependencies.
+   3. It reduces tight coupling between classes.
+   4. Constructor injection is generally preferred because dependencies are clear and testable.
+
+   Example:
+
+   @Service
+   public class OrderService {
+
+       private final PaymentService paymentService;
+
+       public OrderService(PaymentService paymentService) {
+           this.paymentService = paymentService;
+       }
+   }
+
+------------------------------------------------------------------------------------------------------------------
+
+24. Explain the Spring Bean lifecycle.
+
+   1. Spring creates the bean instance.
+   2. Spring injects dependencies into the bean.
+   3. Initialisation callbacks execute, such as @PostConstruct.
+   4. The bean is ready for use, and destruction callbacks execute when the container shuts down.
+
+   Lifecycle in simple order:
+
+   Bean Instantiation
+          |
+   Dependency Injection
+          |
+   BeanPostProcessor Before Initialization
+          |
+   @PostConstruct
+          |
+   BeanPostProcessor After Initialization
+          |
+   Bean Ready for Use
+          |
+   @PreDestroy
+
+------------------------------------------------------------------------------------------------------------------
+
+25. What is the difference between @PostConstruct and @PreDestroy?
+
+   1. @PostConstruct executes after dependency injection is completed.
+   2. It is used for initialisation tasks.
+   3. @PreDestroy executes before the bean is destroyed.
+   4. It is used for cleanup tasks such as closing resources.
+
+------------------------------------------------------------------------------------------------------------------
+
+26. What are different Spring Bean scopes?
+
+   1. Singleton: One instance per Spring IoC container.
+   2. Prototype: New instance for each container lookup.
+   3. Request: One instance per HTTP request.
+   4. Session: One instance per HTTP session.
+
+------------------------------------------------------------------------------------------------------------------
+
+27. What happens if two beans implement the same interface?
+
+   1. Spring finds multiple matching beans and cannot decide which one to inject.
+   2. It can throw NoUniqueBeanDefinitionException.
+   3. Use @Primary to define the default bean.
+   4. Use @Qualifier to select a specific bean.
+
+------------------------------------------------------------------------------------------------------------------
+
+28. Why is constructor injection preferred?
+
+   1. It makes mandatory dependencies explicit.
+   2. It supports immutable fields using final.
+   3. It makes unit testing easier without starting the Spring container.
+   4. It helps identify circular dependencies during bean creation.
+
+====================================================================
+SECTION 6: JAVA STREAMS AND FUNCTIONAL PROGRAMMING
+====================================================================
+
+29. Why were Streams introduced in Java?
+
+   1. Streams were introduced in Java 8 to process collections in a declarative way.
+   2. They reduce boilerplate code compared with traditional loops.
+   3. They support operations like filter, map, reduce and collect.
+   4. They support parallel processing when appropriate.
+
+------------------------------------------------------------------------------------------------------------------
+
+30. Streams vs Loops?
+
+   1. Loops use an imperative approach, where we specify how to process data.
+   2. Streams use a declarative approach, where we specify what operation is required.
+   3. Streams support functional operations such as filter, map and collect.
+   4. Loops can be more suitable for complex control flow and fine-grained performance tuning.
+
+------------------------------------------------------------------------------------------------------------------
+
+31. If we can double employee salary using a loop, why do we need Streams?
+
+   1. Both approaches can achieve the same result.
+   2. Streams make transformation and filtering operations easier to read.
+   3. They support method chaining and functional composition.
+   4. They also provide an easy way to combine multiple operations.
+
+   LOOP:
+
+   for (Employee emp : employees) {
+       emp.setSalary(emp.getSalary() * 2);
+   }
+
+   STREAM:
+
+   employees.forEach(emp ->
+       emp.setSalary(emp.getSalary() * 2)
+   );
+
+   NOTE: forEach() is a terminal stream operation. For a transformation that
+   creates new Employee objects, map() is more appropriate.
+
+------------------------------------------------------------------------------------------------------------------
+
+32. Can we add our own intermediate or terminal operations in Streams?
+
+   1. We cannot directly add new built-in operations to Java's Stream interface.
+   2. We can create reusable methods that accept and return Stream objects.
+   3. We can use StreamSupport and Spliterator to build custom stream sources.
+   4. Libraries can provide additional stream operations, but they do not modify
+      the standard Stream interface itself.
+
+   Example:
+
+   public static <T> Stream<T> filterActive(Stream<T> stream) {
+       return stream.filter(item -> item != null);
+   }
+
+   Usage:
+
+   filterActive(list.stream()).forEach(System.out::println);
+
+------------------------------------------------------------------------------------------------------------------
+
+33. What is a Functional Interface?
+
+   1. A functional interface contains exactly one abstract method.
+   2. It can have multiple default and static methods.
+   3. It can be implemented using lambda expressions.
+   4. @FunctionalInterface helps the compiler validate the interface.
+
+------------------------------------------------------------------------------------------------------------------
+
+34. Explain Supplier.
+
+   1. Supplier is a functional interface that does not accept any input.
+   2. It returns a value using the get() method.
+   3. It is useful for lazy object creation and supplying default values.
+   4. Example: Supplier<List<String>> supplier = ArrayList::new;
+
+   Practical usage:
+
+   Supplier<Double> supplier = Math::random;
+   Double value = supplier.get();
+
+------------------------------------------------------------------------------------------------------------------
+
+35. Explain Consumer.
+
+   1. Consumer accepts one input and does not return a result.
+   2. Its functional method is accept().
+   3. It is used for operations such as printing, logging and updating objects.
+   4. Example: Consumer<String> consumer = System.out::println;
+
+------------------------------------------------------------------------------------------------------------------
+
+36. Explain Predicate.
+
+   1. Predicate accepts one input and returns a boolean.
+   2. Its functional method is test().
+   3. It is commonly used for filtering conditions.
+   4. Example: Predicate<Integer> predicate = n -> n > 10;
+
+------------------------------------------------------------------------------------------------------------------
+
+37. Explain Function.
+
+   1. Function accepts one input and returns one output.
+   2. Its functional method is apply().
+   3. It is commonly used for data transformation.
+   4. Example: Function<String, Integer> function = String::length;
+
+------------------------------------------------------------------------------------------------------------------
+
+38. Difference between Supplier, Consumer, Predicate and Function?
+
+   1. Supplier: Takes no input and returns a value.
+   2. Consumer: Takes input and returns nothing.
+   3. Predicate: Takes input and returns boolean.
+   4. Function: Takes input and returns a transformed value.
+
+   QUICK MEMORY:
+
+   Supplier  -> Get
+   Consumer  -> Accept
+   Predicate -> Test
+   Function  -> Apply
+
+====================================================================
