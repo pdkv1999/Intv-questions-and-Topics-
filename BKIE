@@ -993,3 +993,298 @@ FINAL INTERVIEW TIP
    2. Clearly separate what you implemented hands-on from what you understand conceptually.
    3. For architecture questions, explain the problem, your approach and why you selected that solution.
    4. Keep answers short and confident, and be ready to explain one practical example for every important concept.
+
+
+
+# JAVA STREAMS, SPRING BOOT, CI/CD, TESTING & MULTITHREADING
+
+==================================================
+1. Are Java Streams limited to Collections, or can they be used with other data sources?
+
+   1. No, Java Streams are not limited to Collections. They can work with arrays, files, I/O sources, generated values and other data sources.
+   2. Collection: list.stream()
+   3. Array: Arrays.stream(numbers)
+   4. File: Files.lines(Path.of("data.txt")), which returns a Stream<String>.
+
+   Examples:
+
+   // Collection
+   List<Integer> list = List.of(10, 20, 30);
+   list.stream().forEach(System.out::println);
+
+   // Array
+   int[] numbers = {10, 20, 30};
+   Arrays.stream(numbers).forEach(System.out::println);
+
+   // Generate stream
+   Stream.iterate(1, n -> n + 1)
+         .limit(5)
+         .forEach(System.out::println);
+
+--------------------------------------------------
+
+2. How do you find the 10th highest salary using SQL and Java Streams?
+
+   SQL:
+
+   SELECT salary
+   FROM (
+       SELECT DISTINCT salary,
+              DENSE_RANK() OVER (ORDER BY salary DESC) AS rnk
+       FROM employee
+   )
+   WHERE rnk = 10;
+
+   Java Streams:
+
+   employees.stream()
+       .map(Employee::getSalary)
+       .distinct()
+       .sorted(Comparator.reverseOrder())
+       .skip(9)
+       .findFirst()
+       .orElseThrow(() ->
+           new IllegalArgumentException("10th highest salary not found"));
+
+   1. First, retrieve employee salaries.
+   2. Use distinct() to remove duplicate salaries.
+   3. Sort salaries in descending order.
+   4. Use skip(9) and findFirst() to get the 10th highest distinct salary.
+
+   Complexity: O(n log n) time and O(n) space for the Stream approach.
+
+--------------------------------------------------
+
+3. Explain a performance improvement you worked on in your project.
+
+   1. In LabFlow, we had database performance issues due to unnecessary queries when retrieving related laboratory result data.
+   2. We identified N+1 query problems using SQL logs and database query analysis.
+   3. We used EntityGraph, JOIN FETCH and batch fetching to reduce unnecessary database calls.
+   4. We validated the improvement by comparing query execution counts and response times.
+
+   Interview point:
+   Always explain the original problem, root cause, optimisation and measurable result. Do not quote performance percentages unless you have actual measurements.
+
+--------------------------------------------------
+
+4. How does @Transactional behave with public and private methods? What happens during self-invocation?
+
+   1. Spring's default proxy-based transaction management intercepts calls through the Spring proxy.
+   2. Public methods called through the proxy are normally eligible for transaction management.
+   3. Private methods cannot be intercepted by the standard proxy mechanism.
+   4. Self-invocation happens when one method calls another method within the same class. That internal call bypasses the proxy, so the inner method's @Transactional settings are not independently applied.
+
+   Example:
+
+   @Service
+   public class OrderService {
+
+       public void createOrder() {
+           saveOrder(); // Self-invocation
+       }
+
+       @Transactional
+       public void saveOrder() {
+           // Database operation
+       }
+   }
+
+   Here, saveOrder() is called directly within the same object, so its transactional annotation is not activated through the proxy.
+
+--------------------------------------------------
+
+5. What are the important Java 17 features? Why were Records introduced?
+
+   1. Records – Reduce boilerplate code for data carrier classes.
+   2. Sealed Classes – Restrict which classes can extend or implement a particular type.
+   3. Pattern Matching for instanceof – Avoids explicit type casting.
+   4. Text Blocks – Support multiline strings.
+
+   Record example:
+
+   public record Employee(Long id, String name) {}
+
+   Why Records?
+   - Automatically provides constructor, accessors, equals(), hashCode() and toString().
+   - Useful for DTOs and immutable data carriers.
+   - Reduces unnecessary boilerplate code.
+
+   Important: Records are shallowly immutable. Mutable objects inside a record can still be modified unless defensive copying is used.
+
+--------------------------------------------------
+
+6. Explain how you configure and manage a CI/CD pipeline.
+
+   1. Source Stage – Developers push code to Git and raise pull requests.
+   2. Build Stage – Maven compiles the application and downloads dependencies.
+   3. Quality Stage – Run unit tests, SonarQube analysis and security checks.
+   4. Deployment Stage – Build Docker images, push them to a registry and deploy through the approved pipeline.
+
+   Tools:
+   - Git – Source control.
+   - Jenkins / GitHub Actions – CI/CD automation.
+   - Maven – Build management.
+   - SonarQube – Code quality.
+   - Docker – Containerisation.
+   - Kubernetes – Container orchestration.
+
+   After deployment, we perform smoke testing and monitor application health.
+
+--------------------------------------------------
+
+7. How would you troubleshoot a request flowing through multiple microservices?
+
+   1. First, generate a unique correlation ID or trace ID at the entry point.
+   2. Pass the same trace context through REST headers and Kafka message metadata.
+   3. Search centralised logs using the correlation ID to identify which service is slow or failing.
+   4. Use distributed tracing tools like OpenTelemetry, Jaeger or Zipkin to understand the complete request flow.
+
+   Interview point:
+   Correlation IDs connect logs, while distributed tracing provides timing and dependency information across services.
+
+--------------------------------------------------
+
+8. How do you handle bulk database processing and large-volume operations?
+
+   1. Use batch processing to group multiple database operations instead of executing one query per record.
+   2. Use pagination or cursor-based processing to retrieve large datasets in manageable chunks.
+   3. Use JDBC batch updates or Hibernate batching to reduce database round trips.
+   4. Monitor transaction size, memory usage, connection pool utilisation and query performance.
+
+   Example:
+
+   spring.jpa.properties.hibernate.jdbc.batch_size=100
+
+   Important:
+   For very large datasets, use Spring Batch with chunk-oriented processing and checkpointing.
+
+--------------------------------------------------
+
+9. What are SonarQube and Nexus IQ?
+
+   1. SonarQube performs static code analysis and identifies bugs, code smells, security hotspots and maintainability issues.
+   2. Nexus IQ analyses application dependencies and identifies known vulnerabilities and licence-related risks.
+   3. Both can be integrated into CI/CD pipelines as quality gates.
+   4. If a configured quality or security threshold fails, the pipeline can prevent the application from proceeding to deployment.
+
+--------------------------------------------------
+
+10. Have you completed any Generative AI certifications? What have you learned?
+
+   1. Generative AI covers models that generate text, code, images and other content based on prompts.
+   2. Important concepts include LLMs, prompt engineering, tokens, embeddings and vector databases.
+   3. RAG combines document retrieval with LLM responses to provide answers based on external knowledge.
+   4. I understand these concepts and their development applications. I would mention a certification only if I have actually completed it.
+
+--------------------------------------------------
+
+# JUNIT & UNIT TESTING
+
+11. How do you write unit tests for void methods?
+
+   1. Since a void method does not return a value, we verify its behaviour rather than its return value.
+   2. Use Mockito verify() to check whether a dependency method was called.
+   3. Use ArgumentCaptor to verify the arguments passed to the dependency.
+   4. Also test exception scenarios and ensure the expected side effects happen.
+
+   Example:
+
+   @Test
+   void shouldSaveOrder() {
+       Order order = new Order();
+
+       orderService.createOrder(order);
+
+       verify(orderRepository).save(order);
+   }
+
+--------------------------------------------------
+
+12. Can we directly test private methods using JUnit?
+
+   1. Private methods cannot normally be accessed directly from a JUnit test.
+   2. The recommended approach is to test private logic through the public method that uses it.
+   3. If private logic is complex and independently testable, consider extracting it into a separate class.
+   4. Reflection is technically possible, but it is generally not recommended because it tightly couples tests to implementation details.
+
+--------------------------------------------------
+
+13. What are the differences between JUnit 4 and JUnit 5?
+
+   1. JUnit 4 uses @Test, @Before, @After and @Ignore.
+   2. JUnit 5 uses @Test, @BeforeEach, @AfterEach and @Disabled.
+   3. JUnit 5 supports parameterised tests, nested tests, dynamic tests and extensions.
+   4. JUnit 5 has a modular architecture consisting of Platform, Jupiter and Vintage.
+
+   Example:
+
+   JUnit 4: @Before
+   JUnit 5: @BeforeEach
+
+--------------------------------------------------
+
+14. Why might some JUnit test cases not execute?
+
+   1. The test method may not have the correct annotation or visibility required by the selected JUnit version.
+   2. Maven Surefire configuration or test naming patterns may exclude the test.
+   3. Incorrect JUnit dependencies or mixing JUnit 4 and JUnit 5 without the required engine can cause execution issues.
+   4. I check IDE test configuration, Maven dependencies and run mvn test to identify the problem.
+
+--------------------------------------------------
+
+15. How do you identify executed, skipped, ignored and failed test cases?
+
+   1. IDE test reports show passed, failed and skipped test cases.
+   2. JUnit 5 uses @Disabled to skip a test, while JUnit 4 uses @Ignore.
+   3. Maven Surefire generates test reports under target/surefire-reports.
+   4. In CI/CD, I check build logs, test reports, stack traces and failure details to identify the root cause.
+
+   Useful command:
+
+   mvn clean test
+
+--------------------------------------------------
+
+# MULTITHREADING & EXECUTORSERVICE
+
+16. What is the difference between execute() and submit() in ExecutorService?
+
+   1. execute() accepts a Runnable and does not return a result.
+   2. submit() accepts Runnable or Callable and returns a Future.
+   3. With submit(), we can retrieve the result using Future.get() and check task completion.
+   4. Exceptions from submit() are captured in the Future and can be observed using get(). Exceptions from execute() are handled by the executor's uncaught exception handling mechanism.
+
+   Example:
+
+   executor.execute(() -> processOrder());
+
+   Future<String> future =
+       executor.submit(() -> fetchCustomer());
+
+--------------------------------------------------
+
+17. If the number of tasks is unknown, which ExecutorService implementation would you choose?
+
+   1. It depends on task type, expected load and available resources.
+   2. For many short-lived I/O-bound tasks, I would consider a bounded ThreadPoolExecutor with a controlled queue.
+   3. For CPU-intensive tasks, I would use a fixed-size pool based on available processors.
+   4. I would avoid blindly using an unbounded thread pool because it can create excessive threads and cause memory or resource exhaustion.
+
+   Example:
+
+   ExecutorService executor = new ThreadPoolExecutor(
+       10,
+       20,
+       60,
+       TimeUnit.SECONDS,
+       new ArrayBlockingQueue<>(500),
+       new ThreadPoolExecutor.CallerRunsPolicy()
+   );
+
+   Important:
+   - Core pool size: 10 threads.
+   - Maximum pool size: 20 threads.
+   - Queue capacity: 500 tasks.
+   - CallerRunsPolicy provides backpressure when the pool and queue are full.
+
+   For Java 21, virtual threads can also be considered for large numbers of blocking I/O tasks, but downstream connection limits and database capacity must still be controlled.
