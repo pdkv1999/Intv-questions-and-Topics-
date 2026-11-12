@@ -1288,3 +1288,188 @@ FINAL INTERVIEW TIP
    - CallerRunsPolicy provides backpressure when the pool and queue are full.
 
    For Java 21, virtual threads can also be considered for large numbers of blocking I/O tasks, but downstream connection limits and database capacity must still be controlled.
+
+
+# JAVA, SPRING BOOT & SYSTEM DESIGN – INTERVIEW ANSWERS
+
+--------------------------------------------------
+
+1. If 10 instances are running and multiple requests try to update the same user's DB record, how do you prevent conflicts?
+
+   1. Since all 10 instances share the same database, Java synchronized will not work across instances.
+   2. I use Optimistic Locking with @Version to detect concurrent updates.
+   3. If conflicts are frequent, I use Pessimistic Locking with SELECT FOR UPDATE to lock the database row.
+   4. If events must be processed sequentially, I use Kafka partitioning with userId as the message key.
+
+   Example:
+
+   @Version
+   private Long version;
+
+   Important:
+   - Optimistic locking detects conflicts.
+   - Pessimistic locking prevents concurrent updates while the row is locked.
+   - Kafka partitioning by userId maintains ordering within that partition.
+
+--------------------------------------------------
+
+2. What is a Data Store and a Key Store? What are their uses?
+
+   1. Data Store is used to store application data such as customer details, transactions and business records.
+   2. Key Store securely stores cryptographic keys and certificates.
+   3. Java KeyStore can store private keys, public-key certificates and trusted certificates.
+   4. Data Store handles business data, whereas KeyStore supports encryption, decryption and digital signatures.
+
+--------------------------------------------------
+
+3. How do you identify slowness in an application and make it faster?
+
+   1. First, I check API response time, CPU, memory, heap usage, GC activity and thread utilisation.
+   2. I analyse application logs and distributed traces to identify slow database queries or external API calls.
+   3. I optimise SQL queries, resolve N+1 problems, introduce caching and improve inefficient code.
+   4. Finally, I perform load testing and compare response times before and after optimisation.
+
+--------------------------------------------------
+
+4. How do you make database query responses faster?
+
+   1. Analyse the execution plan to identify full table scans and inefficient joins.
+   2. Create suitable indexes on frequently filtered and joined columns.
+   3. Avoid SELECT *, retrieve only required columns and use pagination.
+   4. Optimise joins and subqueries, and validate improvements using actual execution statistics.
+
+--------------------------------------------------
+
+5. A downstream service processes only one event at a time. How do you process 250 records without timeout?
+
+   1. I avoid processing all 250 records synchronously within one HTTP request.
+   2. I accept the request, assign a job ID and publish the records to Kafka or another message queue.
+   3. A controlled consumer processes the records asynchronously and updates their processing status.
+   4. The client can check the job status using the job ID instead of waiting for all records to finish.
+
+   Flow:
+
+   Client sends 250 records
+           |
+           v
+   API accepts request
+           |
+           v
+   Publish to Kafka
+           |
+           v
+   Controlled Consumer
+           |
+           v
+   Downstream Database Service
+           |
+           v
+   Update processing status
+
+   Important:
+   If downstream supports only one event at a time, we must maintain concurrency = 1 for that destination. Asynchronous processing prevents HTTP timeout, but it does not reduce the actual processing time.
+
+--------------------------------------------------
+
+6. How do you create Global Exception Handling in Spring Boot?
+
+   1. I use @RestControllerAdvice to handle exceptions across all REST controllers.
+   2. I use @ExceptionHandler to handle specific exception types.
+   3. I create a common error response containing timestamp, status code, message and request path.
+   4. This avoids duplicate try-catch blocks and maintains consistent API error responses.
+
+   Example:
+
+   @RestControllerAdvice
+   public class GlobalExceptionHandler {
+
+       @ExceptionHandler(ResourceNotFoundException.class)
+       public ResponseEntity<String> handleNotFound(
+               ResourceNotFoundException ex) {
+
+           return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                   .body(ex.getMessage());
+       }
+
+       @ExceptionHandler(Exception.class)
+       public ResponseEntity<String> handleException(Exception ex) {
+
+           return ResponseEntity
+                   .status(HttpStatus.INTERNAL_SERVER_ERROR)
+                   .body("Something went wrong");
+       }
+   }
+
+--------------------------------------------------
+
+7. What is an API Gateway and what are its functionalities?
+
+   1. API Gateway acts as a single entry point between clients and backend microservices.
+   2. It routes requests to the appropriate microservice.
+   3. It handles authentication, authorization, rate limiting, request filtering and logging.
+   4. It can also support load balancing, request transformation, monitoring and circuit breaking.
+
+--------------------------------------------------
+
+8. Can an API Gateway prevent multiple outgoing calls from our application to a third-party application?
+
+   1. Yes, but a traditional API Gateway generally manages incoming traffic.
+   2. For outgoing communication, we can use an Egress Gateway or outbound proxy.
+   3. We can configure rate limiting, throttling, connection limits and circuit breakers.
+   4. For example, if a third-party API allows only 100 requests per minute, we can enforce that limit before sending requests.
+
+   Interview point:
+   An outbound rate limiter can also be implemented inside our application using Resilience4j or a distributed rate-limiting mechanism.
+
+--------------------------------------------------
+
+9. What is a Full Table Scan? When is it useful?
+
+   1. A Full Table Scan means the database reads the entire table to find the required records.
+   2. It can happen when there is no suitable index or when the query retrieves a large percentage of the table.
+   3. It is not always bad. For small tables or queries returning most rows, a full scan can be faster than index access.
+   4. I check the execution plan before deciding whether an index is required.
+
+--------------------------------------------------
+
+10. Two different APIs need different responses from the same resource. How do you handle this?
+
+   Example:
+   - API 1: Get Partial Address.
+   - API 2: Get Complete Address.
+
+   1. I maintain the common address data in one service or resource.
+   2. I expose separate API endpoints or response DTOs based on consumer requirements.
+   3. The partial address API returns only required fields, whereas the complete address API returns all available fields.
+   4. I keep the business logic reusable in the service layer and avoid duplicating database access logic.
+
+   Example:
+
+   GET /api/address/{id}/summary
+   GET /api/address/{id}/complete
+
+   Service methods:
+
+   getAddressSummary(id);
+   getCompleteAddress(id);
+
+--------------------------------------------------
+
+11. CPU usage is low, but API latency is high. What could be the issue and how do you debug it?
+
+   1. Low CPU with high latency usually indicates that the application is waiting for something.
+   2. Possible reasons include slow database queries, external API delays, network latency or connection pool exhaustion.
+   3. I check distributed traces, thread dumps, database response times and HTTP connection pools.
+   4. After identifying the bottleneck, I optimise queries, fix connection pool issues, configure timeouts or improve asynchronous processing.
+
+--------------------------------------------------
+
+12. What is the difference between OAuth 1.0 and OAuth 2.0?
+
+   1. OAuth 1.0 uses cryptographic signatures to sign requests, whereas OAuth 2.0 commonly uses bearer access tokens.
+   2. OAuth 1.0 has a more complex signature-based protocol. OAuth 2.0 supports different authorisation flows for different application types.
+   3. OAuth 2.0 is widely used for web applications, mobile applications and service-to-service communication.
+   4. For user authentication, OpenID Connect is commonly used on top of OAuth 2.0.
+
+   Important:
+   OAuth 2.0 bearer tokens must be protected using HTTPS because anyone possessing a valid token may be able to use it.
