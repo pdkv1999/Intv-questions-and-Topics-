@@ -1,0 +1,532 @@
+JAVA FULL STACK – INTERVIEW PREPARATION
+
+1. Explain your most recent project, including architecture, technologies, role and responsibilities.
+
+   1. My recent project is LabFlow, a healthcare application used to integrate laboratory results from hospital systems and display them to clinicians.
+   2. We use Java 17, Spring Boot, Apache Kafka, Oracle and React.
+   3. Hospital systems send lab results to our backend APIs. We validate and store the results in Oracle and use Kafka for asynchronous communication with downstream services.
+   4. My responsibilities include developing REST APIs, Kafka integration, database optimisation, handling duplicate events, writing automated tests, supporting UAT and resolving production issues.
+
+   Architecture:
+   Hospital Systems → Spring Boot APIs → Oracle → Kafka → Downstream Services → React UI
+
+------------------------------------------------------------------------------------------------------------------
+
+2. Can an interface have non-abstract methods?
+
+   1. Yes, from Java 8 onwards, interfaces can have default and static methods.
+   2. Default methods have an implementation and can be overridden by implementing classes.
+   3. Static methods belong to the interface itself and are called using the interface name.
+   4. From Java 9, interfaces can also have private methods to reuse common logic.
+
+------------------------------------------------------------------------------------------------------------------
+
+3. Can HashMap have null keys and can HashSet have null values?
+
+   1. HashMap supports one null key and multiple null values.
+   2. HashSet supports one null element because it internally uses a HashMap.
+   3. HashSet stores its elements as keys in the internal HashMap, so duplicate elements are not allowed.
+
+   Follow-up: Why only one null key?
+
+   1. HashMap does not allow duplicate keys.
+   2. All null keys represent the same key.
+   3. Therefore, inserting another null key replaces the value associated with the existing null key.
+
+   Follow-up: Can we invoke hashCode() on a null reference?
+
+   1. No, calling hashCode() on null throws NullPointerException.
+   2. For example, `String s = null; s.hashCode();` throws an exception.
+
+   Follow-up: How does HashMap calculate the hash for a null key?
+
+   1. HashMap has special handling for null keys.
+   2. Internally, it assigns hash value 0 to a null key.
+   3. It does not call hashCode() on the null reference.
+
+------------------------------------------------------------------------------------------------------------------
+
+4. Why is String immutable in Java?
+
+   1. Once a String object is created, its value cannot be changed.
+   2. String immutability makes it thread-safe because multiple threads can safely share the same String.
+   3. It allows String Pool optimisation, where identical string literals can share objects.
+   4. It also improves security because values like file paths and URLs cannot be modified unexpectedly.
+
+------------------------------------------------------------------------------------------------------------------
+
+5. What are the different ways to create a String?
+
+   1. Using a string literal: `String s = "Java";`
+   2. Using the new keyword: `String s = new String("Java");`
+   3. Using a character array: `String s = new String(new char[]{'J','a','v','a'});`
+   4. Using StringBuilder or StringBuffer and converting them using `toString()`.
+
+------------------------------------------------------------------------------------------------------------------
+
+6. Explain Streams in Java 8.
+
+   1. Streams are used to process collections of data in a functional programming style.
+   2. Intermediate operations like filter(), map() and sorted() transform the data.
+   3. Terminal operations like collect(), forEach() and reduce() produce the final result.
+   4. Streams support lazy execution and parallel processing.
+
+   Example:
+
+   List<Integer> result = numbers.stream()
+       .filter(n -> n % 2 == 0)
+       .map(n -> n * 2)
+       .toList();
+
+   - filter() selects even numbers.
+   - map() doubles each selected number.
+   - toList() collects the results.
+
+------------------------------------------------------------------------------------------------------------------
+
+7. What happens if an exception occurs during Stream execution?
+
+   1. The exception is propagated to the caller when the operation is executed.
+   2. The stream pipeline stops processing after an unhandled exception.
+   3. We can handle exceptions using try-catch inside the lambda or handle them before passing data to the stream.
+   4. Streams do not automatically retry failed operations.
+
+------------------------------------------------------------------------------------------------------------------
+
+8. What is CompletableFuture?
+
+   1. CompletableFuture is used for asynchronous and non-blocking programming in Java.
+   2. It allows us to execute tasks in the background without blocking the main thread.
+   3. We can combine multiple tasks using thenCombine(), allOf() and thenCompose().
+   4. We can handle failures using exceptionally(), handle() and whenComplete().
+
+------------------------------------------------------------------------------------------------------------------
+
+9. Suppose we want to perform three tasks in parallel and execute another operation based on their results. How will you do it?
+
+   1. I will use CompletableFuture to execute the three independent tasks asynchronously.
+   2. I will use CompletableFuture.allOf() to wait until all three tasks are completed.
+   3. After completion, I will collect their results using join().
+   4. Then I will perform the next operation using thenApply() or thenRun().
+
+   Example:
+
+   CompletableFuture<String> task1 =
+       CompletableFuture.supplyAsync(() -> "Result 1");
+
+   CompletableFuture<String> task2 =
+       CompletableFuture.supplyAsync(() -> "Result 2");
+
+   CompletableFuture<String> task3 =
+       CompletableFuture.supplyAsync(() -> "Result 3");
+
+   CompletableFuture<String> finalResult =
+       CompletableFuture.allOf(task1, task2, task3)
+           .thenApply(v -> {
+               String result1 = task1.join();
+               String result2 = task2.join();
+               String result3 = task3.join();
+
+               return result1 + result2 + result3;
+           });
+
+   Follow-up: What if one task throws an exception?
+
+   1. By default, allOf() completes exceptionally if any task fails.
+   2. The dependent operation will not execute normally.
+   3. We can handle the failure using exceptionally() or handle().
+   4. If we want partial results, we should handle failures individually before combining the futures.
+
+------------------------------------------------------------------------------------------------------------------
+
+10. What happens if we don't provide a custom Executor and want to execute 100 tasks in parallel?
+
+   1. CompletableFuture normally uses the common ForkJoinPool when we don't provide an Executor.
+   2. It does not create 100 dedicated threads for 100 tasks.
+   3. Tasks share the common thread pool, so they may execute concurrently or wait for available workers.
+   4. For production applications, I prefer a custom thread pool to control concurrency and isolate workloads.
+
+------------------------------------------------------------------------------------------------------------------
+
+11. What is eager and lazy dependency injection in Spring Boot?
+
+   1. Eager initialisation means a bean is created during application startup.
+   2. Lazy initialisation means a bean is created only when it is first required.
+   3. By default, Spring singleton beans are eagerly initialised.
+   4. We can use @Lazy on a bean or injection point to enable lazy initialisation.
+
+   Example:
+
+   @Lazy
+   @Service
+   public class ReportService {
+   }
+
+   To enable lazy initialisation globally:
+
+   spring.main.lazy-initialization=true
+
+------------------------------------------------------------------------------------------------------------------
+
+12. What are field injection and constructor injection?
+
+   1. Field injection injects dependencies directly into class fields using @Autowired.
+   2. Constructor injection passes dependencies through the class constructor.
+   3. Constructor injection is preferred because it supports immutability, easier unit testing and mandatory dependencies.
+   4. It also makes circular dependencies easier to identify.
+
+   Example:
+
+   @Service
+   public class OrderService {
+
+       private final OrderRepository repository;
+
+       public OrderService(OrderRepository repository) {
+           this.repository = repository;
+       }
+   }
+
+------------------------------------------------------------------------------------------------------------------
+
+13. How do you handle exceptions in Spring Boot controllers?
+
+   1. I use @RestControllerAdvice to handle exceptions globally.
+   2. I use @ExceptionHandler to handle specific exception types.
+   3. I return meaningful HTTP status codes and error messages.
+   4. I also log exceptions with proper details for debugging without exposing internal information to clients.
+
+   Example:
+
+   @RestControllerAdvice
+   public class GlobalExceptionHandler {
+
+       @ExceptionHandler(ResourceNotFoundException.class)
+       public ResponseEntity<String> handleNotFound(
+               ResourceNotFoundException ex) {
+
+           return ResponseEntity
+                   .status(HttpStatus.NOT_FOUND)
+                   .body(ex.getMessage());
+       }
+   }
+
+------------------------------------------------------------------------------------------------------------------
+
+14. What is the N+1 problem and how do you handle it?
+
+   1. N+1 occurs when one query fetches parent records and additional queries fetch related records individually.
+   2. For example, fetching 100 orders and then accessing each order's items can result in 101 database queries.
+   3. I handle it using JOIN FETCH, @EntityGraph, batch fetching or DTO projections.
+   4. In LabFlow, I worked on resolving N+1 queries to improve database performance.
+
+------------------------------------------------------------------------------------------------------------------
+
+15. Name relational database providers that support row-level locking.
+
+   1. PostgreSQL supports row-level locking using SELECT FOR UPDATE.
+   2. Oracle supports row-level locking using SELECT FOR UPDATE.
+   3. MySQL with InnoDB supports row-level locking.
+   4. SQL Server supports row-level locking through locking hints and its locking mechanisms.
+
+------------------------------------------------------------------------------------------------------------------
+
+16. Do you have experience with CI/CD, or were you mainly working as a developer?
+
+   Suggested answer – keep the hands-on details aligned with your actual experience:
+
+   1. My primary responsibility has been backend development using Java, Spring Boot, Kafka and Oracle.
+   2. I have worked with the development lifecycle, including code changes, testing, defect fixing and UAT support.
+   3. I understand CI/CD pipelines, including build, automated testing, code quality checks and deployment stages.
+   4. I would distinguish my development experience from direct ownership of pipeline configuration.
+
+------------------------------------------------------------------------------------------------------------------
+
+17. One task is consuming many resources while other tasks are lightweight. How will you prevent one task from consuming all resources?
+
+   1. I will use the Bulkhead pattern to isolate resource-intensive tasks from lightweight tasks.
+   2. I can create separate thread pools for different workloads.
+   3. I will configure maximum thread counts, queue capacity and timeouts.
+   4. This ensures a heavy task cannot consume all available resources and block lightweight operations.
+
+------------------------------------------------------------------------------------------------------------------
+
+18. Multiple microservices are running, but one service consumes most of the resources. How will you handle it?
+
+   1. I will apply resource limits and requests for each service.
+   2. In Kubernetes, I can configure CPU and memory requests and limits.
+   3. I will use Horizontal Pod Autoscaling to scale services based on resource utilisation.
+   4. I will also monitor each service independently and apply rate limiting and workload isolation where required.
+
+------------------------------------------------------------------------------------------------------------------
+
+19. A service takes a long time to respond. How will you handle it?
+
+   1. I will configure connection timeouts and response timeouts so requests do not wait indefinitely.
+   2. I will use retries with exponential backoff for temporary failures.
+   3. I will implement a Circuit Breaker to stop repeated calls when the downstream service is unhealthy.
+   4. I can also use asynchronous processing or fallback responses depending on business requirements.
+
+   Important concepts:
+
+   - Timeout: Stops waiting after a configured duration.
+   - Retry: Tries the failed operation again.
+   - Exponential Backoff: Increases the waiting time between retries.
+   - Circuit Breaker: Temporarily stops calls to an unhealthy service.
+   - Bulkhead: Isolates resources so one failure does not affect everything.
+
+------------------------------------------------------------------------------------------------------------------
+
+20. Have you worked with messaging queues like RabbitMQ or Kafka?
+
+   1. Yes, I have worked with Apache Kafka in my LabFlow project.
+   2. We use Kafka for asynchronous communication between services and processing laboratory result events.
+   3. I have worked on handling duplicate events, out-of-order events and consumer-side processing.
+   4. I have also used the Transactional Outbox pattern to ensure reliable event publishing.
+
+------------------------------------------------------------------------------------------------------------------
+
+21. How will you ensure at-least-once delivery semantics in Kafka?
+
+   1. I will disable automatic offset commits and commit offsets only after successful processing.
+   2. If processing fails, I will avoid committing the offset so Kafka can deliver the message again.
+   3. I will implement idempotent processing using a unique event ID to prevent duplicate business updates.
+   4. For failures, I will use retry handling and a Dead Letter Topic for messages that cannot be processed.
+
+   Important: At-least-once delivery can produce duplicate messages, so consumer-side idempotency is essential.
+
+------------------------------------------------------------------------------------------------------------------
+
+22. Do you have experience in React?
+
+   1. Yes, I have worked with React in my LabFlow project.
+   2. We use React to display laboratory results, patient history, trends and critical-result alerts.
+   3. I have worked with components, props, state, hooks and API integration.
+   4. I understand hooks like useState, useEffect, useMemo and useCallback.
+
+------------------------------------------------------------------------------------------------------------------
+
+23. What is your AI experience?
+
+   Suggested answer – do not claim production AI experience unless you have actually implemented it:
+
+   1. I understand the fundamentals of Generative AI, Large Language Models and prompt engineering.
+   2. I have knowledge of RAG, embeddings and vector databases.
+   3. I understand how RAG retrieves relevant information and provides it as context to an LLM.
+   4. I am exploring how AI can be integrated into enterprise applications to improve information retrieval and automation.
+
+------------------------------------------------------------------------------------------------------------------
+
+DSA PROBLEM – SEARCH IN A ROW-WISE AND COLUMN-WISE SORTED MATRIX
+
+Approach: Start from the top-right corner.
+
+1. If the current element equals the target, return its row and column.
+2. If the current element is greater than the target, move left.
+3. If the current element is smaller than the target, move down.
+4. This eliminates one row or column at every step.
+
+Java 21 Code:
+
+public static int[] findPosition(int[][] matrix, int target) {
+
+    // Handle an empty matrix.
+    if (matrix == null || matrix.length == 0 || matrix[0].length == 0) {
+        return new int[]{-1, -1};
+    }
+
+    // Start from the top-right corner.
+    int row = 0;
+    int col = matrix[0].length - 1;
+
+    // Continue while the position is inside the matrix.
+    while (row < matrix.length && col >= 0) {
+
+        // Return the position if the target is found.
+        if (matrix[row][col] == target) {
+            return new int[]{row, col};
+        }
+
+        // Move left if the current value is greater.
+        else if (matrix[row][col] > target) {
+            col--;
+        }
+
+        // Move down if the current value is smaller.
+        else {
+            row++;
+        }
+    }
+
+    // Return -1, -1 if the target is absent.
+    return new int[]{-1, -1};
+}
+
+Input:
+int[][] matrix = {
+    {1, 4, 7, 11},
+    {2, 5, 8, 12},
+    {3, 6, 9, 16},
+    {10, 13, 14, 17}
+};
+
+Target: 9
+
+Output: [2, 2]
+
+Time Complexity: O(R + C)
+Space Complexity: O(1)
+
+Dry Run:
+
+   1. Start at 11 (row 0, col 3). Since 11 > 9, move left.
+   2. Check 7 (row 0, col 2). Since 7 < 9, move down.
+   3. Check 8 (row 1, col 2). Since 8 < 9, move down.
+   4. Check 9 (row 2, col 2). Target found. Return [2, 2].
+
+------------------------------------------------------------------------------------------------------------------
+
+CODE REVIEW – ORDER PROCESSING SERVICE
+
+1. Field Injection – Not Recommended
+
+   Problem:
+   - The controller and service use @Autowired field injection.
+   - Dependencies are difficult to mock and test.
+   - Dependencies cannot be declared final.
+
+   Solution:
+   - Use constructor injection.
+   - Declare dependencies as final.
+
+2. HashMap Used for Concurrent Order Processing
+
+   Problem:
+   - processingOrders is a normal HashMap and is not thread-safe.
+   - Two requests can simultaneously check the map and both start processing.
+   - The map works only within one application instance.
+   - If multiple application instances are running, each instance has its own map.
+
+   Solution:
+   - Do not use an in-memory HashMap as a distributed locking mechanism.
+   - Use database locking, optimistic locking, or a distributed lock if required.
+   - Add a database-level idempotency mechanism to prevent duplicate processing.
+
+3. Incorrect Transaction and Exception Handling
+
+   Problem:
+   - The method catches Exception and only prints the error.
+   - The exception is swallowed, so Spring may commit the transaction.
+   - Some inventory updates might be committed even when processing fails.
+
+   Solution:
+   - Log the exception properly.
+   - Rethrow the exception so the transaction can roll back.
+   - Use custom exceptions with meaningful error messages.
+
+   Example:
+
+   catch (Exception e) {
+       log.error("Order processing failed: {}", orderId, e);
+       throw e;
+   }
+
+4. Notification Inside the Transaction
+
+   Problem:
+   - notificationService.sendEmail() is called before the database transaction commits.
+   - The email might be sent successfully, but the database transaction could later roll back.
+   - The user may receive an email for an order that was not actually processed.
+
+   Solution:
+   - Use the Transactional Outbox pattern.
+   - Save the notification event in the same database transaction.
+   - Publish the event after the transaction commits.
+   - A separate notification service can send the email.
+
+5. Database Concurrency During Inventory Updates
+
+   Problem:
+   - Two orders can read the same inventory quantity simultaneously.
+   - Both can reduce the quantity based on the same old value.
+   - This can cause incorrect inventory values or overselling.
+
+   Solution:
+   - Use optimistic locking with @Version or pessimistic locking.
+   - Another option is an atomic conditional database update.
+
+   Example SQL:
+
+   UPDATE inventory
+   SET quantity = quantity - :requestedQuantity
+   WHERE product_id = :productId
+     AND quantity >= :requestedQuantity;
+
+   Check the number of updated rows. If zero, inventory is insufficient or the product does not exist.
+
+6. N+1 Query Problem
+
+   Problem:
+   - The code fetches inventory separately for every order item.
+   - If an order has 100 items, it may execute 100 inventory queries.
+
+   Solution:
+   - Fetch inventory records in a single query using all product IDs.
+   - Use an IN query or an appropriate batch-fetching strategy.
+   - This reduces database round trips.
+
+7. Missing Null and Validation Checks
+
+   Problem:
+   - `order.getStatus().equals("PROCESSED")` can throw NullPointerException.
+   - `inventory.getQuantity()` can throw NullPointerException if inventory is not found.
+   - There is no explicit validation for invalid order IDs or empty orders.
+
+   Solution:
+   - Use an enum for order status.
+   - Validate the order and inventory records.
+   - Throw meaningful exceptions such as OrderNotFoundException and InsufficientInventoryException.
+
+8. Early Return and Cleanup
+
+   Problem:
+   - The method returns when the order is already processed.
+   - The finally block does execute even when return is used, so the map entry is removed.
+   - However, the map-based locking approach itself is still unsafe.
+
+   Solution:
+   - Retain proper database-level concurrency control.
+   - Use idempotent order processing.
+
+9. Logging
+
+   Problem:
+   - System.out.println() is used for error logging.
+   - It does not provide structured logging or proper log levels.
+
+   Solution:
+   - Use SLF4J with Logback.
+   - Include order ID and exception details in logs.
+   - Avoid logging sensitive customer information.
+
+10. API Response
+
+   Problem:
+   - The controller always returns HTTP 200 if the service method returns normally.
+   - Because exceptions are swallowed, even failed processing can return "Order processed".
+
+   Solution:
+   - Let exceptions propagate to the global exception handler.
+   - Return suitable HTTP status codes.
+   - Return a meaningful response based on the actual processing result.
+
+------------------------------------------------------------------------------------------------------------------
+
+OVERALL RECOMMENDED DESIGN
+
+1. Use constructor injection instead of field injection.
+2. Use database locking and idempotency instead of the in-memory HashMap.
+3. Keep inventory updates and order status updates within one database transaction.
+4. Publish notifications through the Transactional Outbox pattern after successful commit.
+5. Fetch inventory in batches to avoid N+1 queries.
+6. Use global exception handling and proper logging.
