@@ -1,0 +1,995 @@
+# SPRING BATCH, DATABASE CONCURRENCY, MICROSERVICES & JVM – INTERVIEW ANSWERS
+
+--------------------------------------------------
+1. How does Spring Batch work, and what happens to duplicate records if we restart a job?
+
+   1. Spring Batch processes large volumes of data using a Job, which contains one or more Steps.
+   2. Each Step can use a Reader to read data, a Processor to validate or transform it, and a Writer to save the data.
+   3. Spring Batch maintains execution metadata in JobRepository, including job status, step status and checkpoint information.
+   4. When a failed job is restarted with the same identifying JobParameters, it can resume from the last committed checkpoint. However, duplicate prevention depends on transaction boundaries and writer idempotency.
+
+   Important points:
+   - Use unique business keys to prevent duplicate inserts.
+   - Use database unique constraints.
+   - Make the writer idempotent using upsert or insert-if-not-exists logic.
+   - Use Skip and Retry policies for failed records.
+
+   Interview example:
+   If 10,000 records are processed and the job fails after 5,000 records, Spring Batch can restart from the last committed chunk instead of processing everything again.
+
+--------------------------------------------------
+2. If 5,000 concurrent requests are coming to update a single database row, how do you handle it?
+
+   1. First, I would identify whether all 5,000 requests are updating the same record and whether every update must be preserved.
+   2. For conflicting updates, I would use Optimistic Locking with @Version or Pessimistic Locking with SELECT FOR UPDATE.
+   3. If all updates must be processed in order, I would use a queue such as Kafka and partition messages using the userId as the key.
+   4. I would also control request concurrency, use idempotency keys and monitor database lock waits and transaction time.
+
+   Important:
+   - Optimistic locking is suitable when conflicts are less frequent.
+   - Pessimistic locking is suitable when conflicts are frequent.
+   - Kafka partitioning by userId ensures ordered processing for that key, but only one consumer in a consumer group processes that partition at a time.
+   - If the row is a high-contention bottleneck, consider redesigning the data model to reduce updates to one shared row.
+
+--------------------------------------------------
+3. How do you handle a slow downstream service?
+
+   1. First, I configure connection and response timeouts so requests do not wait indefinitely.
+   2. I use Circuit Breaker to temporarily stop calls when the downstream service is unhealthy.
+   3. I use limited retries with exponential backoff for temporary failures and avoid retrying non-idempotent operations blindly.
+   4. If immediate processing is not required, I use asynchronous messaging through Kafka and process requests in the background.
+
+   Additional steps:
+   - Monitor downstream response time and error rate.
+   - Use bulkheads to isolate resources.
+   - Apply rate limiting and backpressure.
+   - Use fallback responses where business requirements allow.
+
+--------------------------------------------------
+4. CPU is normal, but heap memory keeps increasing and GC spikes continuously. What will you do?
+
+   1. First, I would check heap usage, GC logs, garbage collection frequency and old-generation memory.
+   2. I would capture a heap dump and analyse it using tools like Eclipse MAT or VisualVM to identify objects consuming memory.
+   3. I would check for memory leaks caused by static collections, unbounded caches, ThreadLocal variables, listeners or objects that are not released.
+   4. I would fix the retention issue, introduce cache limits, release unnecessary references and validate the improvement through load testing.
+
+   Important:
+   - If memory usage drops after Full GC, it may be temporary allocation pressure.
+   - If memory remains high after Full GC and keeps increasing, it may indicate a memory leak.
+   - Increasing heap size alone is not a permanent solution.
+
+   Useful tools:
+   - GC logs
+   - Java Flight Recorder (JFR)
+   - Java Mission Control (JMC)
+   - VisualVM
+   - Eclipse MAT
+   - jcmd and jstat
+
+--------------------------------------------------
+5. What cloud technologies are you aware of?
+
+   1. AWS – EC2 for virtual machines, S3 for object storage, RDS for managed databases, EKS for Kubernetes and CloudWatch for monitoring.
+   2. Azure – Virtual Machines, Blob Storage, Azure SQL, AKS for Kubernetes and Azure Monitor.
+   3. GCP – Compute Engine, Cloud Storage, Cloud SQL, GKE and Cloud Monitoring.
+   4. I understand how these services support application deployment, storage, scalability and monitoring. My strongest hands-on experience should be described based on the cloud platforms I have actually used.
+
+   Interview tip:
+   If asked about hands-on cloud experience, clearly distinguish between production experience and conceptual knowledge. Do not claim expertise in a cloud platform unless you have worked with it.
+
+
+
+# JAVA FULL STACK – API, SECURITY, TESTING & PROJECT INTERVIEW QUESTIONS
+
+--------------------------------------------------
+1. Have you used OpenAPI and Swagger?
+
+   1. OpenAPI is a specification used to describe REST APIs, including endpoints, request parameters, responses and authentication.
+   2. Swagger provides tools to create, document and test APIs based on the OpenAPI specification.
+   3. Swagger UI allows developers and testers to explore and execute API requests.
+   4. I understand how to use OpenAPI and Swagger for API documentation and contract definition. I would claim project hands-on experience only if I have actually configured them.
+
+--------------------------------------------------
+2. How have you used OpenAPI in your project?
+
+   1. OpenAPI can define API contracts before implementation starts.
+   2. It documents endpoints, HTTP methods, request DTOs, response DTOs and error responses.
+   3. It helps frontend and backend teams work independently using a common API contract.
+   4. In LabFlow, our REST APIs support laboratory result integration and retrieval. I can explain how OpenAPI fits this workflow, but I should not claim a specific configuration unless I have implemented it.
+
+--------------------------------------------------
+3. What is OWASP?
+
+   1. OWASP stands for Open Worldwide Application Security Project.
+   2. It provides security guidelines, awareness documents and tools for application security.
+   3. OWASP Top 10 highlights common web application security risks such as Broken Access Control, Injection and Security Misconfiguration.
+   4. We can use OWASP guidelines during application development, code reviews and security testing.
+
+--------------------------------------------------
+4. What is SAST?
+
+   1. SAST stands for Static Application Security Testing.
+   2. It analyses source code without executing the application.
+   3. It identifies security issues such as SQL injection, hardcoded credentials and insecure coding practices.
+   4. Tools include Checkmarx, SonarQube and Fortify.
+
+--------------------------------------------------
+5. What is the Richardson Maturity Model?
+
+   1. It measures how closely an API follows REST principles.
+   2. Level 0 – Uses HTTP as a transport mechanism, usually with a single endpoint.
+   3. Level 1 – Introduces individual resources and resource-based URLs.
+   4. Level 2 – Uses HTTP methods and status codes correctly. Level 3 – Uses HATEOAS links to guide clients through available actions.
+
+--------------------------------------------------
+6. What are API Models?
+
+   1. API models define the structure of data exchanged between the client and server.
+   2. Request models represent incoming data, while response models represent outgoing data.
+   3. In Spring Boot, we commonly create DTO classes for API models.
+   4. DTOs help separate the API contract from internal database entities and prevent exposing unnecessary fields.
+
+--------------------------------------------------
+7. What is API Versioning?
+
+   1. API versioning allows us to introduce changes without breaking existing consumers.
+   2. We can use URL versioning, such as /api/v1/customers and /api/v2/customers.
+   3. Other approaches include request headers and query parameters.
+   4. I prefer URL versioning when simplicity and visibility are important, along with backward compatibility and a clear deprecation strategy.
+
+--------------------------------------------------
+8. What is the Test Pyramid?
+
+   1. The Test Pyramid describes how we should distribute different levels of testing.
+   2. Unit tests form the base because they are fast and cover individual methods or components.
+   3. Integration tests verify interactions between components, databases and external dependencies.
+   4. End-to-end tests validate complete business flows. They are fewer because they are slower and more expensive to maintain.
+
+--------------------------------------------------
+9. What is Contract Testing?
+
+   1. Contract testing verifies whether two services follow an agreed API contract.
+   2. It checks request formats, response structures, status codes and expected behaviour.
+   3. It helps identify integration issues before deploying services together.
+   4. For example, if a consumer expects customerId but the provider changes the response field, contract testing can identify the breaking change.
+
+--------------------------------------------------
+10. How do you write test cases in BDD format?
+
+   1. BDD stands for Behaviour-Driven Development.
+   2. Test scenarios are written in simple business-readable language using Given, When and Then.
+   3. Given describes the initial condition, When describes the action, and Then describes the expected result.
+   4. Tools like Cucumber help automate these scenarios.
+
+   Example:
+
+   Feature: Order Creation
+
+   Scenario: Create an order successfully
+
+   Given the customer is valid
+   When the customer submits an order
+   Then the order should be created successfully
+
+--------------------------------------------------
+11. Do you know any tools for API Contract Testing?
+
+   1. Pact is used for consumer-driven contract testing.
+   2. Spring Cloud Contract supports contract testing in Spring applications.
+   3. OpenAPI-based tools can validate API requests and responses against an API specification.
+   4. These tools help identify breaking API changes before integration or deployment.
+
+--------------------------------------------------
+12. What is Dependency Injection?
+
+   1. Dependency Injection is a design technique where an object receives its dependencies from an external container.
+   2. In Spring Boot, the IoC container creates and manages beans.
+   3. Constructor injection is generally preferred because dependencies are explicit and easier to test.
+   4. It reduces tight coupling between classes and improves maintainability.
+
+--------------------------------------------------
+13. What happens if you do not override equals() and rely only on hashCode()?
+
+   1. The default equals() method from Object compares object references.
+   2. hashCode() generates an integer hash value, but it does not establish object equality.
+   3. Two different objects can have the same hash code because hash collisions are possible.
+   4. For HashMap and HashSet, hashCode() identifies the bucket and equals() checks whether the keys are actually equal.
+
+--------------------------------------------------
+14. If you annotate a class with @Singleton, can the JVM create two instances?
+
+   1. @Singleton does not automatically guarantee one instance across the entire JVM.
+   2. Its behaviour depends on the framework providing the annotation and managing the object lifecycle.
+   3. For example, Spring's singleton scope means one instance per Spring IoC container, not necessarily one per JVM.
+   4. Multiple containers, class loaders or manual object creation can result in multiple instances.
+
+--------------------------------------------------
+15. Do you have hands-on experience with AWS deployments?
+
+   1. I understand AWS services such as EC2, S3, RDS, EKS and CloudWatch.
+   2. EC2 provides compute, S3 provides object storage, RDS provides managed databases and EKS manages Kubernetes clusters.
+   3. CloudWatch is used for monitoring logs, metrics and alarms.
+   4. I would clearly distinguish conceptual knowledge from actual deployment experience rather than claiming hands-on experience without having performed it.
+
+--------------------------------------------------
+16. What is a Spring Bean and how do you use it?
+
+   1. A Spring Bean is an object created and managed by the Spring IoC container.
+   2. We can define beans using annotations such as @Component, @Service and @Repository.
+   3. We can also define beans explicitly using @Bean inside a @Configuration class.
+   4. Spring manages dependency injection, bean lifecycle and scopes.
+
+--------------------------------------------------
+17. Explain OAuth and JWT and how they are used in your project.
+
+   1. OAuth 2.0 is an authorization framework that allows applications to access protected resources using access tokens.
+   2. JWT is a token format containing claims, which can be digitally signed to verify integrity.
+   3. In Spring Security, we can validate JWT signatures, expiry and authorities before allowing API access.
+   4. I understand this integration approach, but I would not claim a specific OAuth/JWT implementation in LabFlow unless I have worked on it directly.
+
+--------------------------------------------------
+18. How do you define Clean Code?
+
+   1. Clean code is simple, readable and easy to maintain.
+   2. I use meaningful variable and method names and keep methods focused on a single responsibility.
+   3. I follow SOLID, DRY and KISS principles and avoid unnecessary complexity.
+   4. I also write unit tests, handle exceptions properly and remove duplicate code.
+
+--------------------------------------------------
+19. Which tools have you used to improve code quality?
+
+   1. IDE inspections help identify unused variables, code issues and potential bugs.
+   2. SonarQube can identify code smells, bugs, security hotspots and maintainability issues.
+   3. JUnit and Mockito help maintain code quality through automated unit testing.
+   4. Git pull requests and code reviews help identify design issues and maintain coding standards.
+
+--------------------------------------------------
+20. What activities do you perform during Unit Testing and Integration Testing?
+
+   1. Unit Testing: I test individual methods and business logic independently using JUnit and Mockito.
+   2. I cover positive scenarios, negative scenarios, edge cases and exception handling.
+   3. Integration Testing: I verify interactions between Spring components, repositories, databases and external integrations.
+   4. I validate API responses, database operations, Kafka event processing and transaction behaviour wherever applicable.
+
+--------------------------------------------------
+21. What are your day-to-day roles and responsibilities in your project?
+
+   1. I participate in requirement discussions, sprint planning and technical design discussions.
+   2. I develop Java and Spring Boot REST APIs and implement business logic using JPA, Hibernate and Oracle.
+   3. I work on Kafka integration, database optimisation, unit testing, code reviews and resolving defects.
+   4. I also support UAT and production issues, analyse logs and coordinate with frontend and other teams.
+
+--------------------------------------------------
+22. How does Java HashMap work internally?
+
+   1. HashMap stores key-value pairs in an internal array of buckets.
+   2. It calculates the key's hash code and uses it to identify the bucket.
+   3. If multiple keys map to the same bucket, collisions are handled using a linked list or a balanced tree when the bucket becomes sufficiently large.
+   4. During lookup, HashMap uses hashCode() to locate the bucket and equals() to identify the correct key.
+
+--------------------------------------------------
+23. Have you used AI tools like GitHub Copilot?
+
+   1. I use AI coding assistants to understand existing code and improve development productivity.
+   2. They help with code suggestions, debugging, refactoring and generating unit-test scenarios.
+   3. I also use them to understand unfamiliar APIs and prepare technical documentation.
+   4. I always review and test generated code before accepting it.
+
+--------------------------------------------------
+24. How do you use REST APIs in your project?
+
+   1. In LabFlow, REST APIs are used to integrate laboratory data from hospital systems and expose relevant information to the frontend.
+   2. We use Spring Boot controllers to expose endpoints and service classes to implement business logic.
+   3. We use repositories to interact with Oracle and DTOs to exchange request and response data.
+   4. We handle validation, exception handling, appropriate HTTP status codes and API performance optimisation.
+
+--------------------------------------------------
+25. Apart from SonarQube, have you used other tools to measure or improve code quality?
+
+   1. JUnit and Mockito are used for automated testing and verifying business logic.
+   2. JaCoCo measures code coverage and helps identify untested code.
+   3. Checkstyle and PMD can enforce coding standards and detect common code-quality issues.
+   4. Git pull requests and peer reviews help maintain design consistency and catch defects before merging.
+
+
+
+# JAVA, SPRING BOOT, KAFKA & AI – INTERVIEW QUESTIONS
+
+--------------------------------------------------
+1. Explain the end-to-end architecture and workflow of your last project, including major components and integrations.
+
+   1. My last project was LabFlow, a healthcare application used to integrate laboratory results from different hospital systems and display them to clinicians.
+   2. We used Java, Spring Boot, Kafka, Oracle and React. Backend services expose REST APIs, validate incoming laboratory data and store results in Oracle.
+   3. Kafka handles asynchronous communication between services. We used the Transactional Outbox pattern to reliably publish events and optimistic locking to prevent concurrent updates.
+   4. React displays laboratory results, patient history, trends and critical alerts. My responsibilities included backend development, Kafka integration, database optimisation, testing and production support.
+
+   End-to-end workflow:
+
+   Hospital Systems
+          |
+          v
+   Spring Boot REST APIs
+          |
+          v
+   Data Validation and Processing
+          |
+          v
+   Oracle Database
+          |
+          v
+   Transactional Outbox
+          |
+          v
+   Kafka Topics
+          |
+          v
+   Downstream Services
+          |
+          v
+   React Application
+          |
+          v
+   Clinicians View Results and Alerts
+
+--------------------------------------------------
+2. Explain equals() and hashCode(). What problems occur if they are not implemented correctly? Explain immutability and HashMap internal implementation.
+
+   1. equals() checks whether two objects are logically equal. hashCode() returns an integer used by hash-based collections to identify a bucket.
+   2. If two objects are equal according to equals(), they must return the same hashCode(). Otherwise, HashMap and HashSet may fail to find logically equal objects correctly.
+   3. Immutability means an object's state cannot change after creation. Immutable keys are preferred in HashMap because changing key fields used in equals() or hashCode() can make entries difficult to retrieve.
+   4. HashMap uses an internal bucket array. Collisions are handled using linked lists and, under suitable conditions, balanced trees. It uses hashCode() to locate a bucket and equals() to identify the key.
+
+   Important interview points:
+   - If equals() is overridden, hashCode() must also be overridden.
+   - HashMap allows one null key.
+   - HashMap is not thread-safe.
+   - String is a good HashMap key because it is immutable.
+
+--------------------------------------------------
+3. What are the key features introduced in Java 17, and where have you used them?
+
+   1. Records: Used to create immutable data carrier classes with less boilerplate code.
+   2. Sealed Classes: Restrict which classes can extend or implement a particular type.
+   3. Pattern Matching for instanceof: Avoids explicit casting after type checking.
+   4. Text Blocks: Support multiline strings, useful for SQL queries and JSON payloads.
+
+   Example:
+
+   // Record
+   public record Employee(Long id, String name) {}
+
+   // Pattern Matching
+   if (obj instanceof String name) {
+       System.out.println(name);
+   }
+
+   Interview point:
+   I have primarily worked with Java 17 and understand these features. I would mention specific production usage only for features I actually used in the project.
+
+--------------------------------------------------
+4. What are Mono and Flux, and when would you use each?
+
+   1. Mono and Flux are reactive types provided by Project Reactor.
+   2. Mono represents zero or one item.
+   3. Flux represents zero to many items.
+   4. I would use Mono for a single API response and Flux for streaming multiple records or continuous data.
+
+   Example:
+
+   Mono<String> mono = Mono.just("Hello");
+
+   Flux<Integer> flux = Flux.just(10, 20, 30);
+
+   Interview point:
+   These are commonly used with Spring WebFlux for reactive, non-blocking applications.
+
+--------------------------------------------------
+5. Explain the architecture of a Spring Boot application.
+
+   1. Controller Layer: Handles HTTP requests, validates input and returns responses.
+   2. Service Layer: Contains business logic and coordinates operations.
+   3. Repository Layer: Handles database interactions using Spring Data JPA or Hibernate.
+   4. Database Layer: Stores application data. Spring Boot also provides dependency injection, auto-configuration, security and monitoring support.
+
+   Request flow:
+
+   Client
+      |
+      v
+   Controller
+      |
+      v
+   Service
+      |
+      v
+   Repository
+      |
+      v
+   Database
+
+   Response travels back through the same layers.
+
+--------------------------------------------------
+6. What is the JavaScript Event Loop, and why is it important?
+
+   1. JavaScript executes synchronous code using a single main call stack.
+   2. Asynchronous operations are handled through browser or runtime APIs, and their callbacks are scheduled for execution.
+   3. The Event Loop checks whether the call stack is empty and schedules queued callbacks. Microtasks, such as resolved Promise callbacks, are processed before the next task.
+   4. It allows JavaScript to handle asynchronous operations like API calls, timers and user events without blocking the main execution thread.
+
+   Important:
+   Promise callbacks are microtasks, whereas setTimeout callbacks are tasks (often called macrotasks).
+
+--------------------------------------------------
+7. What is Consumer Lag in Kafka? How do you monitor and troubleshoot it?
+
+   1. Consumer Lag is the difference between the latest available offset in a partition and the consumer group's committed offset.
+   2. High lag means consumers are processing messages slower than producers are publishing them.
+   3. I monitor consumer lag, processing rate, error logs, rebalance activity and consumer health.
+   4. I troubleshoot slow database operations, external API delays, insufficient consumer capacity, partition distribution and failed message processing.
+
+   Tools:
+   - Kafka Consumer Group CLI
+   - Kafka exporter and Prometheus
+   - Grafana
+   - Splunk
+   - Kafka monitoring dashboards
+
+--------------------------------------------------
+8. Explain Saga Pattern. How do you handle idempotency and fault tolerance?
+
+   1. Saga manages distributed transactions across multiple microservices using individual local transactions.
+   2. Each service completes its operation and triggers the next service through an event or command.
+   3. If a step fails, compensating transactions reverse previous business operations wherever possible.
+   4. I use unique transaction IDs, idempotency checks, retries, timeouts and dead-letter handling to make the workflow reliable.
+
+   Example:
+
+   Order Created
+        |
+        v
+   Payment Successful
+        |
+        v
+   Inventory Reserved
+        |
+        v
+   Booking Confirmed
+
+   If booking fails:
+   Trigger payment refund and release inventory where applicable.
+
+--------------------------------------------------
+9. What alternatives to Saga Pattern have you used or evaluated for distributed transactions?
+
+   1. Two-Phase Commit (2PC): Coordinates multiple participants through prepare and commit phases, but introduces coordination overhead and can reduce availability.
+   2. Transactional Outbox: Ensures database changes and event records are committed together before publishing events.
+   3. Eventual Consistency: Allows services to update independently and reach a consistent state through asynchronous events.
+   4. In LabFlow, we used the Transactional Outbox pattern for reliable event publishing. Saga is useful when a business workflow spans multiple services and requires compensating actions.
+
+--------------------------------------------------
+10. What challenges would you expect when migrating Kafka from version 0.10 to 3.7?
+
+   1. Compatibility: Old clients, producer configurations, consumer APIs and deprecated features may not work correctly with newer versions.
+   2. Broker and protocol changes: We need to review changes in broker protocols, replication, security, metadata handling and supported configurations.
+   3. Deployment and data safety: We must plan broker upgrade order, replication health, partition availability, backups and rollback.
+   4. Testing: I would first validate the migration in a lower environment, test producers and consumers, measure throughput and latency, and then perform a controlled production rollout.
+
+   Migration approach:
+   - Review Kafka release notes and upgrade documentation.
+   - Upgrade through supported intermediate versions rather than assuming a direct upgrade is safe.
+   - Check client library compatibility.
+   - Validate consumer offsets and message processing.
+   - Monitor under production-like load.
+
+--------------------------------------------------
+11. How are you using AI tools in your software development lifecycle?
+
+   1. I use AI coding assistants to understand existing code and explore implementation approaches.
+   2. I use them to generate unit-test scenarios, identify potential bugs and understand exceptions.
+   3. I also use AI for code refactoring suggestions, documentation and SQL query explanations.
+   4. I review and test all generated code before accepting it into the application.
+
+--------------------------------------------------
+12. Have you encountered situations where AI-generated code looked correct but produced incorrect results?
+
+   1. AI-generated code can look correct but may miss business rules, edge cases or existing application constraints.
+   2. For example, generated code may handle normal input correctly but fail for null values, duplicate records or concurrent requests.
+   3. I identify such issues through code review, unit tests, integration tests and checking the actual output against expected business behaviour.
+   4. I correct the implementation, add regression test cases and validate the complete flow before accepting the code.
+
+--------------------------------------------------
+13. What are the risks of using AI-generated code without understanding it?
+
+   1. It may introduce incorrect business logic or hidden bugs.
+   2. It may create security vulnerabilities, such as SQL injection or improper authentication handling.
+   3. It may introduce inefficient queries, unnecessary dependencies or performance problems.
+   4. Developers may become dependent on generated code without understanding its behaviour, making production debugging difficult.
+
+--------------------------------------------------
+14. Have you used Agentic AI tools or Specification-Driven Development?
+
+   1. AI coding assistants help developers generate code and provide suggestions, whereas Agentic AI can plan and execute multiple steps using tools.
+   2. An agent can analyse a requirement, inspect a repository, identify affected files, suggest changes and run tests with appropriate permissions.
+   3. Specification-Driven Development starts with clear requirements, acceptance criteria and technical specifications before implementation.
+   4. I understand these approaches and their development workflows. I would distinguish my experience with AI-assisted coding from hands-on implementation of custom agents or specification-driven development in production.
+
+
+
+# FULL STACK JAVA INTERVIEW – AWS, DOCKER, REST APIs, MICROSERVICES, SPRING BOOT, JAVA & SCRUM
+
+==================================================
+AWS
+==================================================
+
+1. What is your experience with AWS and how comfortable are you working with it?
+
+   1. I understand AWS services used for application deployment, storage, networking and monitoring.
+   2. EC2 is used for compute, S3 for object storage, RDS for managed databases and EKS for Kubernetes.
+   3. CloudWatch is used for monitoring application logs, metrics and alarms.
+   4. I am comfortable with the AWS architecture and concepts. I would distinguish my conceptual knowledge from actual production deployment experience.
+
+--------------------------------------------------
+
+==================================================
+DOCKER
+==================================================
+
+2. Explain Docker and Kubernetes.
+
+   1. Docker is a containerisation platform used to package an application along with its dependencies.
+   2. A Docker image contains the application, runtime and required libraries. A container is a running instance of that image.
+   3. Kubernetes manages containers across multiple machines. It handles deployment, scaling, service discovery and self-healing.
+   4. Docker builds and runs containers, whereas Kubernetes orchestrates containers in a distributed environment.
+
+   Important Kubernetes components:
+   - Pod – Smallest deployable unit.
+   - Deployment – Manages application replicas.
+   - Service – Provides stable network access.
+   - ConfigMap – Stores non-sensitive configuration.
+   - Secret – Stores sensitive configuration.
+   - Ingress – Manages external HTTP/HTTPS access.
+
+==================================================
+REST APIs
+==================================================
+
+3. What are Contract-First APIs?
+
+   1. Contract-First means defining the API specification before implementing the API.
+   2. We define endpoints, request fields, response fields, HTTP methods and status codes using OpenAPI.
+   3. Backend and frontend teams can work independently using the same contract.
+   4. It improves consistency and reduces integration issues between teams.
+
+--------------------------------------------------
+
+4. How would you create an API design and share it with others?
+
+   1. First, I understand the business requirement and identify the resources and operations.
+   2. I define REST endpoints, HTTP methods, request DTOs, response DTOs and error responses.
+   3. I document the API using OpenAPI/Swagger.
+   4. I share the specification through a Git repository or API documentation portal and review it with frontend and backend teams.
+
+--------------------------------------------------
+
+5. What is the difference between PUT and PATCH?
+
+   1. PUT is generally used to replace the complete resource representation.
+   2. PATCH is used to partially update selected fields of a resource.
+   3. PUT is idempotent by definition.
+   4. PATCH is not inherently idempotent; its behaviour depends on the patch operation.
+
+--------------------------------------------------
+
+6. What tools do you use for API design?
+
+   1. Swagger Editor is used to create and edit OpenAPI specifications.
+   2. Swagger UI is used to view and try API endpoints.
+   3. Postman is used to test API requests and responses.
+   4. OpenAPI Generator can generate client SDKs and server stubs from API definitions.
+
+--------------------------------------------------
+
+7. Would you create Java objects first and generate the API design, or define OpenAPI first?
+
+   1. It depends on the project approach and team requirements.
+   2. In Contract-First development, I define the OpenAPI specification first and generate DTOs or interfaces from it.
+   3. In Code-First development, I create controllers and DTOs first and generate the OpenAPI documentation from the implementation.
+   4. For large projects with multiple teams, I prefer Contract-First because everyone agrees on the API contract before implementation.
+
+--------------------------------------------------
+
+8. How would you version your APIs?
+
+   1. I generally prefer URL-based versioning, such as /api/v1/customers.
+   2. When introducing breaking changes, I create a new version such as /api/v2/customers.
+   3. I maintain backward compatibility for existing consumers.
+   4. I communicate deprecation timelines and provide migration guidance before retiring older versions.
+
+--------------------------------------------------
+
+9. Can you make changes to V1 without creating V2?
+
+   1. Yes, if the changes are backward compatible.
+   2. Adding an optional request field is generally safe if existing clients can continue working.
+   3. Adding a new optional response field or a new endpoint is usually backward compatible.
+   4. Changing existing field types, removing fields or changing their meaning requires careful compatibility analysis and may need V2.
+
+--------------------------------------------------
+
+10. What changes would you add to V1 without creating V2?
+
+   1. Adding a new optional field to a request.
+   2. Adding a new optional field to a response.
+   3. Adding a new endpoint without changing existing endpoint behaviour.
+   4. Adding support for a new optional query parameter while preserving existing defaults.
+
+   Important:
+   Adding a required request field or changing existing response semantics can break existing clients.
+
+--------------------------------------------------
+
+11. How did you test your API contract?
+
+   1. I validate request and response structures against the agreed API specification.
+   2. I test mandatory fields, optional fields, data types and validation failures.
+   3. I verify HTTP status codes and error response structures.
+   4. I use automated integration tests and tools such as Postman or OpenAPI validators.
+
+--------------------------------------------------
+
+12. What methods are available for API Contract Testing?
+
+   1. Consumer-Driven Contract Testing – Consumers define their expectations.
+   2. Pact – Verifies that providers satisfy consumer expectations.
+   3. Spring Cloud Contract – Supports contract testing in Spring applications.
+   4. OpenAPI validation – Checks actual API requests and responses against the specification.
+
+--------------------------------------------------
+
+13. Have you worked with Swagger/OpenAPI documents?
+
+   1. OpenAPI defines the structure and behaviour of REST APIs.
+   2. Swagger provides tools such as Swagger UI and Swagger Editor to work with OpenAPI documents.
+   3. These documents describe endpoints, request parameters, schemas, responses and security requirements.
+   4. I understand how to use them for API documentation and contract validation, while distinguishing this from any specific hands-on project configuration.
+
+--------------------------------------------------
+
+14. How would you define validation on a field or property?
+
+   1. I use Jakarta Bean Validation annotations on DTO fields.
+   2. Common annotations include @NotNull, @NotBlank, @Size, @Email and @Pattern.
+   3. I use @Valid in the controller to trigger validation.
+   4. I handle validation failures centrally using @RestControllerAdvice.
+
+   Example:
+
+   public class CustomerRequest {
+
+       @NotBlank
+       private String name;
+
+       @Email
+       private String email;
+
+       @Min(18)
+       private int age;
+   }
+
+   Controller:
+
+   public ResponseEntity<?> create(
+       @Valid @RequestBody CustomerRequest request) {
+       return ResponseEntity.ok().build();
+   }
+
+--------------------------------------------------
+
+15. Are you familiar with SOAP communication?
+
+   1. SOAP is a protocol used for exchanging structured XML messages between applications.
+   2. It uses WSDL to define service operations and message contracts.
+   3. It commonly works over HTTP and supports standards such as WS-Security.
+   4. REST generally uses lightweight JSON communication, whereas SOAP provides a more formal XML-based messaging standard.
+
+==================================================
+MICROSERVICES
+==================================================
+
+16. How do services communicate with each other?
+
+   1. Services communicate synchronously using REST APIs or HTTP clients.
+   2. They communicate asynchronously using Kafka, RabbitMQ or other messaging systems.
+   3. Synchronous communication is useful when an immediate response is required.
+   4. Asynchronous communication is useful for event-driven processing and loose coupling.
+
+--------------------------------------------------
+
+17. What are the different communication patterns between services?
+
+   1. Request-Response – One service calls another and waits for a response.
+   2. Event-Driven – A service publishes an event and other services consume it.
+   3. Publish-Subscribe – Multiple consumers receive events from a common topic.
+   4. Message Queue – Messages are stored and processed asynchronously by consumers.
+
+--------------------------------------------------
+
+18. What is the best communication method: synchronous or asynchronous?
+
+   1. There is no single best approach; it depends on business requirements.
+   2. Synchronous REST is suitable when the caller needs an immediate response.
+   3. Asynchronous Kafka communication is suitable for background processing, high-volume events and loose coupling.
+   4. In LabFlow, we used REST APIs for request-response operations and Kafka for asynchronous laboratory result event processing.
+
+--------------------------------------------------
+
+19. How would you convert a monolithic application into microservices?
+
+   1. First, understand the existing application and identify business domains.
+   2. Identify independent modules using Domain-Driven Design and bounded contexts.
+   3. Extract one business capability at a time and expose it through APIs or events.
+   4. Gradually migrate traffic, monitor the new service and avoid a risky complete rewrite.
+
+   Important:
+   This approach is commonly called the Strangler Fig Pattern.
+
+--------------------------------------------------
+
+20. What is the difference between Choreography and Orchestration?
+
+   1. Choreography is an event-driven approach where services communicate by publishing and consuming events.
+   2. There is no central coordinator; each service decides what to do based on received events.
+   3. Orchestration uses a central coordinator to control the sequence of service operations.
+   4. Choreography is suitable for simpler event-driven workflows, while orchestration is useful for complex workflows with multiple steps and compensating actions.
+
+--------------------------------------------------
+
+21. How would you solve timeout issues and transient errors?
+
+   1. Configure connection and response timeouts for service-to-service communication.
+   2. Use limited retries with exponential backoff for temporary failures.
+   3. Implement Circuit Breaker and Bulkhead patterns to prevent cascading failures.
+   4. Use asynchronous messaging and dead-letter queues when immediate processing is not required.
+
+--------------------------------------------------
+
+22. How would you trace a request in a distributed application?
+
+   1. Generate or propagate a correlation ID for every incoming request.
+   2. Pass the trace context between services through HTTP headers or messaging metadata.
+   3. Use distributed tracing tools such as OpenTelemetry with Jaeger or Zipkin.
+   4. Analyse traces and correlated logs to identify slow services and failures.
+
+--------------------------------------------------
+
+23. How would you handle exceptions in an application?
+
+   1. Use custom exceptions for business-specific failures.
+   2. Use @RestControllerAdvice and @ExceptionHandler for centralized REST exception handling.
+   3. Return meaningful HTTP status codes and a consistent error response.
+   4. Log technical details with correlation IDs, but avoid exposing sensitive internal information to clients.
+
+--------------------------------------------------
+
+24. How would you communicate error handling across microservices?
+
+   1. Define a common error response structure containing error code, message, timestamp and correlation ID.
+   2. Use appropriate HTTP status codes for synchronous communication.
+   3. For asynchronous communication, define retryable and non-retryable failures and use dead-letter topics where required.
+   4. Maintain centralised logging and monitoring so teams can trace failures across services.
+
+==================================================
+SPRING BOOT
+==================================================
+
+25. Which parts of the Spring ecosystem have you used?
+
+   1. Spring Core for dependency injection and IoC.
+   2. Spring Boot and Spring MVC for REST API development.
+   3. Spring Data JPA and Hibernate for database operations.
+   4. Spring Security, Spring Kafka and Spring Boot Actuator for security, messaging and application monitoring concepts.
+
+--------------------------------------------------
+
+26. Explain Inversion of Control and Dependency Injection.
+
+   1. IoC is a principle where object creation and dependency management are controlled by an external container.
+   2. DI is the technique used to provide dependencies to an object.
+   3. Spring's ApplicationContext acts as the IoC container.
+   4. Constructor injection is preferred because dependencies are explicit and easier to test.
+
+--------------------------------------------------
+
+27. Is there any implementation of IoC outside Spring Boot?
+
+   1. Yes, IoC is a general design principle and is not limited to Spring.
+   2. Google Guice is another dependency injection framework for Java.
+   3. CDI is used in Jakarta EE applications for dependency injection.
+   4. Even manually passing dependencies through constructors is an example of dependency injection without a framework.
+
+--------------------------------------------------
+
+28. How do you handle bean creation in Spring Boot?
+
+   1. I use annotations such as @Component, @Service and @Repository for component scanning.
+   2. I use @Configuration and @Bean when explicit bean creation is required.
+   3. Spring creates the bean, injects dependencies and manages its lifecycle.
+   4. I generally prefer constructor injection for mandatory dependencies.
+
+--------------------------------------------------
+
+29. What are the different Spring Bean scopes?
+
+   1. Singleton – One instance per Spring IoC container.
+   2. Prototype – A new instance whenever requested from the container.
+   3. Request – One instance per HTTP request.
+   4. Session – One instance per HTTP session. Application scope is also available in web applications.
+
+--------------------------------------------------
+
+30. Why does Spring keep beans Singleton by default?
+
+   1. Most service and repository objects are stateless.
+   2. Reusing one instance reduces unnecessary object creation and memory consumption.
+   3. It improves resource utilisation and simplifies dependency management.
+   4. Singleton beans should avoid mutable shared state unless proper thread safety is implemented.
+
+--------------------------------------------------
+
+31. How does Singleton scope affect multiple threads calling the same bean?
+
+   1. Multiple requests can access the same singleton bean instance concurrently.
+   2. If the bean contains only local variables and immutable dependencies, it is generally safe.
+   3. If it maintains shared mutable instance variables, race conditions can occur.
+   4. I avoid shared mutable state or use suitable synchronisation, atomic variables or database concurrency controls.
+
+--------------------------------------------------
+
+32. How would you implement thread safety?
+
+   1. Prefer immutable objects and stateless service classes.
+   2. Use synchronized blocks or locks when shared mutable state must be protected.
+   3. Use AtomicInteger, ConcurrentHashMap and other concurrency utilities where appropriate.
+   4. For shared database records, use optimistic or pessimistic locking instead of relying only on Java-level synchronisation.
+
+--------------------------------------------------
+
+33. Why do we need thread safety?
+
+   1. Multiple threads may access the same shared data simultaneously.
+   2. Without proper control, race conditions and inconsistent data can occur.
+   3. Thread safety ensures operations behave correctly under concurrent execution.
+   4. It is especially important in multi-user applications where multiple requests update shared resources.
+
+--------------------------------------------------
+
+34. Tell me about immutable objects.
+
+   1. An immutable object cannot be modified after it is created.
+   2. Make the class final, fields private and final, and initialise them through the constructor.
+   3. Do not expose mutable internal objects directly; use defensive copies when needed.
+   4. String and Java records are useful examples of immutable-style data objects, although records are only shallowly immutable.
+
+--------------------------------------------------
+
+35. Can immutable objects improve thread safety?
+
+   1. Yes, immutable objects can be safely shared between multiple threads.
+   2. Their state cannot change after creation, so concurrent modification is avoided.
+   3. They reduce the need for synchronisation when sharing data.
+   4. However, if an immutable object contains a mutable object and exposes it directly, thread safety can still be compromised.
+
+--------------------------------------------------
+
+36. Explain JWT.
+
+   1. JWT stands for JSON Web Token and is a compact format for transferring claims between parties.
+   2. It contains three parts: Header, Payload and Signature.
+   3. The signature helps verify that the token has not been modified.
+   4. In Spring Security, JWT can be validated to authenticate users and check their roles or authorities.
+
+==================================================
+JAVA
+==================================================
+
+37. What features were introduced from Java 8 to Java 17?
+
+   1. Java 8 – Lambda expressions, Stream API, Functional Interfaces, Optional and CompletableFuture.
+   2. Java 9 – Module system, JShell and factory methods for collections.
+   3. Java 11 – Standard HTTP Client, String methods like isBlank() and Files.readString().
+   4. Java 17 – Records, Sealed Classes, Pattern Matching for instanceof and Text Blocks.
+
+--------------------------------------------------
+
+38. What are Records and Sealed Classes?
+
+   1. Records are used to create concise data carrier classes without writing constructors, getters, equals() and hashCode() manually.
+   2. Example: public record Employee(Long id, String name) {}
+   3. Sealed Classes restrict which classes can extend or implement a particular class or interface.
+   4. They help create controlled class hierarchies and make domain modelling more predictable.
+
+--------------------------------------------------
+
+39. What is a Functional Interface?
+
+   1. A Functional Interface contains exactly one abstract method.
+   2. It can have multiple default and static methods.
+   3. It can be implemented using lambda expressions or method references.
+   4. Examples include Predicate, Function, Consumer and Supplier.
+
+--------------------------------------------------
+
+40. Why are Functional Interfaces useful?
+
+   1. They allow behaviour to be passed as a parameter.
+   2. They reduce boilerplate code using lambda expressions.
+   3. They support functional programming with Java Streams.
+   4. They improve code reusability and make collection processing more readable.
+
+--------------------------------------------------
+
+41. Difference between Intermediate and Terminal operations in Streams?
+
+   1. Intermediate operations transform a stream and return another stream.
+   2. Examples include filter(), map(), flatMap(), sorted() and distinct().
+   3. Terminal operations produce the final result or side effect.
+   4. Examples include collect(), forEach(), reduce(), count() and findFirst(). Streams are lazy until a terminal operation executes.
+
+--------------------------------------------------
+
+42. What is the purpose of hashCode()?
+
+   1. hashCode() returns an integer representing an object's hash value.
+   2. Hash-based collections such as HashMap and HashSet use it to identify the bucket where an object may be stored.
+   3. If two objects are equal according to equals(), they must return the same hash code.
+   4. Different objects can have the same hash code, so equals() is used to identify the actual matching object.
+
+==================================================
+SCRUM
+==================================================
+
+43. What ceremonies happen in Scrum?
+
+   1. Sprint Planning – The team decides the Sprint goal and selects work.
+   2. Daily Scrum – The team discusses progress and identifies blockers.
+   3. Sprint Review – The team demonstrates completed work and collects feedback.
+   4. Sprint Retrospective – The team discusses improvements for the next Sprint.
+
+   Backlog refinement is also an important ongoing activity.
+
+--------------------------------------------------
+
+44. How do you decide what goes into a Sprint?
+
+   1. First, the Product Owner prioritises the Product Backlog based on business value.
+   2. The team discusses requirements, acceptance criteria, dependencies and complexity.
+   3. We consider team capacity, availability and previous Sprint velocity.
+   4. The team selects achievable items and agrees on a Sprint Goal.
+
+--------------------------------------------------
+
+45. What are the different types of testing?
+
+   1. Unit Testing – Tests individual methods or components.
+   2. Integration Testing – Tests interactions between components, databases and external services.
+   3. System and End-to-End Testing – Validates complete application workflows.
+   4. Performance, Security, Regression and User Acceptance Testing validate non-functional requirements and business expectations.
+
+--------------------------------------------------
+
+46. What quality gates do you follow apart from testing?
+
+   1. Code Reviews – Ensure readability, design quality and coding standards.
+   2. Static Code Analysis – Use tools like SonarQube to identify code smells, bugs and security issues.
+   3. Security and Dependency Checks – Identify vulnerable libraries and insecure coding practices.
+   4. CI/CD Quality Gates – Ensure successful builds, test coverage thresholds, approved reviews and deployment checks before release.
+
+==================================================
+FINAL INTERVIEW TIP
+==================================================
+
+   1. Explain concepts with simple examples from LabFlow wherever possible.
+   2. Clearly separate what you implemented hands-on from what you understand conceptually.
+   3. For architecture questions, explain the problem, your approach and why you selected that solution.
+   4. Keep answers short and confident, and be ready to explain one practical example for every important concept.
