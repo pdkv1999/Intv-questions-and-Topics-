@@ -1,0 +1,278 @@
+201. Code review: What are the problems in the InMemoryCache implementation?
+
+   1. Thread-safety issue: Only get() is synchronized. put(), delete() and size() are not synchronized, so multiple threads can access the HashMaps concurrently.
+   2. Inconsistent operations: Two HashMaps are maintained separately. Their updates can become inconsistent when concurrent operations happen.
+   3. Memory leak: Expired entries are removed only when get() is called. Unaccessed expired entries remain in memory, and size() includes them.
+   4. TTL handling: Use System.nanoTime() for elapsed-time calculations, validate TTL and consider automatic cleanup.
+
+------------------------------------------------------------------------------------------------------------------
+
+202. How would you improve the InMemoryCache?
+
+   1. Use ConcurrentHashMap instead of HashMap.
+   2. Store the value and expiry time together in a single cache entry instead of maintaining two separate maps.
+   3. Use atomic operations such as compute() or remove(key, expectedValue) to handle concurrent updates safely.
+   4. Add automatic expiry cleanup or use a cache library such as Caffeine for production use.
+
+   Improved implementation:
+
+   import java.util.concurrent.ConcurrentHashMap;
+   import java.util.concurrent.TimeUnit;
+
+   public class InMemoryCache<K, V> {
+
+       private static class Entry<V> {
+           V value;
+           long expiryTime;
+
+           Entry(V value, long expiryTime) {
+               this.value = value;
+               this.expiryTime = expiryTime;
+           }
+       }
+
+       private final ConcurrentHashMap<K, Entry<V>> store =
+               new ConcurrentHashMap<>();
+
+       private final long ttlNanos;
+
+       public InMemoryCache(long ttlMillis) {
+           if (ttlMillis <= 0) {
+               throw new IllegalArgumentException("TTL must be positive");
+           }
+
+           this.ttlNanos = TimeUnit.MILLISECONDS.toNanos(ttlMillis);
+       }
+
+       public void put(K key, V value) {
+           if (key == null || value == null) {
+               throw new IllegalArgumentException("Null not allowed");
+           }
+
+           store.put(key,
+               new Entry<>(value, System.nanoTime() + ttlNanos));
+       }
+
+       public V get(K key) {
+           Entry<V> entry = store.get(key);
+
+           if (entry == null) {
+               return null;
+           }
+
+           if (System.nanoTime() >= entry.expiryTime) {
+               store.remove(key, entry);
+               return null;
+           }
+
+           return entry.value;
+       }
+
+       public void delete(K key) {
+           store.remove(key);
+       }
+
+       public int size() {
+           return store.size();
+       }
+   }
+
+   Note:
+   - This implementation is thread-safe for individual map operations.
+   - Expired entries are removed when accessed, but there is no background cleanup.
+   - For production caching, I would prefer Caffeine because it provides automatic expiry, eviction and statistics.
+
+------------------------------------------------------------------------------------------------------------------
+
+203. Code review: Is this MetricsTracker thread-safe?
+
+   public class MetricsTracker {
+
+       private final ConcurrentHashMap<String, LongAdder> pageViews =
+               new ConcurrentHashMap<>();
+
+       public void incrementView(String pageId) {
+           pageViews.putIfAbsent(pageId, new LongAdder());
+           pageViews.get(pageId).increment();
+       }
+   }
+
+   1. ConcurrentHashMap makes map operations thread-safe.
+   2. LongAdder supports efficient concurrent counter updates with less contention than a single AtomicLong in high-contention scenarios.
+   3. I would simplify the code using computeIfAbsent().
+   4. I would also handle null page IDs and consider memory growth if the number of unique pages is unlimited.
+
+   Improved code:
+
+   public void incrementView(String pageId) {
+       pageViews.computeIfAbsent(
+           pageId, key -> new LongAdder()
+       ).increment();
+   }
+
+   To read the count:
+
+   long count = pageViews.get(pageId).sum();
+
+   Note: LongAdder.sum() is not an atomic snapshot while updates are happening.
+
+------------------------------------------------------------------------------------------------------------------
+
+204. Explain the IBM MQ, SFTP and scheduler-based project experience mentioned in the interview notes.
+
+   Use this answer only when describing the project in which you actually performed this work:
+
+   1. The application integrated with external systems using IBM MQ for messaging.
+   2. We used scheduled jobs to execute background processing at configured intervals.
+   3. We connected to remote SFTP locations, read PDF files and processed or stored them in the required server location.
+   4. We also developed service-layer CRUD operations and handled file processing and integration-related errors.
+
+------------------------------------------------------------------------------------------------------------------
+
+205. What is IBM MQ?
+
+   1. IBM MQ is an enterprise messaging middleware used for reliable communication between applications.
+   2. Producers send messages to queues, and consumers retrieve and process them.
+   3. It supports asynchronous communication and message persistence.
+   4. It helps decouple applications so they do not need to be available at exactly the same time.
+
+------------------------------------------------------------------------------------------------------------------
+
+206. What is SFTP?
+
+   1. SFTP stands for SSH File Transfer Protocol.
+   2. It transfers files securely between systems over SSH.
+   3. Applications can upload, download, rename and manage remote files.
+   4. In a file-processing application, we can use scheduled jobs to read files from an SFTP location and process them.
+
+------------------------------------------------------------------------------------------------------------------
+
+207. What is the difference between Kafka and RabbitMQ?
+
+   1. Kafka is a distributed event-streaming platform designed for high-throughput event storage and processing.
+   2. RabbitMQ is a message broker that supports queues and flexible routing through exchanges.
+   3. Kafka retains messages based on its retention configuration, allowing consumers to replay them.
+   4. RabbitMQ is useful for traditional task queues and routing; Kafka is useful for event streaming and event-driven architectures.
+
+------------------------------------------------------------------------------------------------------------------
+
+208. How do you implement Kafka in Spring Boot?
+
+   1. Add the Spring Kafka dependency.
+   2. Configure Kafka bootstrap servers, serializers and deserializers.
+   3. Use KafkaTemplate to publish messages and @KafkaListener to consume messages.
+   4. Configure error handling, retries, offset management and idempotent processing.
+
+------------------------------------------------------------------------------------------------------------------
+
+209. How do you use CompletableFuture in a project?
+
+   Suggested answer – use only if this matches your actual project experience:
+
+   1. CompletableFuture is useful when independent tasks can execute asynchronously.
+   2. We can execute tasks using supplyAsync() and combine results using allOf() or thenCombine().
+   3. We can handle failures using exceptionally() or handle().
+   4. For production workloads, I prefer a configured ExecutorService to control thread usage.
+
+------------------------------------------------------------------------------------------------------------------
+
+210. How would you explain your frontend experience and rate yourself?
+
+   Suggested answer – adjust the rating to your actual hands-on level:
+
+   1. I have worked with React for displaying laboratory results, patient history and critical alerts.
+   2. I understand components, props, state, hooks, API integration and routing.
+   3. My stronger area is backend development using Java and Spring Boot.
+   4. I can contribute to frontend development as well, while continuing to improve my advanced React skills.
+
+------------------------------------------------------------------------------------------------------------------
+
+211. How would you combine frontend and backend code into one project?
+
+   1. Keep frontend and backend as separate modules within one repository if that suits the team's build process.
+   2. Build the React application into static files using its production build command.
+   3. Serve those files through a web server or package them with the Spring Boot application.
+   4. Configure API routing, environment-specific URLs, authentication and CORS appropriately.
+
+------------------------------------------------------------------------------------------------------------------
+
+212. How do you maintain quality in a Java project?
+
+   1. Follow clean code practices and SOLID, DRY and KISS principles.
+   2. Write unit tests using JUnit and Mockito, along with integration tests.
+   3. Use code reviews and tools such as SonarQube for static analysis.
+   4. Monitor production performance, logs and errors and fix recurring issues.
+
+------------------------------------------------------------------------------------------------------------------
+
+213. What is the difference between unit testing and integration testing?
+
+   1. Unit testing checks one class or method in isolation.
+   2. Integration testing checks whether multiple components work correctly together.
+   3. Mockito can mock external dependencies during unit testing.
+   4. Spring Boot integration tests can verify API, database and application-context behaviour.
+
+------------------------------------------------------------------------------------------------------------------
+
+214. What is the difference between JUnit and Mockito?
+
+   1. JUnit is a testing framework used to write and execute tests.
+   2. Mockito is a mocking framework used to create mock dependencies.
+   3. JUnit provides assertions and test lifecycle annotations.
+   4. Mockito helps isolate the class under test from repositories, external APIs and other dependencies.
+
+------------------------------------------------------------------------------------------------------------------
+
+215. How do you handle a conflict between technical quality and business deadlines?
+
+   1. I first understand the business deadline and identify the minimum required scope.
+   2. I explain technical risks such as security, data consistency and maintainability.
+   3. I propose phased delivery without compromising critical requirements.
+   4. I document the agreed trade-offs and plan the remaining improvements.
+
+------------------------------------------------------------------------------------------------------------------
+
+216. What is mentoring in a software engineering team?
+
+   1. Mentoring means helping developers improve their technical and problem-solving skills.
+   2. I can support them through code reviews, debugging discussions and design explanations.
+   3. I encourage them to understand the reason behind a solution instead of simply copying code.
+   4. I also share project knowledge to reduce dependency on individual team members.
+
+------------------------------------------------------------------------------------------------------------------
+
+217. What is a virtual thread in Java?
+
+   1. Virtual threads were introduced as a preview feature in Java 19 and became final in Java 21.
+   2. They are lightweight threads managed by the JVM rather than directly mapping every task to a dedicated operating-system thread.
+   3. They are useful for applications with many blocking I/O operations.
+   4. They do not make CPU-intensive operations faster; CPU-bound work still depends on available processors.
+
+------------------------------------------------------------------------------------------------------------------
+
+218. When would you use virtual threads?
+
+   1. I would consider them for applications that handle many concurrent I/O-bound requests.
+   2. They can simplify thread-per-request programming.
+   3. I would still control database connection pools and downstream service limits.
+   4. I would measure performance before adopting them and avoid using them as a replacement for every concurrency strategy.
+
+------------------------------------------------------------------------------------------------------------------
+
+219. What is the difference between synchronized and Lock?
+
+   1. synchronized is a built-in Java mechanism for mutual exclusion.
+   2. ReentrantLock provides explicit lock and unlock operations.
+   3. Lock supports features such as tryLock(), interruptible lock acquisition and optional fairness.
+   4. With Lock, unlock() must be called in a finally block to avoid accidentally holding the lock.
+
+------------------------------------------------------------------------------------------------------------------
+
+220. What is CountDownLatch versus CyclicBarrier?
+
+   1. CountDownLatch allows threads to wait until a counter reaches zero.
+   2. CountDownLatch cannot be reset after it reaches zero.
+   3. CyclicBarrier allows a fixed number of threads to wait for each other at a common barrier.
+   4. CyclicBarrier can be reused for multiple phases of execution.
+
+------------------------------------------------------------------------------------------------------------------
