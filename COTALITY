@@ -1,0 +1,389 @@
+1. What is the difference between Git Merge and Git Rebase?
+
+   1. Git Merge combines changes from one branch into another and creates a merge commit when required.
+   2. Git Rebase moves our commits on top of another branch, creating a linear commit history.
+   3. Merge preserves the original branch history, whereas rebase rewrites commit history.
+   4. I prefer merge for shared branches and rebase to keep my local feature branch updated with the latest changes.
+
+------------------------------------------------------------------------------------------------------------------
+
+2. Are you using any AI tools in your day-to-day development workflow?
+
+   1. Yes, I use AI coding assistants to understand unfamiliar code, generate boilerplate and explore implementation approaches.
+   2. I use them to understand exceptions, analyse errors and get suggestions for debugging.
+   3. I also use AI to generate unit-test scenarios and improve code readability.
+   4. I always review the generated output and validate it through tests before using it.
+
+------------------------------------------------------------------------------------------------------------------
+
+3. How are you using AI throughout the development lifecycle?
+
+   1. Requirement Analysis – I use AI to understand requirements, identify edge cases and prepare clarification questions.
+   2. Development – I use it to explore implementation approaches, generate boilerplate and understand existing code.
+   3. Testing and Debugging – I use it to suggest test cases, analyse stack traces and identify possible root causes.
+   4. Maintenance – I use it for documentation, code explanation and refactoring suggestions.
+
+------------------------------------------------------------------------------------------------------------------
+
+4. How do you perform requirement analysis using Generative AI?
+
+   1. I provide the requirement with relevant business context and ask AI to break it into smaller functional requirements.
+   2. I ask it to identify missing information, assumptions, dependencies and edge cases.
+   3. I use it to draft acceptance criteria and possible positive, negative and boundary test scenarios.
+   4. I validate everything with the Product Owner and business stakeholders before starting development.
+
+------------------------------------------------------------------------------------------------------------------
+
+5. How do you use AI agents in your development work?
+
+   1. An AI agent can understand a task, analyse relevant information and use tools to perform multiple steps.
+   2. For example, a bug-investigation agent can analyse a bug description, search the repository and identify potentially affected classes.
+   3. It can suggest code changes, generate tests and run permitted validation tools.
+   4. I would review and approve the changes before merging them into the main branch.
+
+------------------------------------------------------------------------------------------------------------------
+
+6. How do you create custom agents in GitHub Copilot?
+
+   1. First, I define the agent's responsibility, such as code review, bug investigation or test generation.
+   2. I create a custom agent configuration with its name, description, instructions and required tools.
+   3. I define which tools and repository capabilities the agent is allowed to access.
+   4. I test it with different prompts and refine its instructions based on the results.
+
+   Important:
+   - GitHub Copilot supports custom agents through agent configuration files.
+   - The exact configuration and available tools depend on the Copilot environment and supported features.
+   - I would not claim that I have built and deployed a custom agent unless I have actually done it.
+
+------------------------------------------------------------------------------------------------------------------
+
+7. How can you integrate a custom agent with external tools?
+
+   1. First, identify the external system the agent needs to access, such as GitHub, Jira or a database.
+   2. Expose the required functionality through APIs or an MCP server.
+   3. Configure the agent with the appropriate tool definitions, authentication and permissions.
+   4. Test the integration with limited permissions and validate every operation before enabling it in production.
+
+------------------------------------------------------------------------------------------------------------------
+
+8. Have you developed your own MCP servers?
+
+   Suggested answer if you have not built one:
+
+   1. I understand the architecture and purpose of MCP servers.
+   2. An MCP server exposes tools, resources and prompts that an AI application can access through the Model Context Protocol.
+   3. For example, we can create an MCP server that exposes repository search, issue retrieval or documentation lookup.
+   4. I understand the implementation approach, but I would distinguish that knowledge from production hands-on MCP server development.
+
+------------------------------------------------------------------------------------------------------------------
+
+9. How do you reuse agents or skills developed by other teams?
+
+   1. First, I understand the agent's purpose, instructions and expected inputs and outputs.
+   2. I check its dependencies, supported tools and configuration requirements.
+   3. I integrate it into our development environment with the required permissions.
+   4. I test it with our project-specific scenarios before allowing the team to use it.
+
+------------------------------------------------------------------------------------------------------------------
+
+10. What security checks would you perform before using an externally shared AI skill or agent?
+
+   1. Review the source code and instructions to identify suspicious or unexpected behaviour.
+   2. Check whether it requests unnecessary access to repositories, files, databases or credentials.
+   3. Verify external API calls, dependencies and authentication mechanisms.
+   4. Run it in a restricted environment, follow the organisation's security policies and require approval before sensitive operations.
+
+   Important risks:
+   - Prompt injection.
+   - Secret and credential exposure.
+   - Unauthorised file or repository access.
+   - Malicious tool execution.
+   - Data exfiltration.
+
+------------------------------------------------------------------------------------------------------------------
+
+11. Have you worked with Test-Driven Development?
+
+   1. TDD means Test-Driven Development, where we write tests before implementing the actual functionality.
+   2. The process follows Red, Green and Refactor.
+   3. Red means writing a test that initially fails; Green means implementing enough code to pass it.
+   4. Refactor means improving the implementation while keeping all tests passing.
+
+   Example:
+   - First, write a test for insufficient inventory.
+   - Then implement the inventory validation.
+   - Finally, refactor the code and run the complete test suite.
+
+------------------------------------------------------------------------------------------------------------------
+
+12. Which cloud technologies have you worked with?
+
+   Safe answer based on your confirmed experience:
+
+   1. My primary experience has been in Java and Spring Boot application development.
+   2. I understand cloud-native concepts such as containerisation, service deployment, scalability and monitoring.
+   3. I understand how applications can be deployed using Docker and Kubernetes.
+   4. I would distinguish my cloud architecture knowledge from direct hands-on ownership of cloud infrastructure.
+
+------------------------------------------------------------------------------------------------------------------
+
+13. Which specific AWS services have you used?
+
+   Suggested answer if you have not used AWS services hands-on:
+
+   1. I understand the purpose of common AWS services such as EC2, S3, RDS, EKS and CloudWatch.
+   2. EC2 provides virtual compute, S3 provides object storage and RDS provides managed relational databases.
+   3. EKS provides managed Kubernetes, while CloudWatch supports monitoring and logging.
+   4. My stronger experience is application development; I would not claim production-level AWS implementation experience without having worked on it directly.
+
+------------------------------------------------------------------------------------------------------------------
+
+14. Do you have experience with Azure?
+
+   Suggested answer if you have not worked on Azure hands-on:
+
+   1. I understand the fundamentals of Microsoft Azure and its cloud services.
+   2. I am familiar with concepts such as Azure App Service, Azure Kubernetes Service, Azure SQL and Azure Monitor.
+   3. These services support application hosting, container orchestration, database management and monitoring.
+   4. My primary experience is Java application development, and I am comfortable learning the required Azure services.
+
+------------------------------------------------------------------------------------------------------------------
+
+15. Are you familiar with Docker and Kubernetes?
+
+   1. Yes, I understand Docker and Kubernetes and how they are used in application deployment.
+   2. Docker packages an application and its dependencies into a container image.
+   3. Kubernetes manages containers through pods, deployments, services and configuration.
+   4. It also supports scaling, health checks, rolling deployments and recovery of failed pods.
+
+------------------------------------------------------------------------------------------------------------------
+
+16. Have you worked with both frontend and backend technologies, particularly React and Spring Boot?
+
+   1. Yes, my primary strength is backend development using Java and Spring Boot.
+   2. I have worked on REST APIs, database integration, Kafka communication and business logic.
+   3. I also have React experience involving components, props, state, hooks and API integration.
+   4. In LabFlow, React is used to display laboratory results, patient history, trends and critical alerts.
+
+------------------------------------------------------------------------------------------------------------------
+
+17. How do you ensure all necessary checks are completed before handing over code to QA?
+
+   1. I review the requirements and acceptance criteria to ensure all expected scenarios are covered.
+   2. I run unit tests, integration tests and relevant regression tests.
+   3. I check code quality, logging, exception handling, database changes and API compatibility.
+   4. I perform local testing, review the code changes and provide deployment or testing instructions to QA.
+
+   My checklist:
+   - Build successful.
+   - Unit tests passed.
+   - Integration tests passed.
+   - Static analysis completed.
+   - No unexpected database changes.
+   - API and error scenarios verified.
+   - Code review completed.
+
+------------------------------------------------------------------------------------------------------------------
+
+18. How do you handle race conditions in your code?
+
+   1. A race condition occurs when multiple threads access shared data concurrently and the result depends on execution timing.
+   2. For in-memory shared data, I use synchronisation, locks or concurrent collections.
+   3. For database updates, I use optimistic locking with @Version, pessimistic locking or atomic SQL updates.
+   4. In distributed systems, I use database constraints, idempotency and appropriate distributed coordination mechanisms.
+
+------------------------------------------------------------------------------------------------------------------
+
+19. How would you design consistent error responses across 20 endpoints?
+
+   1. I would create a common error response DTO containing timestamp, status, error code, message, path and correlation ID.
+   2. I would implement @RestControllerAdvice with @ExceptionHandler methods.
+   3. I would define custom exceptions for validation, resource not found, business errors and unexpected failures.
+   4. All controllers would use the same response structure, making error handling consistent for frontend applications.
+
+   Example:
+
+   public class ErrorResponse {
+       private LocalDateTime timestamp;
+       private int status;
+       private String errorCode;
+       private String message;
+       private String path;
+       private String traceId;
+   }
+
+   Global handler:
+
+   @RestControllerAdvice
+   public class GlobalExceptionHandler {
+
+       @ExceptionHandler(ResourceNotFoundException.class)
+       public ResponseEntity<ErrorResponse> handleNotFound(
+               ResourceNotFoundException ex) {
+
+           // Build a standard error response.
+           ErrorResponse response = new ErrorResponse();
+
+           // Return HTTP 404.
+           return ResponseEntity
+                   .status(HttpStatus.NOT_FOUND)
+                   .body(response);
+       }
+   }
+
+------------------------------------------------------------------------------------------------------------------
+
+20. An endpoint's P95 latency increased from 200 milliseconds to 4 seconds after production release. What are the first five things you would analyse?
+
+   1. Application Logs and Distributed Tracing:
+      Check which operation or downstream service is consuming the additional time.
+
+   2. Database Performance:
+      Check slow queries, execution plans, missing indexes, locks and connection pool exhaustion.
+
+   3. Resource Utilisation:
+      Check CPU, memory, garbage collection, thread pools and container resource limits.
+
+   4. External Dependencies:
+      Check Kafka, third-party APIs, network latency and downstream service response times.
+
+   5. Release Changes:
+      Compare the new deployment with the previous version, review code changes and configuration differences.
+
+   Final action:
+   - If the release is responsible and the impact is significant, roll back to the last stable version while investigating the root cause.
+
+------------------------------------------------------------------------------------------------------------------
+
+
+
+1. Have you worked on existing legacy applications where you need to take over repositories and maintain the application?
+
+   1. Yes, I am comfortable working with existing codebases and understanding their architecture before making changes.
+   2. I start by understanding the project structure, business flow, dependencies and database interactions.
+   3. I review existing tests, logs, API contracts and recent Git history.
+   4. I make small, controlled changes and validate that existing functionality is not affected.
+
+------------------------------------------------------------------------------------------------------------------
+
+2. When you take ownership of an unfamiliar module, how do you understand and test all impacted components before handing it over to QA?
+
+   1. First, I understand the module's responsibilities, entry points, dependencies and business flow.
+   2. I identify the affected APIs, services, repositories, database tables and downstream integrations.
+   3. I prepare a dependency impact analysis and cover positive, negative, boundary and regression scenarios.
+   4. I execute unit and integration tests and verify the affected end-to-end flows before handing over to QA.
+
+   I also check:
+   - Existing API contracts.
+   - Database migrations.
+   - Kafka events and consumers.
+   - Authentication and authorisation.
+   - Logs and monitoring.
+
+------------------------------------------------------------------------------------------------------------------
+
+3. A critical component works in development and QA, but an edge case causes a major production issue. How would you minimise the impact and safely revert to a stable version?
+
+   1. First, I assess the severity, affected users and business impact.
+   2. I stop further impact using a feature flag, traffic restriction or disabling the affected functionality where possible.
+   3. If the new release is responsible, I coordinate a rollback to the last stable version.
+   4. I verify database compatibility, data consistency and service health, then investigate the root cause and prepare a tested fix.
+
+   Important:
+   - A code rollback does not automatically reverse database changes.
+   - Database rollback or forward-fix decisions must be handled carefully.
+   - I would keep stakeholders informed throughout the incident.
+
+------------------------------------------------------------------------------------------------------------------
+
+4. An API works in development and QA but fails under load in UAT or production. How would you analyse and fix it?
+
+   1. First, I collect the failing request details, timestamps, traffic volume and correlation IDs.
+   2. I compare the environments, including configuration, database size, connection pools and infrastructure limits.
+   3. I inspect thread dumps, application metrics, database execution plans, Kafka lag and distributed traces.
+   4. I reproduce the issue using load testing, fix the bottleneck and verify the solution under realistic traffic.
+
+------------------------------------------------------------------------------------------------------------------
+
+5. If you maintain multiple applications and repositories, how would you manage context switching?
+
+   1. I maintain clear documentation of each application's architecture, current tasks and open issues.
+   2. I use separate branches and well-organised pull requests for different repositories.
+   3. I prioritise tasks based on business impact, urgency and dependencies.
+   4. Before switching tasks, I record the current progress, pending questions and next steps so I can resume quickly.
+
+------------------------------------------------------------------------------------------------------------------
+
+6. Your team lead is unavailable during a critical production issue, and you have limited knowledge of the component. What would you do?
+
+   1. I would first assess the severity and follow the established incident-management process.
+   2. I would check dashboards, logs, runbooks, recent deployments and available documentation.
+   3. I would involve the on-call engineer or another experienced team member rather than making risky changes based on assumptions.
+   4. I would focus on restoring service safely, communicate updates and document the incident for further investigation.
+
+   Important:
+   - I would not make an unverified production change just to show ownership.
+   - Restoring service safely is more important than finding the perfect fix immediately.
+
+------------------------------------------------------------------------------------------------------------------
+
+7. Can AI help you understand an unfamiliar component when the delivery deadline remains unchanged?
+
+   1. Yes, AI can help summarise repository structure, explain classes and identify dependencies.
+   2. I can provide relevant code, documentation and error logs to get suggestions for possible execution flows.
+   3. I can use it to generate test scenarios and identify potential edge cases.
+   4. I still validate its findings against actual code, tests, logs and application behaviour before making changes.
+
+   My approach:
+   - Understand the module.
+   - Ask AI targeted questions.
+   - Verify the answers.
+   - Make controlled changes.
+   - Run regression tests.
+
+------------------------------------------------------------------------------------------------------------------
+
+8. You estimated a story as 5 points, but halfway through the Sprint you realise it is actually an 8-point story. You also have other stories assigned. What would you do?
+
+   1. I would immediately inform the Scrum Master and Product Owner about the new complexity.
+   2. I would explain why the original estimate was incorrect and identify the additional work.
+   3. I would review the remaining Sprint capacity and discuss whether some lower-priority work should be moved to the next Sprint.
+   4. I would not compromise quality by rushing all the work just to meet the original estimate.
+
+   Important:
+   - Story points are estimates, not commitments.
+   - The team should transparently renegotiate scope when new information becomes available.
+
+------------------------------------------------------------------------------------------------------------------
+
+9. You have had an exhausting working day and logged off, but a production issue occurs in a component you own. How would you handle it?
+
+   1. I would first check the severity and whether it is covered by the team's on-call or incident-response process.
+   2. If I am the designated on-call engineer, I would respond according to the agreed support arrangement.
+   3. If I am not on call, I would notify the responsible on-call person and share any useful context about the component.
+   4. For a critical issue where my knowledge is essential, I would support the investigation through the appropriate escalation process.
+
+   Important:
+   - Production support should be handled through a clear team rotation.
+   - Long-term ownership should not depend on one individual being available 24/7.
+
+------------------------------------------------------------------------------------------------------------------
+
+10. What if the issue is minor, but the client insists that it must be fixed immediately?
+
+   1. I would listen to the client's concern and understand why they consider it urgent.
+   2. I would assess the actual business impact, affected users and possible risks.
+   3. I would explain the priority and suggest a safe workaround or planned fix if an immediate production change is risky.
+   4. I would agree on the next action with the Product Owner or relevant stakeholder and communicate the timeline clearly.
+
+------------------------------------------------------------------------------------------------------------------
+
+11. Which Scrum ceremony would you use to discuss recurring client escalations and after-hours support issues?
+
+   1. I would discuss the immediate operational impact during the Daily Scrum if it affects current Sprint work.
+   2. I would bring recurring support problems and process improvements to the Sprint Retrospective.
+   3. If escalations create new work or change priorities, I would discuss them with the Product Owner during backlog refinement or Sprint Planning.
+   4. For a major production incident, I would also conduct a separate incident review or postmortem outside the regular Scrum ceremonies.
+
+   Best answer:
+   Sprint Retrospective is the most appropriate Scrum event for discussing recurring problems and agreeing on improvements.
