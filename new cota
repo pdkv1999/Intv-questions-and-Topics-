@@ -1,0 +1,77 @@
+13. How are you using AI in your daily coding activities?
+
+1. I use approved AI coding assistants to understand unfamiliar code, generate boilerplate and get suggestions for implementation.
+2. I use AI to identify possible bugs, understand exceptions, review code and suggest refactoring improvements.
+3. I also use it to generate unit-test scenarios, edge cases and documentation.
+4. I always review the generated code, validate business logic, run tests and check security before using it.
+
+Example:
+If I get an unfamiliar Spring Boot service, I can ask AI to explain the controller-service-repository flow and suggest test cases. I then verify everything against the actual code.
+
+--------------------------------------------------
+
+14. How do you integrate MCP tools into a custom AI Agent?
+
+1. MCP stands for Model Context Protocol. It provides a standard way for AI applications to communicate with external tools and data sources.
+2. I would create or use an MCP server that exposes required tools, such as searching Git repositories, reading documentation or retrieving issue details.
+3. I would configure the AI agent as an MCP client, connect it to the MCP server and discover the available tools and their input/output schemas.
+4. When the agent needs external information or an action, the model selects an appropriate tool, the MCP client invokes it, and the result is returned to the model for further processing.
+
+Architecture:
+
+User
+  |
+Custom AI Agent
+  |
+LLM / Reasoning
+  |
+MCP Client
+  |
+MCP Server
+  |
+External Tools / APIs / Database
+
+Important security points:
+- Authenticate the MCP connection.
+- Apply least-privilege permissions.
+- Validate tool inputs.
+- Do not expose secrets in prompts or logs.
+- Require human approval for sensitive actions.
+- Treat external tool responses as untrusted data.
+
+--------------------------------------------------
+
+15. What are Chunking and Embeddings?
+
+1. Chunking means dividing a large document into smaller meaningful sections so the AI system can retrieve relevant information efficiently.
+2. Embeddings are numerical vector representations of text that capture semantic meaning.
+3. These vectors are stored in a vector database, where similar content can be retrieved using similarity search.
+4. They are commonly used in RAG (Retrieval-Augmented Generation) to provide relevant company documents or knowledge to an LLM.
+
+Example:
+
+Document:
+"Spring Boot provides dependency injection and auto-configuration..."
+
+Chunking:
+Chunk 1: Spring Boot introduction.
+Chunk 2: Dependency injection.
+Chunk 3: Auto-configuration.
+
+Embedding:
+Each chunk is converted into a numerical vector.
+
+When a user asks:
+"How does dependency injection work?"
+
+The system:
+- Converts the question into an embedding.
+- Searches for semantically similar chunks.
+- Retrieves relevant content.
+- Sends the retrieved content to the LLM to generate an answer.
+
+Important:
+- Chunk size affects retrieval quality.
+- Overlap helps preserve context between chunks.
+- Metadata can help filter by document, date or department.
+- Embeddings capture semantic similarity; they do not store the original text itself.
