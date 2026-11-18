@@ -75,3 +75,126 @@ Important:
 - Overlap helps preserve context between chunks.
 - Metadata can help filter by document, date or department.
 - Embeddings capture semantic similarity; they do not store the original text itself.
+
+
+
+1. What is PACELC theorem? How is it an extension of CAP theorem?
+
+1. CAP theorem says that during a network partition, a distributed system must choose between Consistency and Availability.
+2. PACELC extends CAP by saying: If there is a Partition (P), choose between Availability (A) and Consistency (C); Else (E), when there is no partition, choose between Latency (L) and Consistency (C).
+3. For example, in a banking application, I would prefer consistency because incorrect account balances are unacceptable, even if some requests take slightly longer.
+4. In a product catalogue, availability and low latency may be preferred, even if updates take some time to become consistent.
+
+Example:
+- Banking: Prefer consistency.
+- Social media likes: Eventual consistency and low latency can be acceptable.
+
+--------------------------------------------------
+
+2. How do you manage transactions in a database-per-service architecture?
+
+1. In microservices, each service owns its database, so a single ACID transaction cannot normally cover multiple services.
+2. We use the Saga pattern to manage distributed transactions. A business transaction is divided into multiple local transactions.
+3. Each service commits its own transaction and publishes an event or communicates with the next service.
+4. If a step fails, we execute compensating transactions to reverse the business effect of previously completed steps.
+
+Example – Order Management:
+- Order Service: Create order.
+- Payment Service: Process payment.
+- Inventory Service: Reserve stock.
+- Delivery Service: Create shipment.
+
+If inventory reservation fails after payment succeeds, the Payment Service initiates a refund, and the Order Service marks the order as cancelled.
+
+Important:
+Saga provides business-level consistency, not a single distributed ACID transaction.
+
+--------------------------------------------------
+
+3. Explain Saga Orchestration vs Choreography.
+
+1. Choreography is event-driven. Each service listens to events and decides what action to perform next. There is no central coordinator.
+2. Orchestration uses a central Saga orchestrator, which tells each service what action to perform and handles the workflow.
+3. Choreography is suitable for smaller workflows with fewer services. Orchestration is easier to manage when workflows are complex and involve many services.
+4. Orchestration provides central visibility and control, while choreography reduces central coordination but can become difficult to trace as the number of services increases.
+
+Example – Order Processing:
+
+Choreography:
+OrderCreated → Payment Service → PaymentCompleted → Inventory Service → StockReserved.
+
+Orchestration:
+Order Orchestrator → Payment Service → Inventory Service → Delivery Service.
+
+Follow-up: What happens if a service fails?
+- Use retry with backoff for transient failures.
+- Use idempotency to prevent duplicate processing.
+- Use compensating transactions for business failures.
+- Use dead-letter queues and monitoring for messages that cannot be processed.
+
+--------------------------------------------------
+
+4. How do you optimise interservice communication?
+
+1. Avoid unnecessary synchronous REST calls. Use asynchronous communication through Kafka or RabbitMQ when immediate responses are not required.
+2. Reduce network calls by combining related operations, using batch APIs and avoiding repeated calls for the same data.
+3. Use caching such as Redis for frequently accessed data that does not change frequently.
+4. Apply timeouts, retries with backoff, circuit breakers and connection pooling to improve reliability.
+
+Additional points:
+- Use lightweight payloads such as JSON or Protobuf depending on requirements.
+- Use compression for large payloads where beneficial.
+- Avoid deeply nested service-to-service calls.
+- Use distributed tracing to identify slow services.
+
+--------------------------------------------------
+
+5. Suppose you have 20+ microservices. How do you fetch data efficiently for the frontend?
+
+1. I would avoid making the frontend call all 20 services independently because it increases network requests, latency and frontend complexity.
+2. I would introduce an API Gateway with a Backend for Frontend (BFF) or an aggregation service.
+3. The BFF calls the required services in parallel using WebClient or CompletableFuture, combines the responses and returns one response to the frontend.
+4. I would also use caching, timeouts, circuit breakers and partial-response handling to improve performance and availability.
+
+Example:
+
+Frontend
+   |
+API Gateway / BFF
+   |
+   |---- Customer Service
+   |---- Order Service
+   |---- Payment Service
+   |---- Product Service
+   |
+Combined Response
+   |
+Frontend
+
+Important follow-up:
+- Use parallel calls for independent services.
+- Do not call services sequentially unless there is a dependency.
+- Avoid calling all 20 services if the screen needs data from only four.
+- For complex read-heavy use cases, consider CQRS or a materialised read model.
+
+Example using CompletableFuture:
+
+CompletableFuture<Customer> customer =
+    CompletableFuture.supplyAsync(() -> customerClient.getCustomer());
+
+CompletableFuture<List<Order>> orders =
+    CompletableFuture.supplyAsync(() -> orderClient.getOrders());
+
+CompletableFuture.allOf(customer, orders).join();
+
+--------------------------------------------------
+
+6. How do you handle partial failure when aggregating multiple services?
+
+1. Set a timeout for each downstream service so one slow service does not block the complete response.
+2. Use a circuit breaker to stop repeatedly calling a failing service.
+3. If some data is optional, return the available data with a clear partial-response indicator.
+4. If critical data is missing, return an appropriate error rather than silently returning incorrect information.
+
+Example:
+If the dashboard needs customer details, orders and recommendations, and recommendations fail, we can still show customer details and orders if recommendations are optional.
