@@ -198,3 +198,91 @@ CompletableFuture.allOf(customer, orders).join();
 
 Example:
 If the dashboard needs customer details, orders and recommendations, and recommendations fail, we can still show customer details and orders if recommendations are optional.
+
+
+
+
+7. What are Virtual Threads? How do they work internally?
+
+1. Virtual Threads were introduced as a final feature in Java 21. They are lightweight threads managed by the JVM rather than directly mapped one-to-one to operating-system threads.
+2. Platform threads are relatively expensive because each is backed by an OS thread. Virtual threads allow applications to handle a large number of concurrent tasks with much lower thread-management overhead.
+3. The JVM schedules virtual threads onto a smaller number of carrier platform threads. When a virtual thread performs certain blocking operations, it can be suspended and its carrier thread can execute another virtual thread.
+4. They are especially useful for I/O-bound applications such as REST APIs, database calls and external service communication.
+
+Example:
+
+try (var executor = Executors.newVirtualThreadPerTaskExecutor()) {
+    for (int i = 0; i < 1000; i++) {
+        executor.submit(() -> {
+            // Perform an I/O operation
+            return callExternalService();
+        });
+    }
+}
+
+Important follow-up:
+- Virtual threads improve concurrency, not CPU execution speed.
+- They are not a replacement for parallel processing of CPU-intensive tasks.
+- They do not make a database or external API handle unlimited requests.
+- We still need connection-pool limits and downstream capacity controls.
+- Use Java 21 or later.
+
+--------------------------------------------------
+
+8. What happens internally when a Virtual Thread performs a blocking operation?
+
+1. The virtual thread is initially mounted on a carrier platform thread.
+2. During supported blocking operations, the JVM can unmount the virtual thread from its carrier.
+3. The carrier thread becomes available to execute another virtual thread.
+4. When the blocking operation completes, the virtual thread becomes runnable and is scheduled again.
+
+Important:
+Some operations can still pin a virtual thread to its carrier. In particular, be careful with certain blocking operations inside synchronized regions and native or foreign-function calls. The exact behaviour depends on the Java version and operation.
+
+--------------------------------------------------
+
+9. I declared a List inside an Immutable Class. How do I prevent external modification?
+
+1. Making the list reference final is not enough because final prevents reassignment, not modification of the list contents.
+2. I would make a defensive copy of the list in the constructor.
+3. I would return an unmodifiable view or immutable copy from the getter.
+4. This prevents external code from modifying the internal list.
+
+Example:
+
+import java.util.*;
+
+final class Employee {
+
+    private final List<String> skills;
+
+    public Employee(List<String> skills) {
+        this.skills = new ArrayList<>(skills);
+    }
+
+    public List<String> getSkills() {
+        return Collections.unmodifiableList(skills);
+    }
+}
+
+public class Main {
+    public static void main(String[] args) {
+        List<String> skills = new ArrayList<>();
+        skills.add("Java");
+
+        Employee employee = new Employee(skills);
+
+        skills.add("Python"); // Does not affect Employee
+
+        System.out.println(employee.getSkills());
+
+        // Throws UnsupportedOperationException:
+        // employee.getSkills().add("Spring");
+    }
+}
+
+Alternative:
+Use List.copyOf(skills) in the constructor and return that immutable list directly.
+
+Important:
+If the list contains mutable objects, make defensive copies of those objects too. Otherwise, the objects themselves can still be modified.
