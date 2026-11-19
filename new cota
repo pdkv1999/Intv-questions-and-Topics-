@@ -284,5 +284,85 @@ public class Main {
 Alternative:
 Use List.copyOf(skills) in the constructor and return that immutable list directly.
 
+
+
+10. When does LazyInitializationException occur? How do you resolve it?
+
+1. LazyInitializationException occurs when Hibernate tries to access a lazily loaded association after the Hibernate session or persistence context has been closed.
+2. For example, an Order entity has a lazy-loaded list of OrderItems. If I fetch the order and close the transaction, accessing order.getItems() outside the persistence context can throw this exception.
+3. I would resolve it by fetching the required data inside the transaction using JOIN FETCH, EntityGraph or DTO projection.
+4. I would avoid blindly changing every relationship to EAGER because it can cause unnecessary database queries and performance problems.
+
+Example:
+
+@Entity
+class Order {
+    @OneToMany(mappedBy = "order", fetch = FetchType.LAZY)
+    private List<OrderItem> items;
+}
+
+Solution using JOIN FETCH:
+
+@Query("""
+    SELECT o FROM Order o
+    LEFT JOIN FETCH o.items
+    WHERE o.id = :id
+""")
+Optional<Order> findOrderWithItems(Long id);
+
+Other solutions:
+- Use @EntityGraph.
+- Map the required data to a DTO inside the transaction.
+- Keep service-layer transaction boundaries appropriate.
+- Avoid relying on Open Session in View as the main solution.
+
+--------------------------------------------------
+
+11. When can a deadlock happen with Pessimistic Locking?
+
+1. A deadlock happens when two or more transactions hold locks and wait for locks held by each other.
+2. For example, Transaction A locks Account 1 and waits for Account 2, while Transaction B locks Account 2 and waits for Account 1.
+3. The database detects the deadlock and usually aborts one transaction to break the cycle.
+4. At Java level, I would handle the exception, apply a controlled retry where safe, and ensure transactions are short.
+
+Example:
+
+Transaction A:
+Lock Account 1
+Wait for Account 2
+
+Transaction B:
+Lock Account 2
+Wait for Account 1
+
+Both transactions wait for each other.
+
+--------------------------------------------------
+
+12. How do you prevent and handle deadlocks at Java and database levels?
+
+Java level:
+1. Acquire locks in a consistent order. For example, always lock the account with the smaller ID first.
+2. Keep transactions short and avoid external API calls while holding database locks.
+3. Handle deadlock-related exceptions and retry the complete transaction with limited attempts and backoff, only when the operation is safe to retry.
+4. Use transaction timeouts and idempotency where required.
+
+Database level:
+1. Check deadlock logs and database execution/locking information.
+2. Create appropriate indexes to reduce the number of rows scanned and locked.
+3. Use suitable isolation levels and lock modes.
+4. Configure lock timeout and statement timeout based on business requirements.
+
+Spring example:
+
+@Transactional(timeout = 5)
+public void transferMoney(Long fromId, Long toId, BigDecimal amount) {
+    // Lock accounts in a consistent order.
+    // Validate balances and update both accounts.
+}
+
+Important:
+A deadlock victim transaction must be rolled back. Retry the complete transaction in a new transaction boundary, not inside the same transaction that has already failed.
+
 Important:
 If the list contains mutable objects, make defensive copies of those objects too. Otherwise, the objects themselves can still be modified.
